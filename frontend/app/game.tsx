@@ -144,6 +144,9 @@ export default function GameScreen() {
       setShowGameOverModal(true);
       saveUserData();
       updateQuestProgress('score', score);
+      
+      // Show interstitial ad on game over (every 2nd game)
+      admobService.showInterstitialIfReady();
     }
   }, [isGameOver]);
 
