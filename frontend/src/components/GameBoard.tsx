@@ -16,16 +16,195 @@ const BOARD_WIDTH = Math.min(SCREEN_WIDTH - BOARD_PADDING * 2, 360);
 const ROW_CLEAR_COLOR = '#00F5A0';
 const COL_CLEAR_COLOR = '#FF6B6B';
 
-// Neon colors for combo levels - More vibrant
-const NEON_COMBO_COLORS = [
-  { main: '#00FF88', glow: '#00FF88', bg: 'rgba(0, 255, 136, 0.2)' },      // Level 1 - Neon Green
-  { main: '#00D4FF', glow: '#00D4FF', bg: 'rgba(0, 212, 255, 0.2)' },      // Level 2 - Neon Cyan
-  { main: '#FF00FF', glow: '#FF00FF', bg: 'rgba(255, 0, 255, 0.2)' },      // Level 3 - Neon Magenta
-  { main: '#FFD700', glow: '#FFD700', bg: 'rgba(255, 215, 0, 0.2)' },      // Level 4 - Neon Gold
-  { main: '#FF3366', glow: '#FF3366', bg: 'rgba(255, 51, 102, 0.2)' },     // Level 5 - Neon Red-Pink
-  { main: '#9D00FF', glow: '#9D00FF', bg: 'rgba(157, 0, 255, 0.2)' },      // Level 6 - Neon Purple
-  { main: '#00FFFF', glow: '#00FFFF', bg: 'rgba(0, 255, 255, 0.2)' },      // Level 7+ - Neon Electric Blue
+// Vibrant neon colors for combo levels
+const COMBO_COLORS = [
+  '#00FF88', // Level 1 - Neon Green
+  '#00D4FF', // Level 2 - Neon Cyan
+  '#FF00FF', // Level 3 - Neon Magenta
+  '#FFD700', // Level 4 - Neon Gold
+  '#FF3366', // Level 5 - Neon Red-Pink
+  '#9D00FF', // Level 6 - Neon Purple
+  '#00FFFF', // Level 7+ - Neon Electric Blue
 ];
+
+// Pixel font definitions - each letter is a 5x5 grid (1 = filled, 0 = empty)
+const PIXEL_FONT: { [key: string]: number[][] } = {
+  'C': [
+    [1,1,1,1,1],
+    [1,0,0,0,0],
+    [1,0,0,0,0],
+    [1,0,0,0,0],
+    [1,1,1,1,1],
+  ],
+  'O': [
+    [1,1,1,1,1],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [1,1,1,1,1],
+  ],
+  'M': [
+    [1,0,0,0,1],
+    [1,1,0,1,1],
+    [1,0,1,0,1],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+  ],
+  'B': [
+    [1,1,1,1,0],
+    [1,0,0,0,1],
+    [1,1,1,1,0],
+    [1,0,0,0,1],
+    [1,1,1,1,0],
+  ],
+  'G': [
+    [1,1,1,1,1],
+    [1,0,0,0,0],
+    [1,0,1,1,1],
+    [1,0,0,0,1],
+    [1,1,1,1,1],
+  ],
+  'R': [
+    [1,1,1,1,0],
+    [1,0,0,0,1],
+    [1,1,1,1,0],
+    [1,0,0,1,0],
+    [1,0,0,0,1],
+  ],
+  'E': [
+    [1,1,1,1,1],
+    [1,0,0,0,0],
+    [1,1,1,1,0],
+    [1,0,0,0,0],
+    [1,1,1,1,1],
+  ],
+  'A': [
+    [0,1,1,1,0],
+    [1,0,0,0,1],
+    [1,1,1,1,1],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+  ],
+  'T': [
+    [1,1,1,1,1],
+    [0,0,1,0,0],
+    [0,0,1,0,0],
+    [0,0,1,0,0],
+    [0,0,1,0,0],
+  ],
+  'W': [
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [1,0,1,0,1],
+    [1,1,0,1,1],
+    [1,0,0,0,1],
+  ],
+  'S': [
+    [1,1,1,1,1],
+    [1,0,0,0,0],
+    [1,1,1,1,1],
+    [0,0,0,0,1],
+    [1,1,1,1,1],
+  ],
+  'N': [
+    [1,0,0,0,1],
+    [1,1,0,0,1],
+    [1,0,1,0,1],
+    [1,0,0,1,1],
+    [1,0,0,0,1],
+  ],
+  'I': [
+    [1,1,1,1,1],
+    [0,0,1,0,0],
+    [0,0,1,0,0],
+    [0,0,1,0,0],
+    [1,1,1,1,1],
+  ],
+  'X': [
+    [1,0,0,0,1],
+    [0,1,0,1,0],
+    [0,0,1,0,0],
+    [0,1,0,1,0],
+    [1,0,0,0,1],
+  ],
+  '!': [
+    [0,0,1,0,0],
+    [0,0,1,0,0],
+    [0,0,1,0,0],
+    [0,0,0,0,0],
+    [0,0,1,0,0],
+  ],
+  '0': [
+    [1,1,1,1,1],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [1,1,1,1,1],
+  ],
+  '1': [
+    [0,0,1,0,0],
+    [0,1,1,0,0],
+    [0,0,1,0,0],
+    [0,0,1,0,0],
+    [0,1,1,1,0],
+  ],
+  '2': [
+    [1,1,1,1,1],
+    [0,0,0,0,1],
+    [1,1,1,1,1],
+    [1,0,0,0,0],
+    [1,1,1,1,1],
+  ],
+  '3': [
+    [1,1,1,1,1],
+    [0,0,0,0,1],
+    [0,1,1,1,1],
+    [0,0,0,0,1],
+    [1,1,1,1,1],
+  ],
+  '4': [
+    [1,0,0,0,1],
+    [1,0,0,0,1],
+    [1,1,1,1,1],
+    [0,0,0,0,1],
+    [0,0,0,0,1],
+  ],
+  '5': [
+    [1,1,1,1,1],
+    [1,0,0,0,0],
+    [1,1,1,1,1],
+    [0,0,0,0,1],
+    [1,1,1,1,1],
+  ],
+  '6': [
+    [1,1,1,1,1],
+    [1,0,0,0,0],
+    [1,1,1,1,1],
+    [1,0,0,0,1],
+    [1,1,1,1,1],
+  ],
+  '7': [
+    [1,1,1,1,1],
+    [0,0,0,0,1],
+    [0,0,0,1,0],
+    [0,0,1,0,0],
+    [0,0,1,0,0],
+  ],
+  '8': [
+    [1,1,1,1,1],
+    [1,0,0,0,1],
+    [1,1,1,1,1],
+    [1,0,0,0,1],
+    [1,1,1,1,1],
+  ],
+  '9': [
+    [1,1,1,1,1],
+    [1,0,0,0,1],
+    [1,1,1,1,1],
+    [0,0,0,0,1],
+    [1,1,1,1,1],
+  ],
+};
 
 interface ScorePopup {
   id: string;
@@ -86,7 +265,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     highlightCells.map(c => `${c.row}-${c.col}`)
   );
 
-  // Detect combo changes for neon popup
+  // Detect combo changes for pixel popup
   useEffect(() => {
     if (combo > prevCombo.current && combo >= 1) {
       const popup: ComboPopup = {
@@ -97,7 +276,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       
       setTimeout(() => {
         setComboPopups(prev => prev.filter(p => p.id !== popup.id));
-      }, 1800);
+      }, 2000);
     }
     prevCombo.current = combo;
   }, [combo]);
@@ -110,11 +289,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
 
     const newCells: { row: number; col: number; color: string }[] = [];
+    const clearedCells: { row: number; col: number; color: string }[] = [];
     const clearedRows = new Set<number>();
     const clearedCols = new Set<number>();
-    const clearedCells: { row: number; col: number; color: string }[] = [];
 
-    // Find new and cleared cells
     for (let r = 0; r < boardSize; r++) {
       for (let c = 0; c < boardSize; c++) {
         const current = board[r][c];
@@ -160,7 +338,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       }
     }
 
-    // Trigger row clear effects (green flash)
+    // Trigger row clear effects
     if (clearedRows.size > 0) {
       const newFlashing = new Map(flashingCells);
       clearedRows.forEach(rowIndex => {
@@ -182,7 +360,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       }, 300);
     }
 
-    // Trigger column clear effects (red flash)
+    // Trigger column clear effects
     if (clearedCols.size > 0) {
       const newFlashing = new Map(flashingCells);
       clearedCols.forEach(colIndex => {
@@ -204,7 +382,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       }, 300);
     }
 
-    // Generate particles for cleared cells
+    // Generate particles
     if (clearedCells.length > 0) {
       const newParticles: ParticleEffect[] = [];
       clearedCells.forEach(cell => {
@@ -223,7 +401,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         setParticles([]);
       }, 600);
 
-      // Calculate score popup
       const linesCleared = clearedRows.size + clearedCols.size;
       
       if (linesCleared > 0) {
@@ -245,7 +422,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       }
     }
 
-    // Clean up clear effects
     setTimeout(() => {
       setClearEffects([]);
     }, 500);
@@ -284,7 +460,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 flashColor && styles.flashingCell,
               ]}
             >
-              {/* 3D Effect */}
               <View style={[styles.cellHighlight, { backgroundColor: lightenColor(flashColor || cell, 30) }]} />
               <View style={[styles.cellShadow, { backgroundColor: darkenColor(flashColor || cell, 30) }]} />
             </View>
@@ -320,7 +495,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         <ClearLineEffect key={effect.id} effect={effect} cellSize={cellSize} boardSize={boardSize} />
       ))}
       
-      {/* Particle Explosion Effects */}
+      {/* Particle Effects */}
       {particles.map(particle => (
         <ParticleComponent key={particle.id} particle={particle} />
       ))}
@@ -330,9 +505,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         <ScorePopupComponent key={popup.id} popup={popup} />
       ))}
       
-      {/* Neon Combo Popups */}
+      {/* Pixel Block Combo Popups */}
       {comboPopups.map(popup => (
-        <NeonComboPopup key={popup.id} combo={popup.combo} />
+        <PixelComboPopup key={popup.id} combo={popup.combo} />
       ))}
       
       {/* Grid lines overlay */}
@@ -362,7 +537,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   );
 };
 
-// Falling Cell Animation Component
+// Falling Cell Animation
 const FallingCellComponent: React.FC<{ color: string; cellSize: number }> = ({ color, cellSize }) => {
   const translateY = useRef(new Animated.Value(-cellSize * 3)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
@@ -370,20 +545,17 @@ const FallingCellComponent: React.FC<{ color: string; cellSize: number }> = ({ c
 
   useEffect(() => {
     Animated.parallel([
-      // Fall from above
       Animated.timing(translateY, {
         toValue: 0,
         duration: 250,
         useNativeDriver: true,
       }),
-      // Scale up as it falls
       Animated.timing(scaleAnim, {
         toValue: 1,
         duration: 250,
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // Bounce effect on landing
       Animated.sequence([
         Animated.timing(bounceAnim, {
           toValue: 0.9,
@@ -419,56 +591,106 @@ const FallingCellComponent: React.FC<{ color: string; cellSize: number }> = ({ c
   );
 };
 
-// Epic Neon Combo Popup Component
-const NeonComboPopup: React.FC<{ combo: number }> = ({ combo }) => {
-  const scaleAnim = useRef(new Animated.Value(0)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+// Pixel Block Letter Component
+const PixelLetter: React.FC<{ 
+  letter: string; 
+  color: string; 
+  blockSize: number;
+  delay: number;
+}> = ({ letter, color, blockSize, delay }) => {
+  const grid = PIXEL_FONT[letter] || PIXEL_FONT['X'];
+  const scaleAnims = useRef(grid.flat().map(() => new Animated.Value(0))).current;
+  
+  useEffect(() => {
+    const animations = scaleAnims.map((anim, index) => {
+      return Animated.sequence([
+        Animated.delay(delay + index * 15),
+        Animated.spring(anim, {
+          toValue: 1,
+          friction: 4,
+          tension: 150,
+          useNativeDriver: true,
+        }),
+      ]);
+    });
+    
+    Animated.parallel(animations).start();
+  }, [delay]);
+
+  return (
+    <View style={{ marginHorizontal: 2 }}>
+      {grid.map((row, rowIndex) => (
+        <View key={rowIndex} style={{ flexDirection: 'row' }}>
+          {row.map((cell, colIndex) => {
+            const animIndex = rowIndex * 5 + colIndex;
+            return (
+              <Animated.View
+                key={colIndex}
+                style={{
+                  width: blockSize,
+                  height: blockSize,
+                  margin: 0.5,
+                  backgroundColor: cell === 1 ? color : 'transparent',
+                  borderRadius: 2,
+                  transform: [{ scale: cell === 1 ? scaleAnims[animIndex] : 1 }],
+                  shadowColor: cell === 1 ? color : 'transparent',
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: cell === 1 ? 0.8 : 0,
+                  shadowRadius: 4,
+                  elevation: cell === 1 ? 4 : 0,
+                }}
+              />
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+};
+
+// Pixel Block Combo Popup
+const PixelComboPopup: React.FC<{ combo: number }> = ({ combo }) => {
+  const containerScale = useRef(new Animated.Value(0)).current;
+  const containerOpacity = useRef(new Animated.Value(0)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
+
+  const colorIndex = Math.min(combo - 1, COMBO_COLORS.length - 1);
+  const color = COMBO_COLORS[colorIndex];
+
+  // Get text based on combo level
+  const getText = () => {
+    if (combo >= 7) return 'WOW';
+    if (combo >= 5) return 'GREAT';
+    if (combo >= 3) return 'NICE';
+    return 'COMBO';
+  };
+
+  const text = getText();
+  const comboText = `X${combo}`;
+  const blockSize = combo >= 5 ? 5 : 6;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.sequence([
-        Animated.spring(scaleAnim, {
-          toValue: 1.3,
-          friction: 3,
-          tension: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 0,
-          duration: 300,
-          delay: 1000,
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.sequence([
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 0,
-          duration: 300,
-          delay: 1200,
-          useNativeDriver: true,
-        }),
-      ]),
+      Animated.spring(containerScale, {
+        toValue: 1,
+        friction: 4,
+        tension: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(containerOpacity, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
       combo >= 3 ? Animated.loop(
         Animated.sequence([
           Animated.timing(shakeAnim, {
-            toValue: 5,
+            toValue: 3,
             duration: 50,
             useNativeDriver: true,
           }),
           Animated.timing(shakeAnim, {
-            toValue: -5,
+            toValue: -3,
             duration: 50,
             useNativeDriver: true,
           }),
@@ -478,55 +700,65 @@ const NeonComboPopup: React.FC<{ combo: number }> = ({ combo }) => {
             useNativeDriver: true,
           }),
         ]),
-        { iterations: 6 }
+        { iterations: 4 }
       ) : Animated.timing(shakeAnim, { toValue: 0, duration: 0, useNativeDriver: true }),
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.15,
-            duration: 150,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 150,
-            useNativeDriver: true,
-          }),
-        ]),
-        { iterations: 5 }
-      ),
     ]).start();
+
+    // Fade out
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(containerScale, {
+          toValue: 0.5,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(containerOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, 1500);
   }, [combo]);
-
-  const colorIndex = Math.min(combo - 1, NEON_COMBO_COLORS.length - 1);
-  const neonColor = NEON_COMBO_COLORS[colorIndex];
-
-  const getComboText = () => {
-    if (combo >= 7) return 'INCREDIBLE!';
-    if (combo >= 5) return 'AMAZING!';
-    if (combo >= 3) return 'GREAT!';
-    return 'COMBO';
-  };
 
   return (
     <Animated.View
       style={[
-        styles.neonComboContainer,
+        styles.pixelComboContainer,
         {
+          opacity: containerOpacity,
           transform: [
-            { scale: Animated.multiply(scaleAnim, pulseAnim) },
+            { scale: containerScale },
             { translateX: shakeAnim },
           ],
-          opacity: opacityAnim,
         },
       ]}
     >
-      <Text style={[styles.neonComboText, { color: neonColor.main }]}>
-        {getComboText()}
-      </Text>
-      <Text style={[styles.neonComboNumber, { color: neonColor.main }]}>
-        x{combo}
-      </Text>
+      {/* Main text made of pixel blocks */}
+      <View style={styles.pixelTextRow}>
+        {text.split('').map((char, index) => (
+          <PixelLetter 
+            key={index} 
+            letter={char} 
+            color={color} 
+            blockSize={blockSize}
+            delay={index * 50}
+          />
+        ))}
+      </View>
+      
+      {/* Combo number */}
+      <View style={[styles.pixelTextRow, { marginTop: 8 }]}>
+        {comboText.split('').map((char, index) => (
+          <PixelLetter 
+            key={index} 
+            letter={char} 
+            color={color} 
+            blockSize={blockSize + 2}
+            delay={text.length * 50 + index * 50}
+          />
+        ))}
+      </View>
     </Animated.View>
   );
 };
@@ -587,9 +819,7 @@ const ClearLineEffect: React.FC<{ effect: ClearEffect; cellSize: number; boardSi
           }),
         },
       ]}
-    >
-      <View style={[styles.clearGlow, { backgroundColor: effect.color }]} />
-    </Animated.View>
+    />
   );
 };
 
@@ -815,15 +1045,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     borderRadius: 4,
   },
-  clearGlow: {
-    position: 'absolute',
-    top: -5,
-    left: -5,
-    right: -5,
-    bottom: -5,
-    opacity: 0.3,
-    borderRadius: 8,
-  },
   particle: {
     position: 'absolute',
     width: 12,
@@ -847,24 +1068,19 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 4,
   },
-  neonComboContainer: {
+  pixelComboContainer: {
     position: 'absolute',
-    top: '30%',
+    top: '25%',
     left: 0,
     right: 0,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 100,
   },
-  neonComboText: {
-    fontSize: 42,
-    fontWeight: '900',
-    letterSpacing: 3,
-  },
-  neonComboNumber: {
-    fontSize: 90,
-    fontWeight: '900',
-    marginTop: -10,
+  pixelTextRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
