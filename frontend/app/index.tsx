@@ -18,7 +18,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useGameStore } from '@/src/store/gameStore';
 import { useQuestStore } from '@/src/store/questStore';
 import { initSounds } from '@/src/utils/sounds';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
