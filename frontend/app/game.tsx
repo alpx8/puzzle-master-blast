@@ -315,17 +315,29 @@ export default function GameScreen() {
           <Ionicons name="pause" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{getModeTitle()}</Text>
-        <TouchableOpacity 
-          onPress={() => setShowQuestsModal(true)} 
-          style={styles.headerButton}
-        >
-          <Ionicons name="trophy" size={24} color="#FFD700" />
-          {completedQuests > 0 && (
-            <View style={styles.questBadge}>
-              <Text style={styles.questBadgeText}>{completedQuests}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        <View style={styles.headerRightButtons}>
+          <TouchableOpacity 
+            onPress={handleToggleMute} 
+            style={[styles.headerButton, styles.muteButton]}
+          >
+            <Ionicons 
+              name={isMuted ? "volume-mute" : "volume-high"} 
+              size={22} 
+              color={isMuted ? "#FF6B6B" : "#4ECDC4"} 
+            />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => setShowQuestsModal(true)} 
+            style={styles.headerButton}
+          >
+            <Ionicons name="trophy" size={24} color="#FFD700" />
+            {completedQuests > 0 && (
+              <View style={styles.questBadge}>
+                <Text style={styles.questBadgeText}>{completedQuests}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Score Display */}
