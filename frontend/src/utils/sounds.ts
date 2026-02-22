@@ -11,15 +11,15 @@ let levelUpSound: Audio.Sound | null = null;
 let gameOverSound: Audio.Sound | null = null;
 let highScoreSound: Audio.Sound | null = null;
 
-// Sound URLs
+// Sound URLs - Using reliable free sound effects
 const SOUND_URLS = {
   place: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3',
   drop: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
   clear: 'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3',
   combo: 'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3',
   levelUp: 'https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3',
-  gameOver: 'https://assets.mixkit.co/active_storage/sfx/2658/2658-preview.mp3', // Sad game over
-  highScore: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3', // Victory fanfare
+  gameOver: 'https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3',
+  highScore: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3',
 };
 
 let soundsEnabled = true;
