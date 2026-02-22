@@ -16,15 +16,15 @@ const BOARD_WIDTH = Math.min(SCREEN_WIDTH - BOARD_PADDING * 2, 360);
 const ROW_CLEAR_COLOR = '#00F5A0';
 const COL_CLEAR_COLOR = '#FF6B6B';
 
-// Neon colors for combo levels
+// Neon colors for combo levels - More vibrant
 const NEON_COMBO_COLORS = [
-  { main: '#00FF88', glow: '#00FF88' },      // Level 1 - Neon Green
-  { main: '#00D4FF', glow: '#00D4FF' },      // Level 2 - Neon Cyan
-  { main: '#FF00FF', glow: '#FF00FF' },      // Level 3 - Neon Magenta
-  { main: '#FFD700', glow: '#FFD700' },      // Level 4 - Neon Gold
-  { main: '#FF3366', glow: '#FF3366' },      // Level 5 - Neon Red-Pink
-  { main: '#9D00FF', glow: '#9D00FF' },      // Level 6 - Neon Purple
-  { main: '#00FFFF', glow: '#00FFFF' },      // Level 7+ - Neon Electric Blue
+  { main: '#00FF88', glow: '#00FF88', bg: 'rgba(0, 255, 136, 0.2)' },      // Level 1 - Neon Green
+  { main: '#00D4FF', glow: '#00D4FF', bg: 'rgba(0, 212, 255, 0.2)' },      // Level 2 - Neon Cyan
+  { main: '#FF00FF', glow: '#FF00FF', bg: 'rgba(255, 0, 255, 0.2)' },      // Level 3 - Neon Magenta
+  { main: '#FFD700', glow: '#FFD700', bg: 'rgba(255, 215, 0, 0.2)' },      // Level 4 - Neon Gold
+  { main: '#FF3366', glow: '#FF3366', bg: 'rgba(255, 51, 102, 0.2)' },     // Level 5 - Neon Red-Pink
+  { main: '#9D00FF', glow: '#9D00FF', bg: 'rgba(157, 0, 255, 0.2)' },      // Level 6 - Neon Purple
+  { main: '#00FFFF', glow: '#00FFFF', bg: 'rgba(0, 255, 255, 0.2)' },      // Level 7+ - Neon Electric Blue
 ];
 
 interface ScorePopup {
@@ -46,7 +46,7 @@ interface ClearEffect {
   color: string;
 }
 
-interface PlaceEffect {
+interface FallingCell {
   id: string;
   row: number;
   col: number;
@@ -76,7 +76,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const [scorePopups, setScorePopups] = useState<ScorePopup[]>([]);
   const [comboPopups, setComboPopups] = useState<ComboPopup[]>([]);
   const [particles, setParticles] = useState<ParticleEffect[]>([]);
-  const [placeEffects, setPlaceEffects] = useState<PlaceEffect[]>([]);
+  const [fallingCells, setFallingCells] = useState<FallingCell[]>([]);
   const [flashingCells, setFlashingCells] = useState<Map<string, string>>(new Map());
   
   const prevBoard = useRef<(string | null)[][]>([]);
@@ -97,7 +97,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       
       setTimeout(() => {
         setComboPopups(prev => prev.filter(p => p.id !== popup.id));
-      }, 1500);
+      }, 1800);
     }
     prevCombo.current = combo;
   }, [combo]);
@@ -128,19 +128,19 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       }
     }
 
-    // Trigger place effects for new cells
+    // Trigger falling animation for new cells
     if (newCells.length > 0) {
-      const newPlaceEffects = newCells.map(cell => ({
-        id: `place-${cell.row}-${cell.col}-${Date.now()}`,
+      const newFalling = newCells.map(cell => ({
+        id: `fall-${cell.row}-${cell.col}-${Date.now()}`,
         row: cell.row,
         col: cell.col,
         color: cell.color,
       }));
-      setPlaceEffects(newPlaceEffects);
+      setFallingCells(newFalling);
       
       setTimeout(() => {
-        setPlaceEffects([]);
-      }, 400);
+        setFallingCells([]);
+      }, 350);
     }
 
     // Detect full row/column clears
@@ -257,7 +257,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     const key = `${rowIndex}-${colIndex}`;
     const isHighlighted = highlightSet.has(key);
     const flashColor = flashingCells.get(key);
-    const hasPlaceEffect = placeEffects.some(p => p.row === rowIndex && p.col === colIndex);
+    const isFalling = fallingCells.some(f => f.row === rowIndex && f.col === colIndex);
 
     return (
       <View
@@ -271,22 +271,24 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         ]}
       >
         {cell ? (
-          <View 
-            style={[
-              styles.filledCell,
-              { backgroundColor: flashColor || cell },
-              flashColor && styles.flashingCell,
-            ]}
-          >
-            {/* 3D Effect */}
-            <View style={[styles.cellHighlight, { backgroundColor: lightenColor(flashColor || cell, 30) }]} />
-            <View style={[styles.cellShadow, { backgroundColor: darkenColor(flashColor || cell, 30) }]} />
-            
-            {/* Place Effect Glow */}
-            {hasPlaceEffect && (
-              <PlaceEffectGlow color={cell} />
-            )}
-          </View>
+          isFalling ? (
+            <FallingCellComponent 
+              color={cell} 
+              cellSize={cellSize}
+            />
+          ) : (
+            <View 
+              style={[
+                styles.filledCell,
+                { backgroundColor: flashColor || cell },
+                flashColor && styles.flashingCell,
+              ]}
+            >
+              {/* 3D Effect */}
+              <View style={[styles.cellHighlight, { backgroundColor: lightenColor(flashColor || cell, 30) }]} />
+              <View style={[styles.cellShadow, { backgroundColor: darkenColor(flashColor || cell, 30) }]} />
+            </View>
+          )
         ) : (
           <View 
             style={[
@@ -360,156 +362,269 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   );
 };
 
-// Place Effect Glow Component
-const PlaceEffectGlow: React.FC<{ color: string }> = ({ color }) => {
+// Falling Cell Animation Component
+const FallingCellComponent: React.FC<{ color: string; cellSize: number }> = ({ color, cellSize }) => {
+  const translateY = useRef(new Animated.Value(-cellSize * 3)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const bounceAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.parallel([
+      // Fall from above
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      // Scale up as it falls
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // Bounce effect on landing
       Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 1.3,
-          duration: 150,
+        Animated.timing(bounceAnim, {
+          toValue: 0.9,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+        Animated.spring(bounceAnim, {
+          toValue: 1,
+          friction: 4,
+          tension: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        styles.filledCell,
+        { 
+          backgroundColor: color,
+          transform: [
+            { translateY },
+            { scale: Animated.multiply(scaleAnim, bounceAnim) },
+          ],
+        },
+      ]}
+    >
+      <View style={[styles.cellHighlight, { backgroundColor: lightenColor(color, 30) }]} />
+      <View style={[styles.cellShadow, { backgroundColor: darkenColor(color, 30) }]} />
+    </Animated.View>
+  );
+};
+
+// Epic Neon Combo Popup Component
+const NeonComboPopup: React.FC<{ combo: number }> = ({ combo }) => {
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const shakeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Epic entrance animation
+    Animated.parallel([
+      // Scale with bounce
+      Animated.sequence([
+        Animated.spring(scaleAnim, {
+          toValue: 1.4,
+          friction: 3,
+          tension: 200,
           useNativeDriver: true,
         }),
         Animated.timing(scaleAnim, {
           toValue: 1,
-          duration: 200,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0,
+          duration: 300,
+          delay: 1000,
           useNativeDriver: true,
         }),
       ]),
+      // Fade in/out
       Animated.sequence([
         Animated.timing(opacityAnim, {
-          toValue: 0.8,
+          toValue: 1,
           duration: 100,
           useNativeDriver: true,
         }),
         Animated.timing(opacityAnim, {
           toValue: 0,
           duration: 300,
+          delay: 1200,
           useNativeDriver: true,
         }),
       ]),
-    ]).start();
-  }, []);
-
-  return (
-    <Animated.View
-      style={[
-        styles.placeGlow,
-        {
-          backgroundColor: color,
-          transform: [{ scale: scaleAnim }],
-          opacity: opacityAnim,
-        },
-      ]}
-    />
-  );
-};
-
-// Neon Combo Popup Component
-const NeonComboPopup: React.FC<{ combo: number }> = ({ combo }) => {
-  const scaleAnim = useRef(new Animated.Value(0)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
-  const glowAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.sequence([
-        Animated.spring(scaleAnim, {
-          toValue: 1.2,
-          friction: 4,
-          tension: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 0.8,
-          duration: 400,
-          delay: 600,
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.sequence([
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 0,
-          duration: 400,
-          delay: 800,
-          useNativeDriver: true,
-        }),
-      ]),
-      // Pulsing glow effect
-      Animated.loop(
+      // Shake effect for high combos
+      combo >= 3 ? Animated.loop(
         Animated.sequence([
-          Animated.timing(glowAnim, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: false,
+          Animated.timing(shakeAnim, {
+            toValue: 5,
+            duration: 50,
+            useNativeDriver: true,
           }),
-          Animated.timing(glowAnim, {
-            toValue: 0.5,
-            duration: 200,
-            useNativeDriver: false,
+          Animated.timing(shakeAnim, {
+            toValue: -5,
+            duration: 50,
+            useNativeDriver: true,
+          }),
+          Animated.timing(shakeAnim, {
+            toValue: 0,
+            duration: 50,
+            useNativeDriver: true,
           }),
         ]),
-        { iterations: 4 }
+        { iterations: 6 }
+      ) : Animated.timing(shakeAnim, { toValue: 0, duration: 0, useNativeDriver: true }),
+      // Pulse effect
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.1,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+        ]),
+        { iterations: 5 }
       ),
     ]).start();
-  }, []);
+  }, [combo]);
 
   const colorIndex = Math.min(combo - 1, NEON_COMBO_COLORS.length - 1);
   const neonColor = NEON_COMBO_COLORS[colorIndex];
 
-  const glowRadius = glowAnim.interpolate({
-    inputRange: [0.5, 1],
-    outputRange: [15, 25],
-  });
+  // Get combo text based on level
+  const getComboText = () => {
+    if (combo >= 7) return 'INCREDIBLE!';
+    if (combo >= 5) return 'AMAZING!';
+    if (combo >= 3) return 'GREAT!';
+    return 'COMBO';
+  };
 
   return (
     <Animated.View
       style={[
         styles.neonComboContainer,
         {
-          transform: [{ scale: scaleAnim }],
+          transform: [
+            { scale: Animated.multiply(scaleAnim, pulseAnim) },
+            { translateX: shakeAnim },
+          ],
           opacity: opacityAnim,
         },
       ]}
     >
-      <Animated.Text
+      {/* Background glow */}
+      <View style={[styles.comboGlowBg, { backgroundColor: neonColor.bg }]} />
+      
+      {/* Main combo text */}
+      <Text
         style={[
           styles.neonComboText,
           {
             color: neonColor.main,
             textShadowColor: neonColor.glow,
-            textShadowRadius: glowRadius,
+            textShadowRadius: 20,
           },
         ]}
       >
-        COMBO
-      </Animated.Text>
-      <Animated.Text
-        style={[
-          styles.neonComboNumber,
-          {
-            color: neonColor.main,
-            textShadowColor: neonColor.glow,
-            textShadowRadius: glowRadius,
-          },
-        ]}
-      >
-        x{combo}
-      </Animated.Text>
+        {getComboText()}
+      </Text>
+      
+      {/* Combo number with extra glow */}
+      <View style={styles.comboNumberContainer}>
+        <Text
+          style={[
+            styles.neonComboNumber,
+            {
+              color: '#fff',
+              textShadowColor: neonColor.glow,
+              textShadowRadius: 30,
+            },
+          ]}
+        >
+          x{combo}
+        </Text>
+        {/* Extra glow layer */}
+        <Text
+          style={[
+            styles.neonComboNumberGlow,
+            {
+              color: neonColor.main,
+              textShadowColor: neonColor.glow,
+              textShadowRadius: 40,
+            },
+          ]}
+        >
+          x{combo}
+        </Text>
+      </View>
+      
+      {/* Sparkle effects for high combos */}
+      {combo >= 3 && (
+        <>
+          <SparkleEffect delay={0} color={neonColor.main} />
+          <SparkleEffect delay={100} color={neonColor.main} />
+          <SparkleEffect delay={200} color={neonColor.main} />
+        </>
+      )}
     </Animated.View>
+  );
+};
+
+// Sparkle effect for combo
+const SparkleEffect: React.FC<{ delay: number; color: string }> = ({ delay, color }) => {
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const positionX = useRef(Math.random() * 160 - 80).current;
+  const positionY = useRef(Math.random() * 80 - 40).current;
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(opacityAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
+            Animated.timing(scaleAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
+          ]),
+          Animated.parallel([
+            Animated.timing(opacityAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+            Animated.timing(scaleAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+          ]),
+        ]),
+        { iterations: 3 }
+      ).start();
+    }, delay);
+    return () => clearTimeout(timeout);
+  }, [delay]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.sparkle,
+        {
+          left: `${50 + positionX / 2}%`,
+          top: `${50 + positionY / 2}%`,
+          backgroundColor: color,
+          opacity: opacityAnim,
+          transform: [{ scale: scaleAnim }],
+        },
+      ]}
+    />
   );
 };
 
@@ -734,17 +849,16 @@ const styles = StyleSheet.create({
   cell: {
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 1,
   },
   emptyCell: {
-    width: '92%',
-    height: '92%',
+    width: '90%',
+    height: '90%',
     backgroundColor: '#2a2a42',
     borderRadius: 6,
   },
   filledCell: {
-    width: '92%',
-    height: '92%',
+    width: '90%',
+    height: '90%',
     borderRadius: 6,
     overflow: 'hidden',
     position: 'relative',
@@ -771,14 +885,6 @@ const styles = StyleSheet.create({
     width: '40%',
     height: '40%',
     borderRadius: 4,
-  },
-  placeGlow: {
-    position: 'absolute',
-    top: -5,
-    left: -5,
-    right: -5,
-    bottom: -5,
-    borderRadius: 10,
   },
   gridOverlay: {
     position: 'absolute',
@@ -840,23 +946,53 @@ const styles = StyleSheet.create({
   },
   neonComboContainer: {
     position: 'absolute',
-    top: '35%',
+    top: '30%',
     left: 0,
     right: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 100,
+  },
+  comboGlowBg: {
+    position: 'absolute',
+    width: 200,
+    height: 120,
+    borderRadius: 60,
+    opacity: 0.6,
   },
   neonComboText: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '900',
-    letterSpacing: 8,
+    letterSpacing: 6,
     textShadowOffset: { width: 0, height: 0 },
+    marginBottom: 5,
+  },
+  comboNumberContainer: {
+    position: 'relative',
   },
   neonComboNumber: {
-    fontSize: 52,
+    fontSize: 72,
     fontWeight: '900',
-    marginTop: -5,
     textShadowOffset: { width: 0, height: 0 },
+  },
+  neonComboNumberGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    fontSize: 72,
+    fontWeight: '900',
+    textShadowOffset: { width: 0, height: 0 },
+    opacity: 0.5,
+  },
+  sparkle: {
+    position: 'absolute',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    shadowColor: '#fff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
   },
 });
 
