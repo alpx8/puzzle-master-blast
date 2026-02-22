@@ -275,7 +275,8 @@ test_plan:
   current_focus:
     - "Drag and Drop Blocks"
     - "Score calculation and combo system"
-  stuck_tasks: []
+  stuck_tasks: 
+    - "WebSocket Multiplayer"
   test_all: false
   test_priority: "high_first"
 
