@@ -36,16 +36,24 @@ export default function LeaderboardScreen() {
   const fetchLeaderboard = async (sortBy: TabType) => {
     try {
       const response = await axios.get(`${API_URL}/api/leaderboard?sort_by=${sortBy}`);
-      setLeaderboard(response.data);
+      // Map backend field names to frontend
+      const mapped = response.data.map((item: any, index: number) => ({
+        id: item.id,
+        username: item.username,
+        level: item.level,
+        highScore: item.high_score || item.highScore || 0,
+        xp: item.xp,
+        rank: item.rank || index + 1,
+      }));
+      setLeaderboard(mapped);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
       // Show mock data if API fails
       setLeaderboard([
-        { id: '1', username: 'Oyuncu1', level: 15, highScore: 12500, xp: 2500, rank: 1 },
-        { id: '2', username: 'Oyuncu2', level: 12, highScore: 10200, xp: 1800, rank: 2 },
-        { id: '3', username: 'Oyuncu3', level: 10, highScore: 8900, xp: 1500, rank: 3 },
-        { id: '4', username: 'Oyuncu4', level: 8, highScore: 7200, xp: 1200, rank: 4 },
-        { id: '5', username: 'Oyuncu5', level: 6, highScore: 5500, xp: 900, rank: 5 },
+        { id: '1', username: 'BlockBuster', level: 8, highScore: 12500, xp: 800, rank: 1 },
+        { id: '2', username: 'GameMaster2024', level: 6, highScore: 10200, xp: 450, rank: 2 },
+        { id: '3', username: 'PuzzlePro', level: 3, highScore: 8900, xp: 200, rank: 3 },
+        { id: '4', username: 'TestOyuncu', level: 1, highScore: 0, xp: 0, rank: 4 },
       ]);
     } finally {
       setLoading(false);
