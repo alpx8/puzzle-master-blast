@@ -8,13 +8,13 @@ let clearSound: Audio.Sound | null = null;
 let comboSound: Audio.Sound | null = null;
 let levelUpSound: Audio.Sound | null = null;
 
-// Sound URLs (using free sound effects)
+// Sound URLs - using pleasant and fun sound effects
 const SOUND_URLS = {
   place: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3', // Soft pop
-  drop: 'https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3', // Swoosh
-  clear: 'https://assets.mixkit.co/active_storage/sfx/270/270-preview.mp3', // Success chime
-  combo: 'https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3', // Achievement
-  levelUp: 'https://assets.mixkit.co/active_storage/sfx/1997/1997-preview.mp3', // Level up
+  drop: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3', // Gentle whoosh
+  clear: 'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3', // Pleasant chime
+  combo: 'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3', // Fun positive notification
+  levelUp: 'https://assets.mixkit.co/active_storage/sfx/1997/1997-preview.mp3', // Level up fanfare
 };
 
 let soundsEnabled = true;
@@ -27,13 +27,13 @@ export const initSounds = async () => {
       staysActiveInBackground: false,
     });
 
-    // Load sounds
+    // Load sounds with appropriate volumes
     const [place, drop, clear, combo, levelUp] = await Promise.all([
-      Audio.Sound.createAsync({ uri: SOUND_URLS.place }, { volume: 0.5 }),
+      Audio.Sound.createAsync({ uri: SOUND_URLS.place }, { volume: 0.4 }),
       Audio.Sound.createAsync({ uri: SOUND_URLS.drop }, { volume: 0.3 }),
-      Audio.Sound.createAsync({ uri: SOUND_URLS.clear }, { volume: 0.6 }),
-      Audio.Sound.createAsync({ uri: SOUND_URLS.combo }, { volume: 0.7 }),
-      Audio.Sound.createAsync({ uri: SOUND_URLS.levelUp }, { volume: 0.8 }),
+      Audio.Sound.createAsync({ uri: SOUND_URLS.clear }, { volume: 0.5 }),
+      Audio.Sound.createAsync({ uri: SOUND_URLS.combo }, { volume: 0.4 }), // Gentler volume
+      Audio.Sound.createAsync({ uri: SOUND_URLS.levelUp }, { volume: 0.6 }),
     ]);
 
     placeSound = place.sound;
@@ -53,7 +53,8 @@ export const initSounds = async () => {
 export const playPlaceSound = async () => {
   if (!soundsEnabled || !placeSound) return;
   try {
-    await placeSound.replayAsync();
+    await placeSound.setPositionAsync(0);
+    await placeSound.playAsync();
   } catch (e) {
     console.log('Place sound error:', e);
   }
@@ -62,7 +63,8 @@ export const playPlaceSound = async () => {
 export const playDropSound = async () => {
   if (!soundsEnabled || !dropSound) return;
   try {
-    await dropSound.replayAsync();
+    await dropSound.setPositionAsync(0);
+    await dropSound.playAsync();
   } catch (e) {
     console.log('Drop sound error:', e);
   }
@@ -71,7 +73,8 @@ export const playDropSound = async () => {
 export const playClearSound = async () => {
   if (!soundsEnabled || !clearSound) return;
   try {
-    await clearSound.replayAsync();
+    await clearSound.setPositionAsync(0);
+    await clearSound.playAsync();
   } catch (e) {
     console.log('Clear sound error:', e);
   }
@@ -80,7 +83,8 @@ export const playClearSound = async () => {
 export const playComboSound = async () => {
   if (!soundsEnabled || !comboSound) return;
   try {
-    await comboSound.replayAsync();
+    await comboSound.setPositionAsync(0);
+    await comboSound.playAsync();
   } catch (e) {
     console.log('Combo sound error:', e);
   }
@@ -89,7 +93,8 @@ export const playComboSound = async () => {
 export const playLevelUpSound = async () => {
   if (!soundsEnabled || !levelUpSound) return;
   try {
-    await levelUpSound.replayAsync();
+    await levelUpSound.setPositionAsync(0);
+    await levelUpSound.playAsync();
   } catch (e) {
     console.log('Level up sound error:', e);
   }
