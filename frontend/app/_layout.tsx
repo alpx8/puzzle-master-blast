@@ -18,6 +18,7 @@ export default function RootLayout() {
         <Stack.Screen name="game" />
         <Stack.Screen name="leaderboard" />
         <Stack.Screen name="multiplayer" />
+        <Stack.Screen name="game-room" />
       </Stack>
     </SafeAreaProvider>
   );
