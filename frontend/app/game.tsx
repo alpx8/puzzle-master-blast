@@ -591,14 +591,14 @@ const styles = StyleSheet.create({
   },
   blockWrapper: {
     alignItems: 'center',
-    padding: 8,
+    padding: 6,
   },
   blockInner: {
     backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    padding: 10,
+    padding: 8,
     borderRadius: 12,
-    minWidth: 75,
-    minHeight: 75,
+    minWidth: 70,
+    minHeight: 70,
     justifyContent: 'center',
     alignItems: 'center',
   },
