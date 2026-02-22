@@ -576,8 +576,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   blocksContainer: {
-    padding: 16,
-    backgroundColor: 'rgba(30, 30, 50, 0.9)',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 20,
+    backgroundColor: 'rgba(30, 30, 50, 0.95)',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
   },
@@ -585,7 +587,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    minHeight: 110,
+    minHeight: 100,
   },
   blockWrapper: {
     alignItems: 'center',
