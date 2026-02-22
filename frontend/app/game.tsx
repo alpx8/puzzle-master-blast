@@ -126,12 +126,25 @@ export default function GameScreen() {
 
   useEffect(() => {
     if (isGameOver) {
+      // Check if new high score
+      if (score > previousHighScore && score > 0) {
+        setIsNewHighScore(true);
+        playHighScoreSound();
+      } else {
+        setIsNewHighScore(false);
+        playGameOverSound();
+      }
       setShowGameOverModal(true);
       saveUserData();
       // Update quest for total score
       updateQuestProgress('score', score);
     }
   }, [isGameOver]);
+
+  // Save high score at start of game
+  useEffect(() => {
+    setPreviousHighScore(highScore);
+  }, []);
 
   // Sound effects based on game state changes
   useEffect(() => {
