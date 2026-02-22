@@ -18,6 +18,8 @@ import { useQuestStore } from '@/src/store/questStore';
 import { GameBoard } from '@/src/components/GameBoard';
 import { BlockPiece } from '@/src/components/BlockPiece';
 import { ScoreDisplay } from '@/src/components/ScoreDisplay';
+import { BannerAd } from '@/src/components/BannerAd';
+import admobService from '@/src/services/admobService';
 import {
   initSounds,
   playPlaceSound,
