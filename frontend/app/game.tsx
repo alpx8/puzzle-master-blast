@@ -25,6 +25,8 @@ import {
   playClearSound,
   playComboSound,
   playLevelUpSound,
+  playGameOverSound,
+  playHighScoreSound,
   triggerComboHaptic,
   unloadSounds,
   toggleSounds,
