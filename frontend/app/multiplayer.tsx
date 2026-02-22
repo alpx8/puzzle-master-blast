@@ -47,14 +47,19 @@ export default function MultiplayerScreen() {
   const fetchRooms = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/rooms`);
-      setRooms(response.data);
+      if (response.data && response.data.length > 0) {
+        setRooms(response.data);
+      } else {
+        // Show default room if no rooms exist
+        setRooms([
+          { id: 'test-room-1', name: 'Test Odası', host: 'TestOyuncu', players: 1, maxPlayers: 2, status: 'waiting' },
+        ]);
+      }
     } catch (error) {
       console.error('Error fetching rooms:', error);
       // Mock data for testing
       setRooms([
-        { id: '1', name: 'Eğlenceli Oda', host: 'Ali', players: 1, maxPlayers: 2, status: 'waiting' },
-        { id: '2', name: 'Pro Oyuncular', host: 'Veli', players: 2, maxPlayers: 2, status: 'playing' },
-        { id: '3', name: 'Yeni Başlayanlar', host: 'Ayşe', players: 1, maxPlayers: 2, status: 'waiting' },
+        { id: 'test-room-1', name: 'Test Odası', host: 'TestOyuncu', players: 1, maxPlayers: 2, status: 'waiting' },
       ]);
     } finally {
       setLoading(false);
