@@ -443,16 +443,27 @@ export default function GameScreen() {
       <Modal visible={showGameOverModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Ionicons name="trophy" size={60} color="#FFD700" />
-            <Text style={styles.gameOverTitle}>Oyun Bitti!</Text>
+            {isNewHighScore ? (
+              <>
+                <Ionicons name="trophy" size={70} color="#FFD700" />
+                <Text style={styles.newHighScoreTitle}>YENİ REKOR!</Text>
+                <View style={styles.confettiContainer}>
+                  <Text style={styles.confettiText}>🎉</Text>
+                  <Text style={styles.confettiText}>🎊</Text>
+                  <Text style={styles.confettiText}>⭐</Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <Ionicons name="game-controller" size={60} color="#FF6B6B" />
+                <Text style={styles.gameOverTitle}>GAME OVER</Text>
+              </>
+            )}
             <View style={styles.finalScoreContainer}>
               <Text style={styles.finalScoreLabel}>Skorun</Text>
-              <Text style={styles.finalScore}>{score.toLocaleString()}</Text>
-              {score >= highScore && score > 0 && (
-                <View style={styles.newRecordBadge}>
-                  <Text style={styles.newRecordText}>YENİ REKOR!</Text>
-                </View>
-              )}
+              <Text style={[styles.finalScore, isNewHighScore && styles.highScoreValue]}>
+                {score.toLocaleString()}
+              </Text>
             </View>
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
