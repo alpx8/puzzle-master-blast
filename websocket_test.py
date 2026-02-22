@@ -37,31 +37,33 @@ class WebSocketTester:
             
             # Try connecting with different timeouts and error handling
             try:
-                async with websockets.connect(uri, timeout=10) as websocket:
-                    self.log_test("WebSocket Connection", True, f"Connected to {uri}")
-                    
-                    # Test sending a message
-                    test_message = {
-                        "type": "move",
-                        "move": {
-                            "block": "L-shape",
-                            "position": {"x": 2, "y": 3},
-                            "rotation": 0
-                        }
+                # Create connection with proper timeout handling
+                websocket = await websockets.connect(uri)
+                self.log_test("WebSocket Connection", True, f"Connected to {uri}")
+                
+                # Test sending a message
+                test_message = {
+                    "type": "move",
+                    "move": {
+                        "block": "L-shape",
+                        "position": {"x": 2, "y": 3},
+                        "rotation": 0
                     }
-                    
-                    await websocket.send(json.dumps(test_message))
-                    self.log_test("WebSocket Send Message", True, "Move message sent")
-                    
-                    # Try to receive a response (with timeout)
-                    try:
-                        response = await asyncio.wait_for(websocket.recv(), timeout=3)
-                        data = json.loads(response)
-                        self.log_test("WebSocket Receive Message", True, f"Received: {data.get('type', 'unknown')}")
-                    except asyncio.TimeoutError:
-                        self.log_test("WebSocket Receive Message", True, "No immediate response (expected for room broadcast)")
-                    
-                    return True
+                }
+                
+                await websocket.send(json.dumps(test_message))
+                self.log_test("WebSocket Send Message", True, "Move message sent")
+                
+                # Try to receive a response (with timeout)
+                try:
+                    response = await asyncio.wait_for(websocket.recv(), timeout=3)
+                    data = json.loads(response)
+                    self.log_test("WebSocket Receive Message", True, f"Received: {data.get('type', 'unknown')}")
+                except asyncio.TimeoutError:
+                    self.log_test("WebSocket Receive Message", True, "No immediate response (expected for room broadcast)")
+                
+                await websocket.close()
+                return True
             except websockets.exceptions.InvalidStatusCode as e:
                 if e.status_code == 404:
                     self.log_test("WebSocket Connection", False, f"WebSocket endpoint not found (404). May need proxy configuration for WebSocket support.")
