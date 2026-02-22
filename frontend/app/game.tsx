@@ -99,6 +99,8 @@ export default function GameScreen() {
 
   useEffect(() => {
     const gameMode = (mode as 'classic' | 'timed' | 'multiplayer') || 'classic';
+    // Save the current high score before starting new game
+    setPreviousHighScore(highScore);
     startGame(gameMode);
     setGamesPlayed(prev => prev + 1);
     updateQuestProgress('games_played', 1);
@@ -126,8 +128,10 @@ export default function GameScreen() {
 
   useEffect(() => {
     if (isGameOver) {
-      // Check if new high score
-      if (score > previousHighScore && score > 0) {
+      // Check if new high score - score must be greater than previous high score
+      const isNewRecord = score > previousHighScore && previousHighScore >= 0;
+      
+      if (isNewRecord) {
         setIsNewHighScore(true);
         playHighScoreSound();
       } else {
@@ -136,15 +140,9 @@ export default function GameScreen() {
       }
       setShowGameOverModal(true);
       saveUserData();
-      // Update quest for total score
       updateQuestProgress('score', score);
     }
   }, [isGameOver]);
-
-  // Save high score at start of game
-  useEffect(() => {
-    setPreviousHighScore(highScore);
-  }, []);
 
   // Sound effects based on game state changes
   useEffect(() => {
