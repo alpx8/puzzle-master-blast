@@ -464,7 +464,9 @@ async def get_rooms():
             "host": room["host_name"],
             "players": len(room.get("players", [])),
             "maxPlayers": room.get("max_players", 2),
-            "status": room["status"]
+            "status": room["status"],
+            "isPrivate": room.get("is_private", False),
+            "hasPassword": bool(room.get("password"))
         })
     
     return result
@@ -477,13 +479,16 @@ async def create_room(room_data: RoomCreate):
         name=room_data.name,
         host_id=room_data.host_id,
         host_name=room_data.host_name,
+        password=room_data.password,
+        is_private=room_data.is_private,
         players=[{
             "id": room_data.host_id,
             "name": room_data.host_name,
             "score": 0,
             "is_host": True,
             "can_move": True,
-            "ready": False
+            "ready": False,
+            "game_over": False
         }]
     )
     
@@ -492,7 +497,8 @@ async def create_room(room_data: RoomCreate):
     return {
         "id": room.id,
         "name": room.name,
-        "status": room.status
+        "status": room.status,
+        "isPrivate": room.is_private
     }
 
 
@@ -510,6 +516,11 @@ async def join_room(room_id: str, player_data: RoomJoin):
     if len(room["players"]) >= room["max_players"]:
         raise HTTPException(status_code=400, detail="Room is full")
     
+    # Check password for private rooms
+    if room.get("password"):
+        if not player_data.password or player_data.password != room["password"]:
+            raise HTTPException(status_code=403, detail="Invalid password")
+    
     for player in room["players"]:
         if player["id"] == player_data.player_id:
             return {"status": "already_joined"}
@@ -520,7 +531,8 @@ async def join_room(room_id: str, player_data: RoomJoin):
         "score": 0,
         "is_host": False,
         "can_move": True,
-        "ready": False
+        "ready": False,
+        "game_over": False
     }
     
     await db.rooms.update_one(
