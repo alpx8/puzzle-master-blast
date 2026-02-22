@@ -427,4 +427,54 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginLeft: 12,
   },
+  // Quest Preview Styles
+  questsPreview: {
+    marginTop: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    padding: 16,
+  },
+  questsPreviewTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 12,
+  },
+  questPreviewItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  questPreviewInfo: {
+    flex: 1,
+  },
+  questPreviewName: {
+    fontSize: 13,
+    color: '#ccc',
+    marginBottom: 4,
+  },
+  questPreviewProgress: {
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  questPreviewFill: {
+    height: '100%',
+    backgroundColor: '#4ECDC4',
+    borderRadius: 2,
+  },
+  questPreviewXP: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFD700',
+    marginLeft: 12,
+  },
+  questClaimDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF6B6B',
+    marginLeft: 8,
+  },
 });
