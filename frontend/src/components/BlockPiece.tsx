@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Block } from '../store/gameStore';
+import { Block } from '@/src/store/gameStore';
 
 interface BlockPieceProps {
   block: Block;
@@ -27,13 +27,24 @@ export const BlockPiece: React.FC<BlockPieceProps> = ({
                 {
                   width: cellSize,
                   height: cellSize,
-                  backgroundColor: cell === 1 ? color : 'transparent',
                 },
-                cell === 1 && styles.filledCell,
               ]}
             >
               {cell === 1 && (
-                <View style={[styles.cellInner, { backgroundColor: color }]} />
+                <View 
+                  style={[
+                    styles.block,
+                    { 
+                      backgroundColor: color,
+                      width: cellSize - 2,
+                      height: cellSize - 2,
+                    }
+                  ]}
+                >
+                  {/* Inner highlight for 3D effect */}
+                  <View style={[styles.highlight, { backgroundColor: lightenColor(color, 30) }]} />
+                  <View style={[styles.shadow, { backgroundColor: darkenColor(color, 30) }]} />
+                </View>
               )}
             </View>
           ))}
@@ -41,6 +52,25 @@ export const BlockPiece: React.FC<BlockPieceProps> = ({
       ))}
     </View>
   );
+};
+
+// Helper functions for 3D effect
+const lightenColor = (color: string, percent: number): string => {
+  const num = parseInt(color.replace('#', ''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = Math.min(255, (num >> 16) + amt);
+  const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
+  const B = Math.min(255, (num & 0x0000FF) + amt);
+  return `rgb(${R}, ${G}, ${B})`;
+};
+
+const darkenColor = (color: string, percent: number): string => {
+  const num = parseInt(color.replace('#', ''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = Math.max(0, (num >> 16) - amt);
+  const G = Math.max(0, ((num >> 8) & 0x00FF) - amt);
+  const B = Math.max(0, (num & 0x0000FF) - amt);
+  return `rgb(${R}, ${G}, ${B})`;
 };
 
 const styles = StyleSheet.create({
@@ -54,19 +84,28 @@ const styles = StyleSheet.create({
   cell: {
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 1,
   },
-  filledCell: {
-    borderRadius: 4,
+  block: {
+    borderRadius: 6,
+    overflow: 'hidden',
+    position: 'relative',
   },
-  cellInner: {
-    width: '85%',
-    height: '85%',
+  highlight: {
+    position: 'absolute',
+    top: 2,
+    left: 2,
+    right: '50%',
+    bottom: '50%',
     borderRadius: 4,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
+    opacity: 0.4,
+  },
+  shadow: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    left: '50%',
+    top: '50%',
+    borderRadius: 4,
+    opacity: 0.3,
   },
 });
