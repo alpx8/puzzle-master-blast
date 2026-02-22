@@ -27,6 +27,8 @@ import {
   playLevelUpSound,
   triggerComboHaptic,
   unloadSounds,
+  toggleSounds,
+  getSoundsEnabled,
 } from '@/src/utils/sounds';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
