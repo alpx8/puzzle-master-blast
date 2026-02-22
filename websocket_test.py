@@ -98,6 +98,10 @@ class WebSocketTester:
         print(f"WebSocket URL: {self.ws_url}")
         print("=" * 50)
         
+        # First test endpoint availability
+        self.test_websocket_endpoint_availability()
+        
+        # Then test actual WebSocket connection
         success = await self.test_websocket_connection()
         
         print("\n" + "=" * 50)
@@ -105,7 +109,8 @@ class WebSocketTester:
         if success:
             print(f"✅ WebSocket functionality working")
         else:
-            print(f"❌ WebSocket functionality failed")
+            print(f"❌ WebSocket functionality failed - likely proxy configuration issue")
+            print(f"💡 WebSocket requires special proxy configuration to handle HTTP upgrade requests")
         
         return success
 
