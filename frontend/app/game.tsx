@@ -532,6 +532,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  headerRightButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  muteButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
