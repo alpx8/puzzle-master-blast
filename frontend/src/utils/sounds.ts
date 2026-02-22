@@ -168,6 +168,8 @@ export const unloadSounds = async () => {
     if (clearSound) await clearSound.unloadAsync();
     if (comboSound) await comboSound.unloadAsync();
     if (levelUpSound) await levelUpSound.unloadAsync();
+    if (gameOverSound) await gameOverSound.unloadAsync();
+    if (highScoreSound) await highScoreSound.unloadAsync();
   } catch (e) {
     console.log('Unload sounds error:', e);
   }
