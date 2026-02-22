@@ -683,10 +683,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF6B6B',
   },
   gameOverTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 36,
+    fontWeight: '900',
+    color: '#FF6B6B',
     marginTop: 16,
+    letterSpacing: 2,
+  },
+  newHighScoreTitle: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: '#FFD700',
+    marginTop: 16,
+    letterSpacing: 2,
+  },
+  confettiContainer: {
+    flexDirection: 'row',
+    marginTop: 8,
+  },
+  confettiText: {
+    fontSize: 32,
+    marginHorizontal: 8,
   },
   finalScoreContainer: {
     alignItems: 'center',
@@ -700,6 +716,9 @@ const styles = StyleSheet.create({
     fontSize: 48,
     fontWeight: 'bold',
     color: '#4ECDC4',
+  },
+  highScoreValue: {
+    color: '#FFD700',
   },
   newRecordBadge: {
     backgroundColor: '#FFD700',
