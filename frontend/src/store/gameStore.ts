@@ -1,37 +1,37 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Block shapes definitions
+// Block shapes definitions - Brighter colors
 export const BLOCK_SHAPES = {
   // Single block (1 point)
-  single: { shape: [[1]], color: '#FF6B6B', points: 1 },
+  single: { shape: [[1]], color: '#FF5252', points: 1 },
   
   // 2-block shapes (2 points)
-  horizontal2: { shape: [[1, 1]], color: '#4ECDC4', points: 2 },
-  vertical2: { shape: [[1], [1]], color: '#45B7D1', points: 2 },
+  horizontal2: { shape: [[1, 1]], color: '#00E5FF', points: 2 },
+  vertical2: { shape: [[1], [1]], color: '#40C4FF', points: 2 },
   
   // 3-block shapes (3 points)
-  horizontal3: { shape: [[1, 1, 1]], color: '#96CEB4', points: 3 },
-  vertical3: { shape: [[1], [1], [1]], color: '#FFEAA7', points: 3 },
-  lShape: { shape: [[1, 0], [1, 0], [1, 1]], color: '#DDA0DD', points: 4 },
-  lShapeReverse: { shape: [[0, 1], [0, 1], [1, 1]], color: '#98D8C8', points: 4 },
+  horizontal3: { shape: [[1, 1, 1]], color: '#69F0AE', points: 3 },
+  vertical3: { shape: [[1], [1], [1]], color: '#FFD740', points: 3 },
+  lShape: { shape: [[1, 0], [1, 0], [1, 1]], color: '#EA80FC', points: 4 },
+  lShapeReverse: { shape: [[0, 1], [0, 1], [1, 1]], color: '#64FFDA', points: 4 },
   
   // 4-block shapes (4-5 points)
-  square: { shape: [[1, 1], [1, 1]], color: '#F7DC6F', points: 4 },
-  horizontal4: { shape: [[1, 1, 1, 1]], color: '#BB8FCE', points: 4 },
-  vertical4: { shape: [[1], [1], [1], [1]], color: '#85C1E9', points: 4 },
-  tShape: { shape: [[1, 1, 1], [0, 1, 0]], color: '#F8B500', points: 5 },
-  sShape: { shape: [[0, 1, 1], [1, 1, 0]], color: '#E74C3C', points: 5 },
-  zShape: { shape: [[1, 1, 0], [0, 1, 1]], color: '#9B59B6', points: 5 },
+  square: { shape: [[1, 1], [1, 1]], color: '#FFFF00', points: 4 },
+  horizontal4: { shape: [[1, 1, 1, 1]], color: '#E040FB', points: 4 },
+  vertical4: { shape: [[1], [1], [1], [1]], color: '#18FFFF', points: 4 },
+  tShape: { shape: [[1, 1, 1], [0, 1, 0]], color: '#FF9100', points: 5 },
+  sShape: { shape: [[0, 1, 1], [1, 1, 0]], color: '#FF1744', points: 5 },
+  zShape: { shape: [[1, 1, 0], [0, 1, 1]], color: '#D500F9', points: 5 },
   
   // 5-block shapes (6-8 points)
-  horizontal5: { shape: [[1, 1, 1, 1, 1]], color: '#1ABC9C', points: 6 },
-  vertical5: { shape: [[1], [1], [1], [1], [1]], color: '#3498DB', points: 6 },
-  plusShape: { shape: [[0, 1, 0], [1, 1, 1], [0, 1, 0]], color: '#E67E22', points: 7 },
-  bigL: { shape: [[1, 0, 0], [1, 0, 0], [1, 1, 1]], color: '#27AE60', points: 7 },
+  horizontal5: { shape: [[1, 1, 1, 1, 1]], color: '#1DE9B6', points: 6 },
+  vertical5: { shape: [[1], [1], [1], [1], [1]], color: '#00B0FF', points: 6 },
+  plusShape: { shape: [[0, 1, 0], [1, 1, 1], [0, 1, 0]], color: '#FF6D00', points: 7 },
+  bigL: { shape: [[1, 0, 0], [1, 0, 0], [1, 1, 1]], color: '#00E676', points: 7 },
   
   // Large shapes (9-12 points)
-  bigSquare: { shape: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: '#FF69B4', points: 9 },
+  bigSquare: { shape: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: '#FF4081', points: 9 },
 };
 
 export type BlockType = keyof typeof BLOCK_SHAPES;
