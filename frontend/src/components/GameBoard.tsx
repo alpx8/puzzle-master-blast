@@ -857,17 +857,14 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   neonComboText: {
-    fontSize: 36,
+    fontSize: 42,
     fontWeight: '900',
-    letterSpacing: 4,
-    textShadowOffset: { width: 0, height: 0 },
-    marginBottom: 0,
+    letterSpacing: 3,
   },
   neonComboNumber: {
-    fontSize: 80,
+    fontSize: 90,
     fontWeight: '900',
-    textShadowOffset: { width: 0, height: 0 },
-    marginTop: -8,
+    marginTop: -10,
   },
 });
 
