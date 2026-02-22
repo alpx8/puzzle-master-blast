@@ -585,6 +585,100 @@ async def start_game(room_id: str):
     return {"status": "started"}
 
 
+@api_router.post("/rooms/{room_id}/player_gameover")
+async def player_game_over(room_id: str, player_id: str, score: int):
+    """Handle when a player can't place any more blocks"""
+    room = await db.rooms.find_one({"id": room_id})
+    
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    # Update player's game_over status and score
+    await db.rooms.update_one(
+        {"id": room_id, "players.id": player_id},
+        {"$set": {"players.$.game_over": True, "players.$.score": score}}
+    )
+    
+    # Check if all players are game over
+    updated_room = await db.rooms.find_one({"id": room_id})
+    all_game_over = all(p.get("game_over", False) for p in updated_room["players"])
+    
+    if all_game_over:
+        # Determine winner (highest score)
+        players = updated_room["players"]
+        winner = max(players, key=lambda p: p["score"])
+        
+        # Update room status
+        await db.rooms.update_one(
+            {"id": room_id},
+            {"$set": {"status": "finished", "winner_id": winner["id"]}}
+        )
+        
+        # Save game result
+        if len(players) >= 2:
+            loser = [p for p in players if p["id"] != winner["id"]][0]
+            game_result = GameResult(
+                room_id=room_id,
+                player1_id=players[0]["id"],
+                player1_name=players[0]["name"],
+                player1_score=players[0]["score"],
+                player2_id=players[1]["id"],
+                player2_name=players[1]["name"],
+                player2_score=players[1]["score"],
+                winner_id=winner["id"],
+                winner_name=winner["name"]
+            )
+            await db.game_results.insert_one(game_result.dict())
+        
+        # Emit game ended event
+        await sio.emit('game_ended', {
+            'room_id': room_id,
+            'winner_id': winner["id"],
+            'winner_name': winner["name"],
+            'players': players
+        }, room=room_id)
+        
+        return {"status": "game_ended", "winner_id": winner["id"]}
+    
+    # Emit player game over event
+    await sio.emit('player_game_over', {
+        'room_id': room_id,
+        'player_id': player_id,
+        'score': score
+    }, room=room_id)
+    
+    return {"status": "waiting_other_player"}
+
+
+@api_router.get("/game_results/{user_id}")
+async def get_user_game_results(user_id: str):
+    """Get game results for a specific user"""
+    results = await db.game_results.find({
+        "$or": [
+            {"player1_id": user_id},
+            {"player2_id": user_id}
+        ]
+    }).sort("created_at", -1).to_list(50)
+    
+    formatted_results = []
+    for result in results:
+        is_winner = result["winner_id"] == user_id
+        opponent_name = result["player2_name"] if result["player1_id"] == user_id else result["player1_name"]
+        my_score = result["player1_score"] if result["player1_id"] == user_id else result["player2_score"]
+        opponent_score = result["player2_score"] if result["player1_id"] == user_id else result["player1_score"]
+        
+        formatted_results.append({
+            "id": result["id"],
+            "result": "win" if is_winner else "loss",
+            "opponent_name": opponent_name,
+            "my_score": my_score,
+            "opponent_score": opponent_score,
+            "created_at": result["created_at"].isoformat() if hasattr(result["created_at"], 'isoformat') else result["created_at"]
+        })
+    
+    return formatted_results
+
+
 # ==================== Health Check ====================
 
 @api_router.get("/")
