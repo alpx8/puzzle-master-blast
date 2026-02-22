@@ -7,14 +7,27 @@ import {
   Dimensions,
   PanResponder,
   Modal,
+  Animated,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useGameStore, Block } from '@/src/store/gameStore';
+import { useQuestStore } from '@/src/store/questStore';
 import { GameBoard } from '@/src/components/GameBoard';
 import { BlockPiece } from '@/src/components/BlockPiece';
 import { ScoreDisplay } from '@/src/components/ScoreDisplay';
+import {
+  initSounds,
+  playPlaceSound,
+  playDropSound,
+  playClearSound,
+  playComboSound,
+  playLevelUpSound,
+  triggerComboHaptic,
+  unloadSounds,
+} from '@/src/utils/sounds';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BOARD_PADDING = 16;
@@ -43,7 +56,10 @@ export default function GameScreen() {
     canPlaceBlock,
     updateTimer,
     saveUserData,
+    userId,
   } = useGameStore();
+
+  const { loadQuests, updateQuestProgress, dailyQuests, claimReward } = useQuestStore();
 
   const [draggingBlock, setDraggingBlock] = useState<Block | null>(null);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
@@ -51,14 +67,34 @@ export default function GameScreen() {
   const [isValidPlacement, setIsValidPlacement] = useState(false);
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [showGameOverModal, setShowGameOverModal] = useState(false);
+  const [showQuestsModal, setShowQuestsModal] = useState(false);
+  const [linesCleared, setLinesCleared] = useState(0);
+  const [gamesPlayed, setGamesPlayed] = useState(0);
 
   const boardRef = useRef<View>(null);
   const boardPositionRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const prevScore = useRef(0);
+  const prevCombo = useRef(0);
+  const prevLevel = useRef(1);
+
+  // Initialize sounds
+  useEffect(() => {
+    initSounds();
+    if (userId) {
+      loadQuests(userId);
+    }
+    
+    return () => {
+      unloadSounds();
+    };
+  }, [userId]);
 
   useEffect(() => {
     const gameMode = (mode as 'classic' | 'timed' | 'multiplayer') || 'classic';
     startGame(gameMode);
+    setGamesPlayed(prev => prev + 1);
+    updateQuestProgress('games_played', 1);
 
     return () => {
       if (timerRef.current) {
@@ -85,8 +121,37 @@ export default function GameScreen() {
     if (isGameOver) {
       setShowGameOverModal(true);
       saveUserData();
+      // Update quest for total score
+      updateQuestProgress('score', score);
     }
   }, [isGameOver]);
+
+  // Sound effects based on game state changes
+  useEffect(() => {
+    if (score > prevScore.current && prevScore.current > 0) {
+      playDropSound();
+    }
+    prevScore.current = score;
+  }, [score]);
+
+  // Combo sound and haptic
+  useEffect(() => {
+    if (combo > prevCombo.current && combo >= 2) {
+      playComboSound();
+      triggerComboHaptic();
+      updateQuestProgress('combo', 1);
+    }
+    prevCombo.current = combo;
+  }, [combo]);
+
+  // Level up sound
+  useEffect(() => {
+    if (level > prevLevel.current) {
+      playLevelUpSound();
+      updateQuestProgress('level_up', 1);
+    }
+    prevLevel.current = level;
+  }, [level]);
 
   const measureBoard = useCallback(() => {
     if (boardRef.current) {
@@ -148,7 +213,19 @@ export default function GameScreen() {
     const { row, col } = calculateBoardPosition(touchX, touchY, draggingBlock);
 
     if (canPlaceBlock(draggingBlock, row, col)) {
-      placeBlock(draggingBlock, row, col);
+      // Play place sound
+      playPlaceSound();
+      
+      const result = placeBlock(draggingBlock, row, col);
+      
+      // Check if lines were cleared
+      if (result) {
+        // Count cleared lines (this is approximate, actual count is in store)
+        setTimeout(() => {
+          playClearSound();
+          updateQuestProgress('clear_lines', 1);
+        }, 200);
+      }
     }
 
     setDraggingBlock(null);
@@ -190,12 +267,21 @@ export default function GameScreen() {
     setShowPauseModal(false);
     setShowGameOverModal(false);
     startGame(gameMode);
+    updateQuestProgress('games_played', 1);
   };
 
   const handleQuit = () => {
     setShowPauseModal(false);
     setShowGameOverModal(false);
     router.back();
+  };
+
+  const handleClaimQuest = async (questId: string) => {
+    const xp = await claimReward(questId);
+    if (xp > 0) {
+      // Add XP to user - this would trigger level up sound if applicable
+      useGameStore.getState().addXP(xp);
+    }
   };
 
   const getModeTitle = () => {
@@ -211,6 +297,8 @@ export default function GameScreen() {
     }
   };
 
+  const completedQuests = dailyQuests.filter(q => q.completed && !q.claimed).length;
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -219,7 +307,17 @@ export default function GameScreen() {
           <Ionicons name="pause" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{getModeTitle()}</Text>
-        <View style={styles.headerButton} />
+        <TouchableOpacity 
+          onPress={() => setShowQuestsModal(true)} 
+          style={styles.headerButton}
+        >
+          <Ionicons name="trophy" size={24} color="#FFD700" />
+          {completedQuests > 0 && (
+            <View style={styles.questBadge}>
+              <Text style={styles.questBadgeText}>{completedQuests}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* Score Display */}
@@ -279,7 +377,7 @@ export default function GameScreen() {
           ]}
           pointerEvents="none"
         >
-          <BlockPiece block={draggingBlock} cellSize={GAME_CELL_SIZE} opacity={0.8} />
+          <BlockPiece block={draggingBlock} cellSize={GAME_CELL_SIZE} opacity={0.9} />
         </View>
       )}
 
@@ -340,6 +438,56 @@ export default function GameScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Daily Quests Modal */}
+      <Modal visible={showQuestsModal} transparent animationType="slide">
+        <View style={styles.questModalOverlay}>
+          <View style={styles.questModalContent}>
+            <View style={styles.questModalHeader}>
+              <Text style={styles.questModalTitle}>Günlük Görevler</Text>
+              <TouchableOpacity onPress={() => setShowQuestsModal(false)}>
+                <Ionicons name="close" size={28} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.questList}>
+              {dailyQuests.map((quest) => (
+                <View key={quest.id} style={styles.questItem}>
+                  <View style={styles.questInfo}>
+                    <Text style={styles.questTitle}>{quest.title}</Text>
+                    <Text style={styles.questDescription}>{quest.description}</Text>
+                    <View style={styles.questProgressBar}>
+                      <View 
+                        style={[
+                          styles.questProgressFill, 
+                          { width: `${Math.min(100, (quest.progress / quest.target) * 100)}%` }
+                        ]} 
+                      />
+                    </View>
+                    <Text style={styles.questProgressText}>
+                      {quest.progress} / {quest.target}
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.questReward}>
+                    <Text style={styles.questXP}>+{quest.xpReward} XP</Text>
+                    {quest.completed && !quest.claimed ? (
+                      <TouchableOpacity 
+                        style={styles.claimButton}
+                        onPress={() => handleClaimQuest(quest.id)}
+                      >
+                        <Text style={styles.claimButtonText}>Al</Text>
+                      </TouchableOpacity>
+                    ) : quest.claimed ? (
+                      <Ionicons name="checkmark-circle" size={24} color="#4ECDC4" />
+                    ) : null}
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -368,6 +516,22 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  questBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#FF6B6B',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  questBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   scoreContainer: {
     paddingHorizontal: 16,
@@ -399,7 +563,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   blockInner: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     padding: 10,
     borderRadius: 12,
     minWidth: 75,
@@ -507,5 +671,91 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  // Quest Modal Styles
+  questModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'flex-end',
+  },
+  questModalContent: {
+    backgroundColor: '#2d2d44',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: '70%',
+  },
+  questModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  questModalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  questList: {
+    flex: 1,
+  },
+  questItem: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+  },
+  questInfo: {
+    flex: 1,
+  },
+  questTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  questDescription: {
+    fontSize: 13,
+    color: '#888',
+    marginBottom: 8,
+  },
+  questProgressBar: {
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  questProgressFill: {
+    height: '100%',
+    backgroundColor: '#4ECDC4',
+    borderRadius: 3,
+  },
+  questProgressText: {
+    fontSize: 11,
+    color: '#666',
+    marginTop: 4,
+  },
+  questReward: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
+  },
+  questXP: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    marginBottom: 8,
+  },
+  claimButton: {
+    backgroundColor: '#4ECDC4',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  claimButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });
