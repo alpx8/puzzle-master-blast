@@ -108,6 +108,26 @@ export const playLevelUpSound = async () => {
   }
 };
 
+export const playGameOverSound = async () => {
+  if (!soundsEnabled || !gameOverSound) return;
+  try {
+    await gameOverSound.setPositionAsync(0);
+    await gameOverSound.playAsync();
+  } catch (e) {
+    console.log('Game over sound error:', e);
+  }
+};
+
+export const playHighScoreSound = async () => {
+  if (!soundsEnabled || !highScoreSound) return;
+  try {
+    await highScoreSound.setPositionAsync(0);
+    await highScoreSound.playAsync();
+  } catch (e) {
+    console.log('High score sound error:', e);
+  }
+};
+
 export const triggerComboHaptic = async () => {
   // Always trigger vibration for combos (independent of sound setting)
   try {
