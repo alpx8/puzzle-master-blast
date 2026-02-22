@@ -444,20 +444,20 @@ export default function GameScreen() {
             {isNewHighScore ? (
               <>
                 <View style={styles.celebrationContainer}>
-                  <Text style={styles.celebrationEmoji}>🏆</Text>
+                  <Ionicons name="trophy" size={60} color="#FFD700" />
                 </View>
                 <Text style={styles.newHighScoreTitle}>NEW HIGH SCORE!</Text>
-                <View style={styles.confettiContainer}>
-                  <Text style={styles.confettiText}>🎉</Text>
-                  <Text style={styles.confettiText}>🌟</Text>
-                  <Text style={styles.confettiText}>🎊</Text>
+                <View style={styles.starsContainer}>
+                  <Ionicons name="star" size={24} color="#FFD700" />
+                  <Ionicons name="star" size={32} color="#FFD700" />
+                  <Ionicons name="star" size={24} color="#FFD700" />
                 </View>
                 <Text style={styles.congratsText}>Tebrikler!</Text>
               </>
             ) : (
               <>
                 <View style={styles.gameOverIconContainer}>
-                  <Text style={styles.gameOverEmoji}>😔</Text>
+                  <Ionicons name="sad-outline" size={60} color="#FF6B6B" />
                 </View>
                 <Text style={styles.gameOverTitle}>GAME OVER</Text>
                 <Text style={styles.tryAgainText}>Tekrar dene!</Text>
