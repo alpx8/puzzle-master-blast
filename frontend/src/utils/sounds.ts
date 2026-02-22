@@ -1,5 +1,6 @@
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
+import { Vibration } from 'react-native';
 
 // Sound references
 let placeSound: Audio.Sound | null = null;
@@ -8,13 +9,14 @@ let clearSound: Audio.Sound | null = null;
 let comboSound: Audio.Sound | null = null;
 let levelUpSound: Audio.Sound | null = null;
 
-// Better sound URLs - pleasant and short sounds
+// Better sound URLs - pleasant and enjoyable sounds
+// Combo: Soft whoosh + positive chime mix
 const SOUND_URLS = {
-  place: 'https://assets.mixkit.co/active_storage/sfx/2570/2570-preview.mp3', // Soft click
-  drop: 'https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3', // Soft thud
-  clear: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3', // Pleasant ding
-  combo: 'https://assets.mixkit.co/active_storage/sfx/2004/2004-preview.mp3', // Short cheerful notification
-  levelUp: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3', // Pleasant notification
+  place: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3', // Soft pop click
+  drop: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3', // Soft landing thud
+  clear: 'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3', // Pleasant sparkle
+  combo: 'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3', // Pleasant whoosh + positive chime
+  levelUp: 'https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3', // Achievement unlock sound
 };
 
 let soundsEnabled = true;
