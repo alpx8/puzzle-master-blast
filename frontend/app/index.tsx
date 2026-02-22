@@ -220,6 +220,32 @@ export default function HomeScreen() {
               <Text style={styles.leaderboardText}>Liderlik Tablosu</Text>
               <Ionicons name="chevron-forward" size={20} color="#888" />
             </TouchableOpacity>
+
+            {/* Daily Quests Preview */}
+            {dailyQuests.length > 0 && (
+              <View style={styles.questsPreview}>
+                <Text style={styles.questsPreviewTitle}>Günlük Görevler</Text>
+                {dailyQuests.slice(0, 2).map((quest) => (
+                  <View key={quest.id} style={styles.questPreviewItem}>
+                    <View style={styles.questPreviewInfo}>
+                      <Text style={styles.questPreviewName}>{quest.title}</Text>
+                      <View style={styles.questPreviewProgress}>
+                        <View 
+                          style={[
+                            styles.questPreviewFill, 
+                            { width: `${Math.min(100, (quest.progress / quest.target) * 100)}%` }
+                          ]} 
+                        />
+                      </View>
+                    </View>
+                    <Text style={styles.questPreviewXP}>+{quest.xpReward} XP</Text>
+                    {quest.completed && !quest.claimed && (
+                      <View style={styles.questClaimDot} />
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
