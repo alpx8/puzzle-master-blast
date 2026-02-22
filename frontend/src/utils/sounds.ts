@@ -8,13 +8,13 @@ let clearSound: Audio.Sound | null = null;
 let comboSound: Audio.Sound | null = null;
 let levelUpSound: Audio.Sound | null = null;
 
-// Sound URLs - using pleasant and fun sound effects
+// Better sound URLs - pleasant and short sounds
 const SOUND_URLS = {
-  place: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3', // Soft pop
-  drop: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3', // Gentle whoosh
-  clear: 'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3', // Pleasant chime
-  combo: 'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3', // Fun positive notification
-  levelUp: 'https://assets.mixkit.co/active_storage/sfx/1997/1997-preview.mp3', // Level up fanfare
+  place: 'https://assets.mixkit.co/active_storage/sfx/2570/2570-preview.mp3', // Soft click
+  drop: 'https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3', // Soft thud
+  clear: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3', // Pleasant ding
+  combo: 'https://assets.mixkit.co/active_storage/sfx/2004/2004-preview.mp3', // Short cheerful notification
+  levelUp: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3', // Pleasant notification
 };
 
 let soundsEnabled = true;
@@ -29,11 +29,11 @@ export const initSounds = async () => {
 
     // Load sounds with appropriate volumes
     const [place, drop, clear, combo, levelUp] = await Promise.all([
-      Audio.Sound.createAsync({ uri: SOUND_URLS.place }, { volume: 0.4 }),
-      Audio.Sound.createAsync({ uri: SOUND_URLS.drop }, { volume: 0.3 }),
-      Audio.Sound.createAsync({ uri: SOUND_URLS.clear }, { volume: 0.5 }),
-      Audio.Sound.createAsync({ uri: SOUND_URLS.combo }, { volume: 0.4 }), // Gentler volume
-      Audio.Sound.createAsync({ uri: SOUND_URLS.levelUp }, { volume: 0.6 }),
+      Audio.Sound.createAsync({ uri: SOUND_URLS.place }, { volume: 0.3 }),
+      Audio.Sound.createAsync({ uri: SOUND_URLS.drop }, { volume: 0.25 }),
+      Audio.Sound.createAsync({ uri: SOUND_URLS.clear }, { volume: 0.4 }),
+      Audio.Sound.createAsync({ uri: SOUND_URLS.combo }, { volume: 0.35 }),
+      Audio.Sound.createAsync({ uri: SOUND_URLS.levelUp }, { volume: 0.5 }),
     ]);
 
     placeSound = place.sound;
@@ -101,6 +101,7 @@ export const playLevelUpSound = async () => {
 };
 
 export const triggerComboHaptic = async () => {
+  if (!soundsEnabled) return; // Also disable haptics in silent mode
   try {
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   } catch (e) {
@@ -109,6 +110,7 @@ export const triggerComboHaptic = async () => {
 };
 
 export const triggerHeavyHaptic = async () => {
+  if (!soundsEnabled) return;
   try {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
   } catch (e) {
@@ -118,6 +120,15 @@ export const triggerHeavyHaptic = async () => {
 
 export const setSoundsEnabled = (enabled: boolean) => {
   soundsEnabled = enabled;
+};
+
+export const getSoundsEnabled = (): boolean => {
+  return soundsEnabled;
+};
+
+export const toggleSounds = (): boolean => {
+  soundsEnabled = !soundsEnabled;
+  return soundsEnabled;
 };
 
 export const unloadSounds = async () => {
