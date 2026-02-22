@@ -164,4 +164,18 @@ Kullanıcı, "Block Blast" benzeri "Puzzle Master Blast" adında bir mobil oyun 
 
 ---
 
+---
+
+## Ready-to-Publish Files Created
+1. `/app/frontend/eas.json` - EAS Build configuration
+2. `/app/frontend/assets/privacy-policy.html` - Privacy policy page (Turkish)
+3. `/app/PARA_KAZANMA_REHBERI.md` - Step-by-step monetization guide (Turkish)
+4. `/app/publishing_guide.md` - Detailed publishing guide
+
+## What User Needs To Do
+1. Create accounts (Expo, Google Play $25, Apple Developer $99, AdMob)
+2. Get AdMob App IDs and Ad Unit IDs
+3. Share IDs with agent to update code
+4. Build with EAS and submit to stores
+
 Last Updated: February 2026
