@@ -935,7 +935,7 @@ const ScorePopupComponent: React.FC<{ popup: ScorePopup }> = ({ popup }) => {
   );
 };
 
-// Helper functions
+// Helper functions - More vibrant colors
 const lightenColor = (color: string, percent: number): string => {
   try {
     const num = parseInt(color.replace('#', ''), 16);
@@ -943,9 +943,9 @@ const lightenColor = (color: string, percent: number): string => {
     const R = Math.min(255, (num >> 16) + amt);
     const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
     const B = Math.min(255, (num & 0x0000FF) + amt);
-    return `rgba(${R}, ${G}, ${B}, 0.6)`;
+    return `rgba(${R}, ${G}, ${B}, 0.8)`;
   } catch {
-    return 'rgba(255,255,255,0.4)';
+    return 'rgba(255,255,255,0.5)';
   }
 };
 
@@ -956,9 +956,9 @@ const darkenColor = (color: string, percent: number): string => {
     const R = Math.max(0, (num >> 16) - amt);
     const G = Math.max(0, ((num >> 8) & 0x00FF) - amt);
     const B = Math.max(0, (num & 0x0000FF) - amt);
-    return `rgba(${R}, ${G}, ${B}, 0.5)`;
+    return `rgba(${R}, ${G}, ${B}, 0.7)`;
   } catch {
-    return 'rgba(0,0,0,0.3)';
+    return 'rgba(0,0,0,0.4)';
   }
 };
 
