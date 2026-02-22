@@ -563,12 +563,13 @@ const styles = StyleSheet.create({
   },
   scoreContainer: {
     paddingHorizontal: 16,
+    paddingVertical: 4,
   },
   boardWrapper: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 16,
+    maxHeight: '55%',
   },
   boardContainer: {
     alignItems: 'center',
