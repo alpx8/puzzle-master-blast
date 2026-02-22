@@ -406,6 +406,9 @@ export default function GameScreen() {
         </View>
       </View>
 
+      {/* Banner Ad at bottom */}
+      <BannerAd position="bottom" testID="game-banner-ad" />
+
       {/* Dragging Block Overlay */}
       {draggingBlock && (
         <View
