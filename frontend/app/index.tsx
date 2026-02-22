@@ -22,7 +22,8 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { username, setUsername, loadUserData, saveUserData, level, highScore } = useGameStore();
+  const { username, setUsername, loadUserData, saveUserData, level, highScore, userId } = useGameStore();
+  const { loadQuests, dailyQuests } = useQuestStore();
   const [showNameInput, setShowNameInput] = useState(false);
   const [tempName, setTempName] = useState('');
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
@@ -30,6 +31,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     loadUserData();
+    initSounds();
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -44,6 +46,13 @@ export default function HomeScreen() {
       }),
     ]).start();
   }, []);
+
+  // Load quests when userId is available
+  useEffect(() => {
+    if (userId) {
+      loadQuests(userId);
+    }
+  }, [userId]);
 
   const handleSaveName = async () => {
     if (tempName.trim()) {
