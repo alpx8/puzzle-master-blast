@@ -559,48 +559,6 @@ const NeonComboPopup: React.FC<{ combo: number }> = ({ combo }) => {
   );
 };
 
-// Sparkle effect for combo
-const SparkleEffect: React.FC<{ delay: number; color: string }> = ({ delay, color }) => {
-  const opacityAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0)).current;
-  const positionX = useRef(Math.random() * 160 - 80).current;
-  const positionY = useRef(Math.random() * 80 - 40).current;
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.parallel([
-            Animated.timing(opacityAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
-            Animated.timing(scaleAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
-          ]),
-          Animated.parallel([
-            Animated.timing(opacityAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-            Animated.timing(scaleAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-          ]),
-        ]),
-        { iterations: 3 }
-      ).start();
-    }, delay);
-    return () => clearTimeout(timeout);
-  }, [delay]);
-
-  return (
-    <Animated.View
-      style={[
-        styles.sparkle,
-        {
-          left: `${50 + positionX / 2}%`,
-          top: `${50 + positionY / 2}%`,
-          backgroundColor: color,
-          opacity: opacityAnim,
-          transform: [{ scale: scaleAnim }],
-        },
-      ]}
-    />
-  );
-};
-
 // Clear Line Effect Component
 const ClearLineEffect: React.FC<{ effect: ClearEffect; cellSize: number; boardSize: number }> = ({ 
   effect, 
