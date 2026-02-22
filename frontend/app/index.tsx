@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -17,8 +18,166 @@ import { Ionicons } from '@expo/vector-icons';
 import { useGameStore } from '@/src/store/gameStore';
 import { useQuestStore } from '@/src/store/questStore';
 import { initSounds } from '@/src/utils/sounds';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Vibrant gradient colors for logo blocks
+const LOGO_COLORS = [
+  ['#FF3366', '#FF6B6B'], // Vibrant Red-Pink
+  ['#00D9FF', '#00F5A0'], // Cyan-Green
+  ['#FFD93D', '#FF8C00'], // Gold-Orange
+  ['#A855F7', '#EC4899'], // Purple-Pink
+  ['#00F5A0', '#00D9FF'], // Green-Cyan
+  ['#FF6B6B', '#FFD93D'], // Red-Gold
+  ['#EC4899', '#A855F7'], // Pink-Purple
+  ['#00D9FF', '#A855F7'], // Cyan-Purple
+  ['#FFD93D', '#FF3366'], // Gold-Red
+];
+
+// Animated Logo Block Component
+const AnimatedLogoBlock = ({ index, colors }: { index: number; colors: string[] }) => {
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(0.5)).current;
+
+  useEffect(() => {
+    // Staggered rotation animation
+    const delay = index * 200;
+    
+    // Continuous rotation
+    const rotateAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(rotateAnim, {
+          toValue: 1,
+          duration: 3000 + (index * 100),
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    // Pulse animation
+    const pulseAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.1,
+          duration: 1000 + (index * 50),
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 1000 + (index * 50),
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    // Glow animation
+    const glowAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, {
+          toValue: 1,
+          duration: 1500 + (index * 100),
+          useNativeDriver: false,
+        }),
+        Animated.timing(glowAnim, {
+          toValue: 0.5,
+          duration: 1500 + (index * 100),
+          useNativeDriver: false,
+        }),
+      ])
+    );
+
+    setTimeout(() => {
+      rotateAnimation.start();
+      pulseAnimation.start();
+      glowAnimation.start();
+    }, delay);
+
+    return () => {
+      rotateAnimation.stop();
+      pulseAnimation.stop();
+      glowAnimation.stop();
+    };
+  }, [index]);
+
+  const rotation = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  return (
+    <Animated.View
+      style={[
+        styles.logoBlockWrapper,
+        {
+          transform: [
+            { rotateY: rotation },
+            { scale: scaleAnim },
+          ],
+        },
+      ]}
+    >
+      <Animated.View
+        style={[
+          styles.logoBlock,
+          {
+            backgroundColor: colors[0],
+            shadowColor: colors[0],
+            shadowOpacity: glowAnim,
+            shadowRadius: 8,
+            elevation: 8,
+          },
+        ]}
+      >
+        {/* Glossy highlight */}
+        <View style={styles.blockHighlight} />
+        {/* Bottom shadow for 3D effect */}
+        <View style={[styles.blockShadow, { backgroundColor: colors[1] }]} />
+      </Animated.View>
+    </Animated.View>
+  );
+};
+
+// Main Animated Logo Component
+const AnimatedLogo = () => {
+  const containerRotate = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Slow continuous rotation for the entire grid
+    Animated.loop(
+      Animated.timing(containerRotate, {
+        toValue: 1,
+        duration: 20000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+  }, []);
+
+  const rotation = containerRotate.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  return (
+    <View style={styles.logoOuterContainer}>
+      <Animated.View 
+        style={[
+          styles.logoGrid,
+          { transform: [{ rotate: rotation }] }
+        ]}
+      >
+        {LOGO_COLORS.map((colors, i) => (
+          <AnimatedLogoBlock key={i} index={i} colors={colors} />
+        ))}
+      </Animated.View>
+    </View>
+  );
+};
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -26,12 +185,15 @@ export default function HomeScreen() {
   const { loadQuests, dailyQuests } = useQuestStore();
   const [showNameInput, setShowNameInput] = useState(false);
   const [tempName, setTempName] = useState('');
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const scaleAnim = React.useRef(new Animated.Value(0.8)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const titleGlow = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     loadUserData();
     initSounds();
+    
+    // Entry animation
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -45,6 +207,22 @@ export default function HomeScreen() {
         useNativeDriver: true,
       }),
     ]).start();
+
+    // Title glow animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(titleGlow, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: false,
+        }),
+        Animated.timing(titleGlow, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: false,
+        }),
+      ])
+    ).start();
   }, []);
 
   // Load quests when userId is available
@@ -91,6 +269,11 @@ export default function HomeScreen() {
     </TouchableOpacity>
   );
 
+  const glowColor = titleGlow.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['rgba(0, 217, 255, 0.3)', 'rgba(168, 85, 247, 0.6)'],
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView 
@@ -109,24 +292,24 @@ export default function HomeScreen() {
           >
             {/* Logo Section */}
             <View style={styles.logoSection}>
-              <View style={styles.logoContainer}>
-                <View style={styles.logoGrid}>
-                  {[...Array(9)].map((_, i) => (
-                    <View 
-                      key={i} 
-                      style={[
-                        styles.logoBlock,
-                        { backgroundColor: [
-                          '#FF6B6B', '#4ECDC4', '#45B7D1',
-                          '#96CEB4', '#FFEAA7', '#DDA0DD',
-                          '#F7DC6F', '#BB8FCE', '#85C1E9'
-                        ][i] }
-                      ]} 
-                    />
-                  ))}
-                </View>
-              </View>
-              <Text style={styles.title}>BLOCK BLAST</Text>
+              <AnimatedLogo />
+              
+              <Animated.Text 
+                style={[
+                  styles.title,
+                  { textShadowColor: glowColor }
+                ]}
+              >
+                PUZZLE MASTER
+              </Animated.Text>
+              <Animated.Text 
+                style={[
+                  styles.titleBlast,
+                  { textShadowColor: glowColor }
+                ]}
+              >
+                BLAST
+              </Animated.Text>
               <Text style={styles.subtitle}>Blokları yerleştir, satırları patlat!</Text>
             </View>
 
@@ -256,7 +439,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#0a0a1a',
   },
   keyboardView: {
     flex: 1,
@@ -274,30 +457,69 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 24,
   },
-  logoContainer: {
-    marginBottom: 16,
+  logoOuterContainer: {
+    width: 140,
+    height: 140,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   logoGrid: {
-    width: 90,
-    height: 90,
+    width: 120,
+    height: 120,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    transform: [{ rotate: '45deg' }],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoBlockWrapper: {
+    width: 36,
+    height: 36,
+    margin: 2,
+    perspective: 1000,
   },
   logoBlock: {
-    width: 26,
-    height: 26,
-    margin: 2,
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  blockHighlight: {
+    position: 'absolute',
+    top: 2,
+    left: 2,
+    width: '45%',
+    height: '45%',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
     borderRadius: 4,
   },
+  blockShadow: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '30%',
+    opacity: 0.5,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+  },
   title: {
-    fontSize: 36,
-    fontWeight: 'bold',
+    fontSize: 32,
+    fontWeight: '900',
     color: '#fff',
-    letterSpacing: 4,
-    textShadowColor: 'rgba(78, 205, 196, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
+    letterSpacing: 3,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 20,
+  },
+  titleBlast: {
+    fontSize: 44,
+    fontWeight: '900',
+    color: '#FFD93D',
+    letterSpacing: 6,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 25,
+    marginTop: -5,
   },
   subtitle: {
     fontSize: 14,
@@ -313,6 +535,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     padding: 16,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   avatarContainer: {
     width: 48,
@@ -420,6 +644,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     marginTop: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
   },
   leaderboardText: {
     flex: 1,
@@ -433,6 +659,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 16,
     padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   questsPreviewTitle: {
     fontSize: 16,
