@@ -14,8 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useGameStore } from '../src/store/gameStore';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useGameStore } from '@/src/store/gameStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
