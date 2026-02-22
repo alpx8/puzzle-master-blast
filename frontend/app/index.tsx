@@ -15,6 +15,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useGameStore } from '@/src/store/gameStore';
+import { useQuestStore } from '@/src/store/questStore';
+import { initSounds } from '@/src/utils/sounds';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
