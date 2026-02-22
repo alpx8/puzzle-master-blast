@@ -698,20 +698,57 @@ const styles = StyleSheet.create({
     marginTop: 16,
     letterSpacing: 2,
   },
+  gameOverIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 107, 107, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gameOverEmoji: {
+    fontSize: 50,
+  },
+  tryAgainText: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 8,
+  },
   newHighScoreTitle: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '900',
     color: '#FFD700',
     marginTop: 16,
-    letterSpacing: 2,
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
+  highScoreModalContent: {
+    borderColor: '#FFD700',
+    borderWidth: 2,
+  },
+  celebrationContainer: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  celebrationEmoji: {
+    fontSize: 55,
+  },
+  congratsText: {
+    fontSize: 16,
+    color: '#FFD700',
+    marginTop: 4,
   },
   confettiContainer: {
     flexDirection: 'row',
     marginTop: 8,
   },
   confettiText: {
-    fontSize: 32,
-    marginHorizontal: 8,
+    fontSize: 28,
+    marginHorizontal: 6,
   },
   finalScoreContainer: {
     alignItems: 'center',
@@ -728,6 +765,12 @@ const styles = StyleSheet.create({
   },
   highScoreValue: {
     color: '#FFD700',
+  },
+  highScoreStatValue: {
+    color: '#FFD700',
+  },
+  highScoreButton: {
+    backgroundColor: '#FFD700',
   },
   newRecordBadge: {
     backgroundColor: '#FFD700',
