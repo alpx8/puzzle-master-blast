@@ -579,6 +579,9 @@ app.add_middleware(
 # Mount Socket.IO app - This creates the /socket.io/ endpoint
 socket_app = socketio.ASGIApp(sio, app)
 
+# Store original app for shutdown handler
+_fastapi_app = app
+
 # Override app with socket_app for uvicorn compatibility
 # This allows the supervisor config to use server:app while still supporting Socket.IO
 app = socket_app
@@ -590,7 +593,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-@app.on_event("shutdown")
+@_fastapi_app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
 
