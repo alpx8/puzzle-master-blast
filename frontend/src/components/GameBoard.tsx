@@ -423,17 +423,14 @@ const FallingCellComponent: React.FC<{ color: string; cellSize: number }> = ({ c
 const NeonComboPopup: React.FC<{ combo: number }> = ({ combo }) => {
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Epic entrance animation
     Animated.parallel([
-      // Scale with bounce
       Animated.sequence([
         Animated.spring(scaleAnim, {
-          toValue: 1.4,
+          toValue: 1.3,
           friction: 3,
           tension: 200,
           useNativeDriver: true,
@@ -450,7 +447,6 @@ const NeonComboPopup: React.FC<{ combo: number }> = ({ combo }) => {
           useNativeDriver: true,
         }),
       ]),
-      // Fade in/out
       Animated.sequence([
         Animated.timing(opacityAnim, {
           toValue: 1,
@@ -464,7 +460,6 @@ const NeonComboPopup: React.FC<{ combo: number }> = ({ combo }) => {
           useNativeDriver: true,
         }),
       ]),
-      // Shake effect for high combos
       combo >= 3 ? Animated.loop(
         Animated.sequence([
           Animated.timing(shakeAnim, {
@@ -485,11 +480,10 @@ const NeonComboPopup: React.FC<{ combo: number }> = ({ combo }) => {
         ]),
         { iterations: 6 }
       ) : Animated.timing(shakeAnim, { toValue: 0, duration: 0, useNativeDriver: true }),
-      // Pulse effect
       Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
-            toValue: 1.1,
+            toValue: 1.15,
             duration: 150,
             useNativeDriver: true,
           }),
@@ -507,7 +501,6 @@ const NeonComboPopup: React.FC<{ combo: number }> = ({ combo }) => {
   const colorIndex = Math.min(combo - 1, NEON_COMBO_COLORS.length - 1);
   const neonColor = NEON_COMBO_COLORS[colorIndex];
 
-  // Get combo text based on level
   const getComboText = () => {
     if (combo >= 7) return 'INCREDIBLE!';
     if (combo >= 5) return 'AMAZING!';
@@ -528,31 +521,10 @@ const NeonComboPopup: React.FC<{ combo: number }> = ({ combo }) => {
         },
       ]}
     >
-      {/* Main combo text - Pure neon with multiple shadow layers */}
-      <Text
-        style={[
-          styles.neonComboText,
-          {
-            color: neonColor.main,
-            textShadowColor: neonColor.glow,
-            textShadowRadius: 25,
-          },
-        ]}
-      >
+      <Text style={[styles.neonComboText, { color: neonColor.main }]}>
         {getComboText()}
       </Text>
-      
-      {/* Combo number - Bold neon */}
-      <Text
-        style={[
-          styles.neonComboNumber,
-          {
-            color: neonColor.main,
-            textShadowColor: neonColor.glow,
-            textShadowRadius: 35,
-          },
-        ]}
-      >
+      <Text style={[styles.neonComboNumber, { color: neonColor.main }]}>
         x{combo}
       </Text>
     </Animated.View>
