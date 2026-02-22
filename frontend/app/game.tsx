@@ -72,6 +72,7 @@ export default function GameScreen() {
   const [showQuestsModal, setShowQuestsModal] = useState(false);
   const [linesCleared, setLinesCleared] = useState(0);
   const [gamesPlayed, setGamesPlayed] = useState(0);
+  const [isMuted, setIsMuted] = useState(!getSoundsEnabled());
 
   const boardRef = useRef<View>(null);
   const boardPositionRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
