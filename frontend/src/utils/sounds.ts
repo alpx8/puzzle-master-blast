@@ -8,15 +8,18 @@ let dropSound: Audio.Sound | null = null;
 let clearSound: Audio.Sound | null = null;
 let comboSound: Audio.Sound | null = null;
 let levelUpSound: Audio.Sound | null = null;
+let gameOverSound: Audio.Sound | null = null;
+let highScoreSound: Audio.Sound | null = null;
 
-// Better sound URLs - pleasant and enjoyable sounds
-// Combo: Soft whoosh + positive chime mix
+// Sound URLs
 const SOUND_URLS = {
-  place: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3', // Soft pop click
-  drop: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3', // Soft landing thud
-  clear: 'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3', // Pleasant sparkle
-  combo: 'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3', // Pleasant whoosh + positive chime
-  levelUp: 'https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3', // Achievement unlock sound
+  place: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3',
+  drop: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
+  clear: 'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3',
+  combo: 'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3',
+  levelUp: 'https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3',
+  gameOver: 'https://assets.mixkit.co/active_storage/sfx/2658/2658-preview.mp3', // Sad game over
+  highScore: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3', // Victory fanfare
 };
 
 let soundsEnabled = true;
@@ -29,13 +32,14 @@ export const initSounds = async () => {
       staysActiveInBackground: false,
     });
 
-    // Load sounds with appropriate volumes
-    const [place, drop, clear, combo, levelUp] = await Promise.all([
+    const [place, drop, clear, combo, levelUp, gameOver, highScore] = await Promise.all([
       Audio.Sound.createAsync({ uri: SOUND_URLS.place }, { volume: 0.3 }),
       Audio.Sound.createAsync({ uri: SOUND_URLS.drop }, { volume: 0.25 }),
       Audio.Sound.createAsync({ uri: SOUND_URLS.clear }, { volume: 0.4 }),
       Audio.Sound.createAsync({ uri: SOUND_URLS.combo }, { volume: 0.35 }),
       Audio.Sound.createAsync({ uri: SOUND_URLS.levelUp }, { volume: 0.5 }),
+      Audio.Sound.createAsync({ uri: SOUND_URLS.gameOver }, { volume: 0.5 }),
+      Audio.Sound.createAsync({ uri: SOUND_URLS.highScore }, { volume: 0.6 }),
     ]);
 
     placeSound = place.sound;
@@ -43,6 +47,8 @@ export const initSounds = async () => {
     clearSound = clear.sound;
     comboSound = combo.sound;
     levelUpSound = levelUp.sound;
+    gameOverSound = gameOver.sound;
+    highScoreSound = highScore.sound;
     soundsLoaded = true;
 
     console.log('Sounds loaded successfully');
