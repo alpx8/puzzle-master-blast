@@ -75,6 +75,8 @@ export default function GameScreen() {
   const [linesCleared, setLinesCleared] = useState(0);
   const [gamesPlayed, setGamesPlayed] = useState(0);
   const [isMuted, setIsMuted] = useState(!getSoundsEnabled());
+  const [isNewHighScore, setIsNewHighScore] = useState(false);
+  const [previousHighScore, setPreviousHighScore] = useState(0);
 
   const boardRef = useRef<View>(null);
   const boardPositionRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
