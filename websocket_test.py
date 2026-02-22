@@ -85,7 +85,7 @@ class WebSocketTester:
         import requests
         try:
             # Try a simple HTTP request to the WebSocket path
-            response = requests.get("https://puzzle-master-blast.preview.emergentagent.com/ws/test/test", timeout=5)
+            response = requests.get("https://block-puzzle-preview.preview.emergentagent.com/ws/test/test", timeout=5)
             if response.status_code == 404:
                 self.log_test("WebSocket Endpoint Check", False, "WebSocket endpoint returns 404 - proxy may not support WebSocket upgrades")
             else:
