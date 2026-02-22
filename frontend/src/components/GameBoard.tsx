@@ -13,22 +13,43 @@ const BOARD_PADDING = 16;
 const BOARD_WIDTH = Math.min(SCREEN_WIDTH - BOARD_PADDING * 2, 360);
 
 // Colors for row and column clearing effects
-const ROW_CLEAR_COLOR = '#00F5A0'; // Bright green for rows
-const COL_CLEAR_COLOR = '#FF6B6B'; // Bright red for columns
-const COMBO_COLORS = ['#FFD93D', '#FF6B6B', '#00F5A0', '#00D9FF', '#A855F7'];
+const ROW_CLEAR_COLOR = '#00F5A0';
+const COL_CLEAR_COLOR = '#FF6B6B';
+
+// Neon colors for combo levels
+const NEON_COMBO_COLORS = [
+  { main: '#00FF88', glow: '#00FF88' },      // Level 1 - Neon Green
+  { main: '#00D4FF', glow: '#00D4FF' },      // Level 2 - Neon Cyan
+  { main: '#FF00FF', glow: '#FF00FF' },      // Level 3 - Neon Magenta
+  { main: '#FFD700', glow: '#FFD700' },      // Level 4 - Neon Gold
+  { main: '#FF3366', glow: '#FF3366' },      // Level 5 - Neon Red-Pink
+  { main: '#9D00FF', glow: '#9D00FF' },      // Level 6 - Neon Purple
+  { main: '#00FFFF', glow: '#00FFFF' },      // Level 7+ - Neon Electric Blue
+];
 
 interface ScorePopup {
   id: string;
   x: number;
   y: number;
   score: number;
-  isCombo?: boolean;
+}
+
+interface ComboPopup {
+  id: string;
+  combo: number;
 }
 
 interface ClearEffect {
   id: string;
   type: 'row' | 'column';
   index: number;
+  color: string;
+}
+
+interface PlaceEffect {
+  id: string;
+  row: number;
+  col: number;
   color: string;
 }
 
@@ -53,24 +74,42 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   
   const [clearEffects, setClearEffects] = useState<ClearEffect[]>([]);
   const [scorePopups, setScorePopups] = useState<ScorePopup[]>([]);
+  const [comboPopups, setComboPopups] = useState<ComboPopup[]>([]);
   const [particles, setParticles] = useState<ParticleEffect[]>([]);
+  const [placeEffects, setPlaceEffects] = useState<PlaceEffect[]>([]);
   const [flashingCells, setFlashingCells] = useState<Map<string, string>>(new Map());
-  const [dropAnimations] = useState<Map<string, Animated.Value>>(new Map());
   
   const prevBoard = useRef<(string | null)[][]>([]);
+  const prevCombo = useRef(0);
 
   const highlightSet = new Set(
     highlightCells.map(c => `${c.row}-${c.col}`)
   );
 
-  // Detect changes and trigger animations
+  // Detect combo changes for neon popup
+  useEffect(() => {
+    if (combo > prevCombo.current && combo >= 1) {
+      const popup: ComboPopup = {
+        id: Date.now().toString(),
+        combo: combo,
+      };
+      setComboPopups(prev => [...prev, popup]);
+      
+      setTimeout(() => {
+        setComboPopups(prev => prev.filter(p => p.id !== popup.id));
+      }, 1500);
+    }
+    prevCombo.current = combo;
+  }, [combo]);
+
+  // Detect board changes and trigger animations
   useEffect(() => {
     if (prevBoard.current.length === 0) {
       prevBoard.current = board.map(row => [...row]);
       return;
     }
 
-    const newCells: { key: string; color: string }[] = [];
+    const newCells: { row: number; col: number; color: string }[] = [];
     const clearedRows = new Set<number>();
     const clearedCols = new Set<number>();
     const clearedCells: { row: number; col: number; color: string }[] = [];
@@ -82,16 +121,30 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         const prev = prevBoard.current[r]?.[c];
 
         if (current && !prev) {
-          newCells.push({ key: `${r}-${c}`, color: current });
+          newCells.push({ row: r, col: c, color: current });
         } else if (!current && prev) {
           clearedCells.push({ row: r, col: c, color: prev });
         }
       }
     }
 
+    // Trigger place effects for new cells
+    if (newCells.length > 0) {
+      const newPlaceEffects = newCells.map(cell => ({
+        id: `place-${cell.row}-${cell.col}-${Date.now()}`,
+        row: cell.row,
+        col: cell.col,
+        color: cell.color,
+      }));
+      setPlaceEffects(newPlaceEffects);
+      
+      setTimeout(() => {
+        setPlaceEffects([]);
+      }, 400);
+    }
+
     // Detect full row/column clears
     if (clearedCells.length > 0) {
-      // Check for row clears
       for (let r = 0; r < boardSize; r++) {
         const rowCells = clearedCells.filter(c => c.row === r);
         if (rowCells.length === boardSize) {
@@ -99,7 +152,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         }
       }
       
-      // Check for column clears
       for (let c = 0; c < boardSize; c++) {
         const colCells = clearedCells.filter(cell => cell.col === c);
         if (colCells.length === boardSize) {
@@ -116,7 +168,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           newFlashing.set(`${rowIndex}-${c}`, ROW_CLEAR_COLOR);
         }
         
-        // Add clear line effect
         setClearEffects(prev => [...prev, {
           id: `row-${rowIndex}-${Date.now()}`,
           type: 'row',
@@ -126,7 +177,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       });
       setFlashingCells(newFlashing);
       
-      // Clear flash after animation
       setTimeout(() => {
         setFlashingCells(new Map());
       }, 300);
@@ -140,7 +190,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           newFlashing.set(`${r}-${colIndex}`, COL_CLEAR_COLOR);
         }
         
-        // Add clear line effect
         setClearEffects(prev => [...prev, {
           id: `col-${colIndex}-${Date.now()}`,
           type: 'column',
@@ -159,7 +208,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     if (clearedCells.length > 0) {
       const newParticles: ParticleEffect[] = [];
       clearedCells.forEach(cell => {
-        // Create multiple particles per cell for explosion effect
         for (let i = 0; i < 4; i++) {
           newParticles.push({
             id: `${cell.row}-${cell.col}-${i}-${Date.now()}`,
@@ -171,13 +219,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       });
       setParticles(newParticles);
       
-      // Remove particles after animation
       setTimeout(() => {
         setParticles([]);
       }, 600);
 
       // Calculate score popup
-      const totalCleared = clearedCells.length;
       const linesCleared = clearedRows.size + clearedCols.size;
       
       if (linesCleared > 0) {
@@ -189,7 +235,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           x: centerCol * cellSize + cellSize / 2,
           y: centerRow * cellSize,
           score: linesCleared * linesCleared * 10,
-          isCombo: combo > 1,
         };
         
         setScorePopups(prev => [...prev, popup]);
@@ -206,15 +251,16 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }, 500);
 
     prevBoard.current = board.map(row => [...row]);
-  }, [board, boardSize, cellSize, combo]);
+  }, [board, boardSize, cellSize]);
 
   const renderCell = (cell: string | null, rowIndex: number, colIndex: number) => {
     const key = `${rowIndex}-${colIndex}`;
     const isHighlighted = highlightSet.has(key);
     const flashColor = flashingCells.get(key);
+    const hasPlaceEffect = placeEffects.some(p => p.row === rowIndex && p.col === colIndex);
 
     return (
-      <Animated.View
+      <View
         key={colIndex}
         style={[
           styles.cell,
@@ -225,7 +271,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         ]}
       >
         {cell ? (
-          <Animated.View 
+          <View 
             style={[
               styles.filledCell,
               { backgroundColor: flashColor || cell },
@@ -235,7 +281,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             {/* 3D Effect */}
             <View style={[styles.cellHighlight, { backgroundColor: lightenColor(flashColor || cell, 30) }]} />
             <View style={[styles.cellShadow, { backgroundColor: darkenColor(flashColor || cell, 30) }]} />
-          </Animated.View>
+            
+            {/* Place Effect Glow */}
+            {hasPlaceEffect && (
+              <PlaceEffectGlow color={cell} />
+            )}
+          </View>
         ) : (
           <View 
             style={[
@@ -248,7 +299,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             ]} 
           />
         )}
-      </Animated.View>
+      </View>
     );
   };
 
@@ -274,7 +325,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       
       {/* Score Popups */}
       {scorePopups.map(popup => (
-        <ScorePopupComponent key={popup.id} popup={popup} combo={combo} />
+        <ScorePopupComponent key={popup.id} popup={popup} />
+      ))}
+      
+      {/* Neon Combo Popups */}
+      {comboPopups.map(popup => (
+        <NeonComboPopup key={popup.id} combo={popup.combo} />
       ))}
       
       {/* Grid lines overlay */}
@@ -301,6 +357,159 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         ))}
       </View>
     </View>
+  );
+};
+
+// Place Effect Glow Component
+const PlaceEffectGlow: React.FC<{ color: string }> = ({ color }) => {
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.3,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.sequence([
+        Animated.timing(opacityAnim, {
+          toValue: 0.8,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        styles.placeGlow,
+        {
+          backgroundColor: color,
+          transform: [{ scale: scaleAnim }],
+          opacity: opacityAnim,
+        },
+      ]}
+    />
+  );
+};
+
+// Neon Combo Popup Component
+const NeonComboPopup: React.FC<{ combo: number }> = ({ combo }) => {
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.sequence([
+        Animated.spring(scaleAnim, {
+          toValue: 1.2,
+          friction: 4,
+          tension: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.8,
+          duration: 400,
+          delay: 600,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.sequence([
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 0,
+          duration: 400,
+          delay: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Pulsing glow effect
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(glowAnim, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: false,
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 0.5,
+            duration: 200,
+            useNativeDriver: false,
+          }),
+        ]),
+        { iterations: 4 }
+      ),
+    ]).start();
+  }, []);
+
+  const colorIndex = Math.min(combo - 1, NEON_COMBO_COLORS.length - 1);
+  const neonColor = NEON_COMBO_COLORS[colorIndex];
+
+  const glowRadius = glowAnim.interpolate({
+    inputRange: [0.5, 1],
+    outputRange: [15, 25],
+  });
+
+  return (
+    <Animated.View
+      style={[
+        styles.neonComboContainer,
+        {
+          transform: [{ scale: scaleAnim }],
+          opacity: opacityAnim,
+        },
+      ]}
+    >
+      <Animated.Text
+        style={[
+          styles.neonComboText,
+          {
+            color: neonColor.main,
+            textShadowColor: neonColor.glow,
+            textShadowRadius: glowRadius,
+          },
+        ]}
+      >
+        COMBO
+      </Animated.Text>
+      <Animated.Text
+        style={[
+          styles.neonComboNumber,
+          {
+            color: neonColor.main,
+            textShadowColor: neonColor.glow,
+            textShadowRadius: glowRadius,
+          },
+        ]}
+      >
+        x{combo}
+      </Animated.Text>
+    </Animated.View>
   );
 };
 
@@ -361,13 +570,12 @@ const ClearLineEffect: React.FC<{ effect: ClearEffect; cellSize: number; boardSi
         },
       ]}
     >
-      {/* Glow effect */}
       <View style={[styles.clearGlow, { backgroundColor: effect.color }]} />
     </Animated.View>
   );
 };
 
-// Particle Component with explosion animation
+// Particle Component
 const ParticleComponent: React.FC<{ particle: ParticleEffect }> = ({ particle }) => {
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
@@ -427,8 +635,8 @@ const ParticleComponent: React.FC<{ particle: ParticleEffect }> = ({ particle })
   );
 };
 
-// Score popup component with animation
-const ScorePopupComponent: React.FC<{ popup: ScorePopup; combo: number }> = ({ popup, combo }) => {
+// Score popup component
+const ScorePopupComponent: React.FC<{ popup: ScorePopup }> = ({ popup }) => {
   const translateY = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
   const scale = useRef(new Animated.Value(0.3)).current;
@@ -462,8 +670,6 @@ const ScorePopupComponent: React.FC<{ popup: ScorePopup; combo: number }> = ({ p
     ]).start();
   }, []);
 
-  const comboColor = popup.isCombo ? COMBO_COLORS[Math.min(combo - 1, COMBO_COLORS.length - 1)] : '#FFD700';
-
   return (
     <Animated.View
       style={[
@@ -476,14 +682,7 @@ const ScorePopupComponent: React.FC<{ popup: ScorePopup; combo: number }> = ({ p
         },
       ]}
     >
-      <Text style={[styles.scorePopupText, { color: comboColor }]}>
-        +{popup.score}
-      </Text>
-      {popup.isCombo && combo > 1 && (
-        <Text style={[styles.comboLabel, { color: comboColor }]}>
-          x{combo} KOMBO!
-        </Text>
-      )}
+      <Text style={styles.scorePopupText}>+{popup.score}</Text>
     </Animated.View>
   );
 };
@@ -573,6 +772,14 @@ const styles = StyleSheet.create({
     height: '40%',
     borderRadius: 4,
   },
+  placeGlow: {
+    position: 'absolute',
+    top: -5,
+    left: -5,
+    right: -5,
+    bottom: -5,
+    borderRadius: 10,
+  },
   gridOverlay: {
     position: 'absolute',
     top: 0,
@@ -626,17 +833,30 @@ const styles = StyleSheet.create({
   scorePopupText: {
     fontSize: 28,
     fontWeight: '900',
+    color: '#FFD700',
     textShadowColor: 'rgba(0,0,0,0.8)',
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 4,
   },
-  comboLabel: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 2,
-    textShadowColor: 'rgba(0,0,0,0.8)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+  neonComboContainer: {
+    position: 'absolute',
+    top: '35%',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  neonComboText: {
+    fontSize: 36,
+    fontWeight: '900',
+    letterSpacing: 8,
+    textShadowOffset: { width: 0, height: 0 },
+  },
+  neonComboNumber: {
+    fontSize: 52,
+    fontWeight: '900',
+    marginTop: -5,
+    textShadowOffset: { width: 0, height: 0 },
   },
 });
 
