@@ -116,6 +116,9 @@ backend:
       - working: true
         agent: "main"
         comment: "GET /api/health returns healthy status"
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED: Health check API working correctly - returns 200 with status healthy"
 
   - task: "User Management API"
     implemented: true
@@ -128,6 +131,9 @@ backend:
       - working: true
         agent: "main"
         comment: "POST /api/users creates user, PUT /api/users/{id} updates stats"
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED: All user management APIs working - POST creates users, PUT updates stats correctly, GET retrieves user data. Tested with realistic user data."
 
   - task: "Leaderboard API"
     implemented: true
@@ -140,6 +146,21 @@ backend:
       - working: true
         agent: "main"
         comment: "GET /api/leaderboard returns sorted users"
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED: Leaderboard API working perfectly - sorts by level and score correctly, returns proper ranking data"
+
+  - task: "Score Submission API"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED: Score submission API working - submits scores and updates user high_score correctly"
 
   - task: "Room Management API"
     implemented: true
@@ -152,18 +173,24 @@ backend:
       - working: true
         agent: "main"
         comment: "POST /api/rooms creates room, GET /api/rooms lists rooms"
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED: All room management APIs working - GET lists rooms, POST creates rooms, POST join adds players, DELETE removes rooms. Tested room lifecycle completely."
 
   - task: "WebSocket Multiplayer"
     implemented: true
-    working: "NA"
+    working: false
     file: "server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "WebSocket endpoint implemented, needs live testing"
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL: WebSocket functionality not accessible - returns HTTP 520/404 errors. The WebSocket endpoint is implemented but proxy/ingress configuration doesn't support WebSocket upgrades. Requires infrastructure configuration to enable WebSocket connections."
 
 frontend:
   - task: "Home Screen"
