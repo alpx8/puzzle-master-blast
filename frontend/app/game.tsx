@@ -440,21 +440,27 @@ export default function GameScreen() {
       {/* Game Over Modal */}
       <Modal visible={showGameOverModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, isNewHighScore && styles.highScoreModalContent]}>
             {isNewHighScore ? (
               <>
-                <Ionicons name="trophy" size={70} color="#FFD700" />
-                <Text style={styles.newHighScoreTitle}>YENİ REKOR!</Text>
+                <View style={styles.celebrationContainer}>
+                  <Text style={styles.celebrationEmoji}>🏆</Text>
+                </View>
+                <Text style={styles.newHighScoreTitle}>NEW HIGH SCORE!</Text>
                 <View style={styles.confettiContainer}>
                   <Text style={styles.confettiText}>🎉</Text>
+                  <Text style={styles.confettiText}>🌟</Text>
                   <Text style={styles.confettiText}>🎊</Text>
-                  <Text style={styles.confettiText}>⭐</Text>
                 </View>
+                <Text style={styles.congratsText}>Tebrikler!</Text>
               </>
             ) : (
               <>
-                <Ionicons name="game-controller" size={60} color="#FF6B6B" />
+                <View style={styles.gameOverIconContainer}>
+                  <Text style={styles.gameOverEmoji}>😔</Text>
+                </View>
                 <Text style={styles.gameOverTitle}>GAME OVER</Text>
+                <Text style={styles.tryAgainText}>Tekrar dene!</Text>
               </>
             )}
             <View style={styles.finalScoreContainer}>
@@ -470,10 +476,15 @@ export default function GameScreen() {
               </View>
               <View style={styles.statItem}>
                 <Text style={styles.statLabel}>En Yüksek</Text>
-                <Text style={styles.statValue}>{highScore.toLocaleString()}</Text>
+                <Text style={[styles.statValue, isNewHighScore && styles.highScoreStatValue]}>
+                  {highScore.toLocaleString()}
+                </Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.modalButton} onPress={handleRestart}>
+            <TouchableOpacity 
+              style={[styles.modalButton, isNewHighScore && styles.highScoreButton]} 
+              onPress={handleRestart}
+            >
               <Ionicons name="refresh" size={24} color="#fff" />
               <Text style={styles.modalButtonText}>Tekrar Oyna</Text>
             </TouchableOpacity>
