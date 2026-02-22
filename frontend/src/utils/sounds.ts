@@ -103,8 +103,10 @@ export const playLevelUpSound = async () => {
 };
 
 export const triggerComboHaptic = async () => {
-  if (!soundsEnabled) return; // Also disable haptics in silent mode
+  // Always trigger vibration for combos (independent of sound setting)
   try {
+    // Custom vibration pattern for combo: short-pause-short
+    Vibration.vibrate([0, 80, 40, 80]);
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   } catch (e) {
     console.log('Haptic error:', e);
