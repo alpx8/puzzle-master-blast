@@ -579,6 +579,10 @@ app.add_middleware(
 # Mount Socket.IO app - This creates the /socket.io/ endpoint
 socket_app = socketio.ASGIApp(sio, app)
 
+# Override app with socket_app for uvicorn compatibility
+# This allows the supervisor config to use server:app while still supporting Socket.IO
+app = socket_app
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
