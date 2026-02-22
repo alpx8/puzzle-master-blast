@@ -287,6 +287,11 @@ export default function GameScreen() {
     }
   };
 
+  const handleToggleMute = () => {
+    const newState = toggleSounds();
+    setIsMuted(!newState);
+  };
+
   const getModeTitle = () => {
     switch (gameMode) {
       case 'classic':
