@@ -71,10 +71,13 @@ class RoomCreate(BaseModel):
     name: str
     host_id: str
     host_name: str
+    password: Optional[str] = None
+    is_private: bool = False
 
 class RoomJoin(BaseModel):
     player_id: str
     player_name: str
+    password: Optional[str] = None
 
 class Room(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -84,6 +87,23 @@ class Room(BaseModel):
     players: List[dict] = []
     max_players: int = 2
     status: str = "waiting"  # waiting, playing, finished
+    password: Optional[str] = None
+    is_private: bool = False
+    winner_id: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class GameResult(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    room_id: str
+    player1_id: str
+    player1_name: str
+    player1_score: int
+    player2_id: str
+    player2_name: str
+    player2_score: int
+    winner_id: str
+    winner_name: str
+    status: str = "completed"  # completed, abandoned
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class GameScore(BaseModel):
