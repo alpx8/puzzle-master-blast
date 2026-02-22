@@ -699,15 +699,13 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   gameOverIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 107, 107, 0.2)',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 107, 107, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  gameOverEmoji: {
-    fontSize: 50,
+    marginBottom: 8,
   },
   tryAgainText: {
     fontSize: 14,
@@ -715,10 +713,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   newHighScoreTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '900',
     color: '#FFD700',
-    marginTop: 16,
+    marginTop: 12,
     letterSpacing: 1,
     textAlign: 'center',
   },
@@ -727,28 +725,23 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   celebrationContainer: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  celebrationEmoji: {
-    fontSize: 55,
+  starsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    gap: 8,
   },
   congratsText: {
     fontSize: 16,
     color: '#FFD700',
     marginTop: 4,
-  },
-  confettiContainer: {
-    flexDirection: 'row',
-    marginTop: 8,
-  },
-  confettiText: {
-    fontSize: 28,
-    marginHorizontal: 6,
   },
   finalScoreContainer: {
     alignItems: 'center',
