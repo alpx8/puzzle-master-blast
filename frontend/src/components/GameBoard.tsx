@@ -528,60 +528,33 @@ const NeonComboPopup: React.FC<{ combo: number }> = ({ combo }) => {
         },
       ]}
     >
-      {/* Background glow */}
-      <View style={[styles.comboGlowBg, { backgroundColor: neonColor.bg }]} />
-      
-      {/* Main combo text */}
+      {/* Main combo text - Pure neon with multiple shadow layers */}
       <Text
         style={[
           styles.neonComboText,
           {
             color: neonColor.main,
             textShadowColor: neonColor.glow,
-            textShadowRadius: 20,
+            textShadowRadius: 25,
           },
         ]}
       >
         {getComboText()}
       </Text>
       
-      {/* Combo number with extra glow */}
-      <View style={styles.comboNumberContainer}>
-        <Text
-          style={[
-            styles.neonComboNumber,
-            {
-              color: '#fff',
-              textShadowColor: neonColor.glow,
-              textShadowRadius: 30,
-            },
-          ]}
-        >
-          x{combo}
-        </Text>
-        {/* Extra glow layer */}
-        <Text
-          style={[
-            styles.neonComboNumberGlow,
-            {
-              color: neonColor.main,
-              textShadowColor: neonColor.glow,
-              textShadowRadius: 40,
-            },
-          ]}
-        >
-          x{combo}
-        </Text>
-      </View>
-      
-      {/* Sparkle effects for high combos */}
-      {combo >= 3 && (
-        <>
-          <SparkleEffect delay={0} color={neonColor.main} />
-          <SparkleEffect delay={100} color={neonColor.main} />
-          <SparkleEffect delay={200} color={neonColor.main} />
-        </>
-      )}
+      {/* Combo number - Bold neon */}
+      <Text
+        style={[
+          styles.neonComboNumber,
+          {
+            color: neonColor.main,
+            textShadowColor: neonColor.glow,
+            textShadowRadius: 35,
+          },
+        ]}
+      >
+        x{combo}
+      </Text>
     </Animated.View>
   );
 };
