@@ -1,11 +1,10 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import {
   View,
   StyleSheet,
   Dimensions,
-  Animated,
 } from 'react-native';
-import { useGameStore } from '../store/gameStore';
+import { useGameStore } from '@/src/store/gameStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BOARD_PADDING = 16;

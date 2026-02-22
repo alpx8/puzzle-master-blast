@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useGameStore } from '../store/gameStore';
+import { useGameStore } from '@/src/store/gameStore';
 
 export const ScoreDisplay: React.FC = () => {
   const { score, highScore, combo, level, xp, xpToNextLevel, gameMode, timeRemaining } = useGameStore();

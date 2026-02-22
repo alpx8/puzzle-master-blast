@@ -6,19 +6,17 @@ import {
   TouchableOpacity,
   Dimensions,
   PanResponder,
-  Animated,
   Modal,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useGameStore, Block } from '../src/store/gameStore';
-import { GameBoard, CELL_SIZE, BOARD_DIMENSIONS } from '../src/components/GameBoard';
-import { BlockPiece } from '../src/components/BlockPiece';
-import { ScoreDisplay } from '../src/components/ScoreDisplay';
+import { useGameStore, Block } from '@/src/store/gameStore';
+import { GameBoard } from '@/src/components/GameBoard';
+import { BlockPiece } from '@/src/components/BlockPiece';
+import { ScoreDisplay } from '@/src/components/ScoreDisplay';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BOARD_PADDING = 16;
 const BOARD_SIZE = Math.min(SCREEN_WIDTH - BOARD_PADDING * 2, 360);
 const GAME_CELL_SIZE = BOARD_SIZE / 8;
