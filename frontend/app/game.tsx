@@ -90,6 +90,7 @@ export default function GameScreen() {
   // Initialize sounds
   useEffect(() => {
     initSounds();
+    admobService.initialize(); // Initialize AdMob
     if (userId) {
       loadQuests(userId);
     }
