@@ -73,32 +73,6 @@
           "resizeMode": "contain",
           "backgroundColor": "#0a0a1a"
         }
-      ],
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "useFrameworks": "static",
-            "deploymentTarget": "14.0"
-          },
-          "android": {
-            "targetSdkVersion": 35,
-            "compileSdkVersion": 35
-          }
-        }
-      ],
-      [
-        "expo-tracking-transparency",
-        {
-          "userTrackingPermission": "Bu uygulama, size daha alakalı reklamlar göstermek için izleme kullanır"
-        }
-      ],
-      [
-        "react-native-google-mobile-ads",
-        {
-          "androidAppId": "ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY",
-          "iosAppId": "ca-app-pub-XXXXXXXXXXXXXXXX~ZZZZZZZZZZ"
-        }
       ]
     ],
     "experiments": {

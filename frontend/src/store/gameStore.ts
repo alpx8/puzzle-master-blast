@@ -90,6 +90,7 @@ export interface GameActions {
   pauseGame: () => void;
   resumeGame: () => void;
   updateTimer: () => void;
+  continueGame: () => void; // NEW: Continue after watching ad
   
   // User actions
   setUsername: (name: string) => void;
@@ -350,6 +351,65 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
 
   pauseGame: () => set({ isPaused: true }),
   resumeGame: () => set({ isPaused: false }),
+
+  // Continue game after watching rewarded ad
+  continueGame: () => {
+    // Generate new blocks that can be placed
+    const board = get().board;
+    let attempts = 0;
+    let validBlocks: Block[] = [];
+    
+    // Try to generate blocks that can actually be placed
+    while (validBlocks.length < 3 && attempts < 50) {
+      const newBlock = generateRandomBlock();
+      
+      // Check if this block can be placed anywhere on the board
+      let canPlace = false;
+      for (let row = 0; row < BOARD_SIZE && !canPlace; row++) {
+        for (let col = 0; col < BOARD_SIZE && !canPlace; col++) {
+          // Check if block fits at this position
+          let fits = true;
+          for (let r = 0; r < newBlock.shape.length && fits; r++) {
+            for (let c = 0; c < newBlock.shape[r].length && fits; c++) {
+              if (newBlock.shape[r][c] === 1) {
+                const boardRow = row + r;
+                const boardCol = col + c;
+                if (
+                  boardRow >= BOARD_SIZE ||
+                  boardCol >= BOARD_SIZE ||
+                  board[boardRow][boardCol] !== null
+                ) {
+                  fits = false;
+                }
+              }
+            }
+          }
+          if (fits) canPlace = true;
+        }
+      }
+      
+      if (canPlace) {
+        validBlocks.push(newBlock);
+      }
+      attempts++;
+    }
+    
+    // If we couldn't find 3 valid blocks, use smaller blocks
+    while (validBlocks.length < 3) {
+      validBlocks.push({
+        id: Math.random().toString(36).substring(7),
+        type: 'single',
+        shape: [[1]],
+        color: '#FF5252',
+        points: 1,
+      });
+    }
+    
+    set({
+      availableBlocks: validBlocks,
+      isGameOver: false,
+    });
+  },
 
   updateTimer: () => {
     const state = get();

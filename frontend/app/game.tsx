@@ -9,6 +9,7 @@ import {
   Modal,
   Animated,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -18,8 +19,6 @@ import { useQuestStore } from '@/src/store/questStore';
 import { GameBoard } from '@/src/components/GameBoard';
 import { BlockPiece } from '@/src/components/BlockPiece';
 import { ScoreDisplay } from '@/src/components/ScoreDisplay';
-import { BannerAd } from '@/src/components/BannerAd';
-import admobService from '@/src/services/admobService';
 import {
   initSounds,
   playPlaceSound,
@@ -63,6 +62,8 @@ export default function GameScreen() {
     updateTimer,
     saveUserData,
     userId,
+    continueGame,
+    generateNewBlocks,
   } = useGameStore();
 
   const { loadQuests, updateQuestProgress, dailyQuests, claimReward } = useQuestStore();
@@ -73,12 +74,23 @@ export default function GameScreen() {
   const [isValidPlacement, setIsValidPlacement] = useState(false);
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [showGameOverModal, setShowGameOverModal] = useState(false);
+  const [showContinueModal, setShowContinueModal] = useState(false);
   const [showQuestsModal, setShowQuestsModal] = useState(false);
   const [linesCleared, setLinesCleared] = useState(0);
   const [gamesPlayed, setGamesPlayed] = useState(0);
   const [isMuted, setIsMuted] = useState(!getSoundsEnabled());
   const [isNewHighScore, setIsNewHighScore] = useState(false);
   const [previousHighScore, setPreviousHighScore] = useState(0);
+  const [continuesUsed, setContinuesUsed] = useState(0);
+  const [isLoadingAd, setIsLoadingAd] = useState(false);
+  
+  // Animations
+  const continueModalScale = useRef(new Animated.Value(0)).current;
+  const continueModalOpacity = useRef(new Animated.Value(0)).current;
+  const heartPulse = useRef(new Animated.Value(1)).current;
+  const countdownValue = useRef(new Animated.Value(5)).current;
+  const [countdown, setCountdown] = useState(5);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
   const boardRef = useRef<View>(null);
   const boardPositionRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
@@ -87,16 +99,17 @@ export default function GameScreen() {
   const prevCombo = useRef(0);
   const prevLevel = useRef(1);
 
-  // Initialize sounds
+  // Initialize sounds and ads
   useEffect(() => {
     initSounds();
-    admobService.initialize(); // Initialize AdMob
+    // AdMob sadece native'de çalışır - production build'de aktif olacak
     if (userId) {
       loadQuests(userId);
     }
     
     return () => {
       unloadSounds();
+      if (countdownRef.current) clearInterval(countdownRef.current);
     };
   }, [userId]);
 
@@ -134,21 +147,116 @@ export default function GameScreen() {
       // Check if new high score - score must be greater than previous high score
       const isNewRecord = score > previousHighScore && previousHighScore >= 0;
       
-      if (isNewRecord) {
-        setIsNewHighScore(true);
-        playHighScoreSound();
+      // İlk 3 devam hakkında "Devam Et" seçeneği göster
+      if (continuesUsed < 3) {
+        setShowContinueModal(true);
+        startContinueCountdown();
+        animateContinueModal(true);
       } else {
-        setIsNewHighScore(false);
-        playGameOverSound();
+        // 3 kez kullanıldıysa direkt game over
+        showFinalGameOver(isNewRecord);
       }
-      setShowGameOverModal(true);
-      saveUserData();
-      updateQuestProgress('score', score);
-      
-      // Show interstitial ad on game over (every 2nd game)
-      admobService.showInterstitialIfReady();
     }
   }, [isGameOver]);
+
+  const startContinueCountdown = () => {
+    setCountdown(5);
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    
+    countdownRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          handleDeclineContinue();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    // Heart pulse animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(heartPulse, {
+          toValue: 1.2,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(heartPulse, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  };
+
+  const animateContinueModal = (show: boolean) => {
+    Animated.parallel([
+      Animated.spring(continueModalScale, {
+        toValue: show ? 1 : 0,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+      Animated.timing(continueModalOpacity, {
+        toValue: show ? 1 : 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const showFinalGameOver = (isNewRecord: boolean) => {
+    if (isNewRecord) {
+      setIsNewHighScore(true);
+      playHighScoreSound();
+    } else {
+      setIsNewHighScore(false);
+      playGameOverSound();
+    }
+    setShowGameOverModal(true);
+    saveUserData();
+    updateQuestProgress('score', score);
+    
+    // Interstitial ad göster - sadece native'de çalışır
+    // Production build'de aktif olacak
+  };
+
+  const handleWatchAdToContinue = async () => {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    setIsLoadingAd(true);
+    
+    // Web'de simüle et, Native'de gerçek reklam gösterilecek
+    // Production build'de AdMob aktif olacak
+    setTimeout(() => {
+      // Reklam izlendi (veya simüle edildi), oyuna devam et
+      setIsLoadingAd(false);
+      setShowContinueModal(false);
+      setContinuesUsed(prev => prev + 1);
+      
+      // Oyunu devam ettir - yeni bloklar ver
+      if (continueGame) {
+        continueGame();
+      } else if (generateNewBlocks) {
+        generateNewBlocks();
+      }
+      
+      // Reset game over state
+      useGameStore.setState({ isGameOver: false });
+    }, Platform.OS === 'web' ? 1000 : 100); // Web'de 1 saniye bekle (simülasyon)
+  };
+
+  const handleDeclineContinue = () => {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    animateContinueModal(false);
+    
+    setTimeout(() => {
+      setShowContinueModal(false);
+      const isNewRecord = score > previousHighScore && previousHighScore >= 0;
+      showFinalGameOver(isNewRecord);
+    }, 200);
+  };
 
   // Sound effects based on game state changes
   useEffect(() => {
@@ -406,8 +514,10 @@ export default function GameScreen() {
         </View>
       </View>
 
-      {/* Banner Ad at bottom */}
-      <BannerAd position="bottom" testID="game-banner-ad" />
+      {/* Banner Ad Placeholder - Production'da aktif */}
+      <View style={styles.bannerPlaceholder}>
+        <Text style={styles.bannerPlaceholderText}>Reklam Alanı</Text>
+      </View>
 
       {/* Dragging Block Overlay */}
       {draggingBlock && (
@@ -443,6 +553,91 @@ export default function GameScreen() {
               <Text style={styles.modalButtonText}>Çıkış</Text>
             </TouchableOpacity>
           </View>
+        </View>
+      </Modal>
+
+      {/* Continue Modal - Ekstra Can İster misiniz? */}
+      <Modal visible={showContinueModal} transparent animationType="none">
+        <View style={styles.continueModalOverlay}>
+          <Animated.View 
+            style={[
+              styles.continueModalContent,
+              {
+                opacity: continueModalOpacity,
+                transform: [{ scale: continueModalScale }],
+              }
+            ]}
+          >
+            {/* Animated Heart */}
+            <Animated.View style={[styles.heartContainer, { transform: [{ scale: heartPulse }] }]}>
+              <View style={styles.heartGlow} />
+              <Ionicons name="heart" size={80} color="#FF6B6B" />
+              <View style={styles.heartPlusContainer}>
+                <Text style={styles.heartPlus}>+1</Text>
+              </View>
+            </Animated.View>
+            
+            {/* Title */}
+            <Text style={styles.continueTitle}>Devam Et?</Text>
+            <Text style={styles.continueSubtitle}>Skorun: {score.toLocaleString()}</Text>
+            
+            {/* Countdown Timer */}
+            <View style={styles.countdownContainer}>
+              <View style={styles.countdownCircle}>
+                <Text style={styles.countdownText}>{countdown}</Text>
+              </View>
+              <Text style={styles.countdownLabel}>saniye</Text>
+            </View>
+            
+            {/* Continue Chances Left */}
+            <View style={styles.chancesContainer}>
+              {[0, 1, 2].map((i) => (
+                <View 
+                  key={i} 
+                  style={[
+                    styles.chanceHeart,
+                    continuesUsed > i && styles.chanceHeartUsed
+                  ]}
+                >
+                  <Ionicons 
+                    name="heart" 
+                    size={20} 
+                    color={continuesUsed > i ? '#444' : '#FF6B6B'} 
+                  />
+                </View>
+              ))}
+            </View>
+            <Text style={styles.chancesText}>{3 - continuesUsed} devam hakkın kaldı</Text>
+            
+            {/* Watch Ad Button */}
+            <TouchableOpacity 
+              style={styles.watchAdButton}
+              onPress={handleWatchAdToContinue}
+              disabled={isLoadingAd}
+            >
+              <View style={styles.watchAdButtonInner}>
+                {isLoadingAd ? (
+                  <Text style={styles.watchAdText}>Reklam Yükleniyor...</Text>
+                ) : (
+                  <>
+                    <Ionicons name="play-circle" size={28} color="#fff" />
+                    <Text style={styles.watchAdText}>Reklam İzle & Devam Et</Text>
+                  </>
+                )}
+              </View>
+              <View style={styles.watchAdBadge}>
+                <Text style={styles.watchAdBadgeText}>ÜCRETSİZ</Text>
+              </View>
+            </TouchableOpacity>
+            
+            {/* Decline Button */}
+            <TouchableOpacity 
+              style={styles.declineButton}
+              onPress={handleDeclineContinue}
+            >
+              <Text style={styles.declineText}>Hayır, Bitir</Text>
+            </TouchableOpacity>
+          </Animated.View>
         </View>
       </Modal>
 
@@ -889,5 +1084,171 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 14,
+  },
+  // Continue Modal Styles
+  continueModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  continueModalContent: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 28,
+    padding: 28,
+    alignItems: 'center',
+    width: SCREEN_WIDTH * 0.88,
+    maxWidth: 380,
+    borderWidth: 2,
+    borderColor: '#FF6B6B',
+    shadowColor: '#FF6B6B',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 20,
+  },
+  heartContainer: {
+    width: 120,
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  heartGlow: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 107, 107, 0.3)',
+  },
+  heartPlusContainer: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: '#4ECDC4',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  heartPlus: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  continueTitle: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#fff',
+    letterSpacing: 1,
+  },
+  continueSubtitle: {
+    fontSize: 18,
+    color: '#888',
+    marginTop: 4,
+  },
+  countdownContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  countdownCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255, 107, 107, 0.2)',
+    borderWidth: 3,
+    borderColor: '#FF6B6B',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  countdownText: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#FF6B6B',
+  },
+  countdownLabel: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 4,
+  },
+  chancesContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  chanceHeart: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 107, 107, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chanceHeartUsed: {
+    backgroundColor: 'rgba(68, 68, 68, 0.3)',
+  },
+  chancesText: {
+    fontSize: 13,
+    color: '#888',
+    marginBottom: 20,
+  },
+  watchAdButton: {
+    width: '100%',
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  watchAdButtonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4ECDC4',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    gap: 10,
+  },
+  watchAdText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  watchAdBadge: {
+    position: 'absolute',
+    top: -1,
+    right: 10,
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+  },
+  watchAdBadgeText: {
+    color: '#1a1a2e',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  declineButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  declineText: {
+    color: '#666',
+    fontSize: 16,
+  },
+  bannerPlaceholder: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  bannerPlaceholderText: {
+    color: '#555',
+    fontSize: 11,
   },
 });
