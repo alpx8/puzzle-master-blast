@@ -1,0 +1,243 @@
+{
+  "identity": {
+    "persona": "E1: The Anti-AI Designer",
+    "mission": "Create a visceral, dopamine-inducing arcade experience that feels like a premium instrument, not a cheap toy. Every pixel must pop against the void.",
+    "principles": [
+      "Darkness is the Canvas: The background is not just black; it is the void where light (content) lives.",
+      "Neon is Life: Blocks and interactive elements must glow and feel physical.",
+      "Motion is Feedback: Every touch, drag, and score must have kinetic consequences.",
+      "Premium Polish: No jagged edges, no default fonts, no flat colors without purpose."
+    ]
+  },
+  "tech_stack": {
+    "framework": "React Native (Expo)",
+    "styling": "StyleSheet with Design Tokens (NativeWind / Tailwind concepts applied manually or via library if available)",
+    "animation": "react-native-reanimated",
+    "icons": "@expo/vector-icons",
+    "gestures": "react-native-gesture-handler"
+  },
+  "design_tokens": {
+    "colors": {
+      "background": {
+        "primary": "#0A0A1A",
+        "secondary": "#11112B",
+        "tertiary": "#1A1A3F",
+        "overlay": "rgba(10, 10, 26, 0.85)"
+      },
+      "text": {
+        "primary": "#FFFFFF",
+        "secondary": "#94A3B8",
+        "muted": "#64748B",
+        "accent": "#39FF14"
+      },
+      "blocks": {
+        "cyan": "#00F0FF",
+        "magenta": "#FF0099",
+        "lime": "#39FF14",
+        "yellow": "#FAFF00",
+        "orange": "#FF5F1F",
+        "purple": "#BD00FF",
+        "red": "#FF003C"
+      },
+      "ui": {
+        "border": "rgba(255, 255, 255, 0.1)",
+        "border_active": "rgba(255, 255, 255, 0.3)",
+        "success": "#39FF14",
+        "warning": "#FAFF00",
+        "error": "#FF003C"
+      }
+    },
+    "typography": {
+      "font_family": {
+        "heading": "System Bold (or Custom Arcade Font if added)",
+        "body": "System Regular"
+      },
+      "sizes": {
+        "xs": 12,
+        "sm": 14,
+        "base": 16,
+        "lg": 18,
+        "xl": 20,
+        "2xl": 24,
+        "3xl": 30,
+        "4xl": 36,
+        "5xl": 48
+      },
+      "weights": {
+        "regular": "400",
+        "medium": "500",
+        "bold": "700",
+        "heavy": "900"
+      }
+    },
+    "spacing": {
+      "xs": 4,
+      "sm": 8,
+      "md": 12,
+      "lg": 16,
+      "xl": 24,
+      "2xl": 32,
+      "3xl": 48
+    },
+    "radius": {
+      "sm": 8,
+      "md": 12,
+      "lg": 16,
+      "xl": 24,
+      "full": 9999
+    },
+    "shadows": {
+      "glow_sm": {
+        "shadowColor": "#39FF14",
+        "shadowOffset": { "width": 0, "height": 0 },
+        "shadowOpacity": 0.5,
+        "shadowRadius": 4,
+        "elevation": 4
+      },
+      "glow_lg": {
+        "shadowColor": "#00F0FF",
+        "shadowOffset": { "width": 0, "height": 0 },
+        "shadowOpacity": 0.7,
+        "shadowRadius": 10,
+        "elevation": 10
+      },
+      "depth": {
+        "shadowColor": "#000",
+        "shadowOffset": { "width": 0, "height": 4 },
+        "shadowOpacity": 0.3,
+        "shadowRadius": 4,
+        "elevation": 5
+      }
+    }
+  },
+  "assets": {
+    "images": {
+      "trophy": {
+        "url": "https://images.pexels.com/photos/6532366/pexels-photo-6532366.jpeg",
+        "desc": "Sleek silver trophy for Tournaments"
+      },
+      "gift_box": {
+        "url": "https://images.unsplash.com/photo-1725347740942-c5306e3c970f",
+        "desc": "Abstract glass box for Daily Rewards"
+      },
+      "bomb_powerup": {
+        "url": "https://images.unsplash.com/photo-1636545948913-c238e8a1b4bb",
+        "desc": "Dark spheres for Bomb Powerup"
+      },
+      "coins": {
+        "url": "https://images.unsplash.com/photo-1624365167573-80c5d1b7681f",
+        "desc": "Gold coins on dark background for Currency"
+      },
+      "shuffle_powerup": {
+        "url": "https://images.unsplash.com/photo-1724184809305-517886d40bbb",
+        "desc": "Blue abstract triangle for Shuffle"
+      },
+      "time_powerup": {
+        "url": "https://images.unsplash.com/photo-1701281497102-b3ef3c0a2ce0",
+        "desc": "Glowing orb for Time Extension"
+      },
+      "tournament_bg": {
+        "url": "https://images.unsplash.com/photo-1584224494548-dab8ad4b4207",
+        "desc": "Neon tunnel lights for Tournament Screen Background"
+      },
+      "skin_texture": {
+        "url": "https://images.unsplash.com/photo-1694852860772-ec8598c72c15",
+        "desc": "Wavy black texture for special block skins or shop background"
+      }
+    }
+  },
+  "component_guidelines": {
+    "Button": {
+      "description": "Primary action elements. Must feel tappable.",
+      "styles": {
+        "primary": {
+          "backgroundColor": "#39FF14",
+          "borderRadius": 16,
+          "paddingVertical": 16,
+          "paddingHorizontal": 32,
+          "alignItems": "center",
+          "shadowColor": "#39FF14",
+          "shadowOpacity": 0.4,
+          "shadowRadius": 8,
+          "elevation": 6
+        },
+        "secondary": {
+          "backgroundColor": "#1A1A3F",
+          "borderRadius": 12,
+          "padding": 12,
+          "borderWidth": 1,
+          "borderColor": "rgba(255,255,255,0.1)"
+        },
+        "text_primary": {
+          "color": "#0A0A1A",
+          "fontWeight": "900",
+          "fontSize": 18,
+          "textTransform": "uppercase",
+          "letterSpacing": 1
+        }
+      }
+    },
+    "Card": {
+      "description": "Container for content. Glass-like or solid dark.",
+      "styles": {
+        "container": {
+          "backgroundColor": "#11112B",
+          "borderRadius": 24,
+          "padding": 20,
+          "borderWidth": 1,
+          "borderColor": "rgba(255,255,255,0.05)"
+        }
+      }
+    },
+    "GameBoard": {
+      "description": "The 8x8 Grid. Must be perfectly square.",
+      "styles": {
+        "grid_container": {
+          "backgroundColor": "#050510",
+          "borderRadius": 12,
+          "padding": 8,
+          "aspectRatio": 1,
+          "flexDirection": "row",
+          "flexWrap": "wrap",
+          "justifyContent": "center",
+          "alignContent": "center"
+        },
+        "cell": {
+          "backgroundColor": "rgba(255,255,255,0.03)",
+          "borderRadius": 4,
+          "margin": 2
+        }
+      }
+    }
+  },
+  "layout_strategies": {
+    "Screen": {
+      "safe_area": "Use SafeAreaView from react-native-safe-area-context",
+      "background": "Fill with #0A0A1A",
+      "padding": "px-4 or px-6 equivalent (16px / 24px)"
+    },
+    "Header": {
+      "height": 60,
+      "alignment": "row, space-between, center",
+      "typography": "text-2xl, heavy weight"
+    },
+    "BottomNav": {
+      "style": "Floating pill shape at bottom, not full width bar. Glassmorphism effect."
+    }
+  },
+  "animation_rules": {
+    "BlockDrag": "Use PanGestureHandler + Reanimated. Scale up block to 1.1x when picked up.",
+    "BlockPlace": "Spring animation (mass: 1, stiffness: 200, damping: 20) when snapping to grid.",
+    "RowClear": "Flash row white/bright, then shrink height to 0 with opacity fade out.",
+    "ScreenTransition": "Slide from right or FadeScale."
+  },
+  "instructions_to_main_agent": [
+    "1. Do NOT assume Tailwind is installed. Use StyleSheet.create or inline styles with the design tokens provided.",
+    "2. If you need gradients, use 'expo-linear-gradient'.",
+    "3. For the 8x8 grid, ensure you calculate cell size dynamically based on screen width: (Dimensions.get('window').width - padding) / 8.",
+    "4. Blocks must be solid colors from the 'blocks' palette. No transparency on the block itself, only on the 'ghost' preview.",
+    "5. Use the provided image URLs for specific UI elements like icons or backgrounds. Use <Image /> component.",
+    "6. Ensure all touch targets are at least 44x44 points.",
+    "7. Add 'data-testid' to all interactables."
+  ]
+}
