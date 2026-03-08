@@ -148,6 +148,62 @@ export const triggerHeavyHaptic = async () => {
   }
 };
 
+// Light haptic for block placement
+export const triggerPlaceHaptic = async () => {
+  try {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  } catch (e) {
+    console.log('Place haptic error:', e);
+  }
+};
+
+// Medium haptic for line clears
+export const triggerClearHaptic = async () => {
+  try {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // Double tap for satisfaction
+    setTimeout(() => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }, 80);
+  } catch (e) {
+    console.log('Clear haptic error:', e);
+  }
+};
+
+// Success haptic for achievements/milestones
+export const triggerSuccessHaptic = async () => {
+  try {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    // Pattern: success, pause, light tap
+    setTimeout(() => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    }, 200);
+  } catch (e) {
+    console.log('Success haptic error:', e);
+  }
+};
+
+// Game over haptic - dramatic feel
+export const triggerGameOverHaptic = async () => {
+  try {
+    Vibration.vibrate([0, 100, 50, 100, 50, 200]);
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  } catch (e) {
+    console.log('Game over haptic error:', e);
+  }
+};
+
+// High score celebration haptic
+export const triggerHighScoreHaptic = async () => {
+  try {
+    // Celebration pattern
+    Vibration.vibrate([0, 50, 30, 50, 30, 50, 100, 100]);
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  } catch (e) {
+    console.log('High score haptic error:', e);
+  }
+};
+
 export const setSoundsEnabled = (enabled: boolean) => {
   soundsEnabled = enabled;
 };

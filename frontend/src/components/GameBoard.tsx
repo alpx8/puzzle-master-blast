@@ -472,6 +472,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             <FallingCellComponent 
               color={cell} 
               cellSize={cellSize}
+              fromDirection={Math.random() > 0.5 ? 'top' : Math.random() > 0.5 ? 'left' : 'right'}
             />
           ) : (
             <View 
@@ -577,40 +578,82 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   );
 };
 
-// Falling Cell Animation
-const FallingCellComponent: React.FC<{ color: string; cellSize: number }> = ({ color, cellSize }) => {
-  const translateY = useRef(new Animated.Value(-cellSize * 3)).current;
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+// Falling Cell Animation - Enhanced with sliding effect
+const FallingCellComponent: React.FC<{ color: string; cellSize: number; fromDirection?: 'top' | 'left' | 'right' }> = ({ 
+  color, 
+  cellSize,
+  fromDirection = 'top'
+}) => {
+  const translateY = useRef(new Animated.Value(fromDirection === 'top' ? -cellSize * 4 : 0)).current;
+  const translateX = useRef(new Animated.Value(
+    fromDirection === 'left' ? -cellSize * 3 : fromDirection === 'right' ? cellSize * 3 : 0
+  )).current;
+  const scaleAnim = useRef(new Animated.Value(0.6)).current;
   const bounceAnim = useRef(new Animated.Value(1)).current;
+  const rotateAnim = useRef(new Animated.Value(fromDirection === 'top' ? 0 : 10)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Smooth slide-in animation with easing
     Animated.parallel([
       Animated.timing(translateY, {
         toValue: 0,
-        duration: 250,
+        duration: 280,
         useNativeDriver: true,
+        easing: require('react-native').Easing.out(require('react-native').Easing.cubic),
+      }),
+      Animated.timing(translateX, {
+        toValue: 0,
+        duration: 280,
+        useNativeDriver: true,
+        easing: require('react-native').Easing.out(require('react-native').Easing.cubic),
       }),
       Animated.timing(scaleAnim, {
         toValue: 1,
-        duration: 250,
+        duration: 280,
+        useNativeDriver: true,
+        easing: require('react-native').Easing.out(require('react-native').Easing.back(1.5)),
+      }),
+      Animated.timing(rotateAnim, {
+        toValue: 0,
+        duration: 280,
         useNativeDriver: true,
       }),
+      // Glow effect on placement
+      Animated.sequence([
+        Animated.timing(glowAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(glowAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]),
     ]).start(() => {
+      // Satisfying bounce on landing
       Animated.sequence([
         Animated.timing(bounceAnim, {
-          toValue: 0.9,
-          duration: 50,
+          toValue: 0.88,
+          duration: 60,
           useNativeDriver: true,
         }),
         Animated.spring(bounceAnim, {
           toValue: 1,
-          friction: 4,
-          tension: 200,
+          friction: 3,
+          tension: 250,
           useNativeDriver: true,
         }),
       ]).start();
     });
   }, []);
+
+  const rotation = rotateAnim.interpolate({
+    inputRange: [-10, 0, 10],
+    outputRange: ['-10deg', '0deg', '10deg'],
+  });
 
   return (
     <Animated.View
@@ -620,8 +663,17 @@ const FallingCellComponent: React.FC<{ color: string; cellSize: number }> = ({ c
           backgroundColor: color,
           transform: [
             { translateY },
+            { translateX },
             { scale: Animated.multiply(scaleAnim, bounceAnim) },
+            { rotate: rotation },
           ],
+          shadowColor: color,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: glowAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, 0.8],
+          }) as any,
+          shadowRadius: 12,
         },
       ]}
     >

@@ -21,6 +21,8 @@ import { usePowerUpsStore, PowerUpType } from '@/src/store/powerUpsStore';
 import { GameBoard } from '@/src/components/GameBoard';
 import { BlockPiece } from '@/src/components/BlockPiece';
 import { ScoreDisplay } from '@/src/components/ScoreDisplay';
+import { StreakMilestone } from '@/src/components/StreakMilestone';
+import { ConfettiCelebration } from '@/src/components/ConfettiCelebration';
 import {
   initSounds,
   playPlaceSound,
@@ -31,6 +33,11 @@ import {
   playGameOverSound,
   playHighScoreSound,
   triggerComboHaptic,
+  triggerPlaceHaptic,
+  triggerClearHaptic,
+  triggerGameOverHaptic,
+  triggerHighScoreHaptic,
+  triggerSuccessHaptic,
   unloadSounds,
   toggleSounds,
   getSoundsEnabled,
@@ -92,6 +99,13 @@ export default function GameScreen() {
   const [previousHighScore, setPreviousHighScore] = useState(0);
   const [continuesUsed, setContinuesUsed] = useState(0);
   const [isLoadingAd, setIsLoadingAd] = useState(false);
+  
+  // Milestone tracking
+  const [milestoneScore, setMilestoneScore] = useState(0);
+  const [showMilestone, setShowMilestone] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const reachedMilestones = useRef<Set<number>>(new Set());
+  const MILESTONE_SCORES = [100, 500, 1000, 2500, 5000, 10000, 25000, 50000];
   
   // Animations
   const continueModalScale = useRef(new Animated.Value(0)).current;
@@ -311,13 +325,19 @@ export default function GameScreen() {
     if (isNewRecord) {
       setIsNewHighScore(true);
       playHighScoreSound();
+      triggerHighScoreHaptic();
+      setShowConfetti(true);
     } else {
       setIsNewHighScore(false);
       playGameOverSound();
+      triggerGameOverHaptic();
     }
     setShowGameOverModal(true);
     saveUserData();
     updateQuestProgress('score', score);
+    
+    // Reset milestones for new game
+    reachedMilestones.current.clear();
     
     // Interstitial ad göster - sadece native'de çalışır
     // Production build'de aktif olacak
@@ -362,6 +382,18 @@ export default function GameScreen() {
   useEffect(() => {
     if (score > prevScore.current && prevScore.current > 0) {
       playDropSound();
+      triggerPlaceHaptic();
+      
+      // Check for milestone achievements
+      for (const milestone of MILESTONE_SCORES) {
+        if (score >= milestone && prevScore.current < milestone && !reachedMilestones.current.has(milestone)) {
+          reachedMilestones.current.add(milestone);
+          setMilestoneScore(milestone);
+          setShowMilestone(true);
+          triggerSuccessHaptic();
+          break;
+        }
+      }
     }
     prevScore.current = score;
   }, [score]);
@@ -372,6 +404,11 @@ export default function GameScreen() {
       playComboSound();
       triggerComboHaptic();
       updateQuestProgress('combo', 1);
+      
+      // Extra celebration for high combos
+      if (combo >= 5) {
+        triggerSuccessHaptic();
+      }
     }
     prevCombo.current = combo;
   }, [combo]);
@@ -455,6 +492,7 @@ export default function GameScreen() {
         // Count cleared lines (this is approximate, actual count is in store)
         setTimeout(() => {
           playClearSound();
+          triggerClearHaptic();
           updateQuestProgress('clear_lines', 1);
         }, 200);
       }
@@ -634,6 +672,13 @@ export default function GameScreen() {
             onClearRowUse={handleClearRowUse}
           />
         </View>
+        
+        {/* Milestone Achievement Popup */}
+        <StreakMilestone
+          score={milestoneScore}
+          visible={showMilestone}
+          onHide={() => setShowMilestone(false)}
+        />
       </View>
 
       {/* Block Selector */}
@@ -907,6 +952,12 @@ export default function GameScreen() {
           </View>
         </View>
       </Modal>
+      
+      {/* Confetti Celebration for High Score */}
+      <ConfettiCelebration 
+        visible={showConfetti} 
+        onComplete={() => setShowConfetti(false)} 
+      />
     </SafeAreaView>
   );
 }
