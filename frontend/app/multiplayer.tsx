@@ -21,7 +21,7 @@ import Constants from 'expo-constants';
 
 const API_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || 
                 process.env.EXPO_PUBLIC_BACKEND_URL || 
-                'https://block-puzzle-preview.preview.emergentagent.com';
+                'https://puzzle-blast-demo.preview.emergentagent.com';
 
 interface Room {
   id: string;

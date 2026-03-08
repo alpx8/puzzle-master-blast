@@ -31,10 +31,10 @@
 - Liste görünümünde modal
 
 ### ⚡ Power-ups Sistemi
-- **Bomba** - 3x3 alan temizle (1 adet başlangıç)
-- **Karıştır** - Yeni bloklar al (1 adet başlangıç)
-- **Ekstra Süre** - +30 saniye (reklam izle)
-- **Satır Temizle** - Bir satırı temizle (reklam izle)
+- **Bomba** - 3x3 alan temizle (1 adet başlangıç) ✅ ÇALIŞIYOR
+- **Karıştır** - Yeni bloklar al (1 adet başlangıç) ✅ ÇALIŞIYOR
+- **Ekstra Süre** - +30 saniye (reklam izle) ✅ ÇALIŞIYOR
+- **Satır Temizle** - Bir satırı temizle (reklam izle) ✅ ÇALIŞIYOR
 
 ### 🏆 Turnuva Modu
 - Haftalık turnuvalar
@@ -44,7 +44,7 @@
 - Kendi sıran vurgulu
 
 ### 📱 Sosyal Özellikler
-- **Paylaş butonu** - Game Over'da skor paylaşımı
+- **Paylaş butonu** - Game Over'da skor paylaşımı ✅ ÇALIŞIYOR
 - Multiplayer lobby
 - Public/Private odalar
 - Oyun geçmişi
@@ -129,4 +129,14 @@ eas submit --platform all
 Tüm temel özellikler uygulandı ve test edildi. 
 Oyun mağazalara yüklenmeye hazır!
 
-Last Updated: Mart 2026
+### Son Güncelleme: Mart 2026
+
+**Bu seansta tamamlanan:**
+- ✅ Power-up oyun içi mantığı (Bomba, Karıştır, Satır Temizle, Ekstra Süre)
+- ✅ Zamanlı Mod göstergesi ve animasyonlu uyarı (son 10 saniye)
+- ✅ Sosyal paylaşım butonu çalışır durumda
+
+**Bekleyen görevler:**
+- 🟡 AdMob production ID'lerinin entegrasyonu (kullanıcı ID'leri sağlayınca)
+- 🟡 Blok yerleştirme kayma animasyonu (P2)
+- 🟡 Tournament backend mantığı (P2)

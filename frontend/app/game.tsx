@@ -66,6 +66,8 @@ export default function GameScreen() {
     userId,
     continueGame,
     generateNewBlocks,
+    useBomb,
+    clearRow,
   } = useGameStore();
 
   const { loadQuests, updateQuestProgress, dailyQuests, claimReward } = useQuestStore();
@@ -139,15 +141,58 @@ export default function GameScreen() {
         useGameStore.setState(state => ({ timeRemaining: state.timeRemaining + 30 }));
         playComboSound();
       } else if (type === 'bomb' || type === 'clearRow') {
-        // Aktif power-up olarak seç
+        // Aktif power-up olarak seç - board'a tıklanmasını bekle
         setActivePowerUp(type);
-        setShowPowerUpModal(false);
       }
     } else {
       // Reklam izle
       setSelectedPowerUp(type);
       setShowPowerUpModal(true);
     }
+  };
+  
+  // Bomb power-up - board üzerinde tıklama ile çalışır
+  const handleBombUse = (row: number, col: number) => {
+    if (activePowerUp !== 'bomb') return;
+    
+    const powerUp = powerUps.find(p => p.id === 'bomb');
+    if (!powerUp || powerUp.count <= 0) {
+      setActivePowerUp(null);
+      return;
+    }
+    
+    // Bomb'u kullan
+    usePowerUp('bomb');
+    const clearedCells = useBomb(row, col);
+    
+    if (clearedCells > 0) {
+      playClearSound();
+      triggerComboHaptic();
+    }
+    
+    setActivePowerUp(null);
+  };
+  
+  // ClearRow power-up - satıra tıklama ile çalışır
+  const handleClearRowUse = (row: number) => {
+    if (activePowerUp !== 'clearRow') return;
+    
+    const powerUp = powerUps.find(p => p.id === 'clearRow');
+    if (!powerUp || powerUp.count <= 0) {
+      setActivePowerUp(null);
+      return;
+    }
+    
+    // ClearRow'u kullan
+    usePowerUp('clearRow');
+    const clearedCells = clearRow(row);
+    
+    if (clearedCells > 0) {
+      playClearSound();
+      triggerComboHaptic();
+    }
+    
+    setActivePowerUp(null);
   };
   
   const handleWatchAdForPowerUp = async () => {
@@ -556,6 +601,23 @@ export default function GameScreen() {
           </TouchableOpacity>
         ))}
       </View>
+      
+      {/* Active Power-up Indicator */}
+      {activePowerUp && (
+        <View style={styles.powerUpIndicator}>
+          <Ionicons 
+            name={activePowerUp === 'bomb' ? 'flame' : 'remove-circle'} 
+            size={16} 
+            color={activePowerUp === 'bomb' ? '#FF5F1F' : '#39FF14'} 
+          />
+          <Text style={styles.powerUpIndicatorText}>
+            {activePowerUp === 'bomb' ? 'Bomba için tahtaya dokun!' : 'Temizlemek için satıra dokun!'}
+          </Text>
+          <TouchableOpacity onPress={() => setActivePowerUp(null)}>
+            <Ionicons name="close-circle" size={18} color="#FF6B6B" />
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Game Board */}
       <View style={styles.boardWrapper}>
@@ -567,6 +629,9 @@ export default function GameScreen() {
           <GameBoard
             highlightCells={highlightCells}
             isValidPlacement={isValidPlacement}
+            activePowerUp={activePowerUp === 'bomb' || activePowerUp === 'clearRow' ? activePowerUp : null}
+            onBombUse={handleBombUse}
+            onClearRowUse={handleClearRowUse}
           />
         </View>
       </View>
@@ -1386,5 +1451,23 @@ const styles = StyleSheet.create({
   shareButton: {
     backgroundColor: '#1DA1F2',
     marginTop: 8,
+  },
+  // Power-up Indicator
+  powerUpIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    borderRadius: 20,
+    gap: 8,
+    marginBottom: 4,
+  },
+  powerUpIndicatorText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

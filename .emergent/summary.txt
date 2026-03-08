@@ -1,77 +1,82 @@
-<analysis>
-<original_problem_statement>
+<analysis>**original_problem_statement:**
 The user wants to build a mobile game called Puzzle Master Blast, similar to Block Blast.
 
 **PRODUCT REQUIREMENTS:**
--   **Core Gameplay:** A block-placing puzzle game on a 10x10 grid. Clearing full rows or columns earns points. The game ends when a player can no longer place any of the three offered blocks.
--   **Visuals & Effects:**
-    -   Blocks should be bright, colorful, and have a 3D effect.
-    -   A falling from above block placement animation.
-    -   Exciting row/column clear animations.
-    -   Pixel-art style text (COMBO, GREAT, WOW) for combos.
-    -   A Game Over screen with appropriate visuals and sound.
-    -   A New High Score celebration with unique visuals and sound.
--   **Audio & Haptics:**
-    -   Sound effects for block placement, clearing lines, game over, and new high score.
-    -   A mute button to disable all sounds.
-    -   Vibration on combo clears.
--   **Multiplayer Mode (as specified by user in chat 398):**
-    -   A lobby with separate lists for public and password-protected rooms.
-    -   Users can create new rooms, either public or private (with a password).
-    -   Gameplay is real-time and simultaneous for both players in a room.
-    -   When one player runs out of moves, their game ends, and they are returned to the menu. The other player continues until they also run out of moves.
-    -   A Game History or Pending Games section where players can see the final results (Win/Loss) of their matches.
--   **Features:**
-    -   A leaderboard for highest scores.
-    -   A system for random daily quests (UI is present, full implementation is pending).
-</original_problem_statement>
+-   **Core Gameplay:** A block-placing puzzle game on a grid. Clearing full rows or columns earns points.
+-   **Visuals & Effects:** Bright, colorful, 3D-effect blocks with placement/clear animations and pixel-art combo text.
+-   **Multiplayer Mode:** Real-time gameplay in public or private (password-protected) rooms with a lobby and game history.
+-   **Monetization & Engagement Features:**
+    -   **Ad Integration (AdMob):** Banner, Interstitial, and Rewarded Video ads.
+    -   **Rewarded Actions:** Allow players to watch an ad to continue a game after running out of moves.
+    -   **In-Game Economy:** A coin-based system where players earn coins through daily rewards and can spend them.
+    -   **Skins/Themes Store:** A shop where players can unlock new block appearances using coins or by watching ads.
+    -   **Power-ups:** In-game abilities like Bomb and Shuffle that can be used a limited number of times.
+    -   **Daily Login Rewards:** A system to reward players with coins for logging in daily, with a streak bonus.
+-   **Game Modes & Features:**
+    -   A leaderboard for high scores.
+    -   **New Game Modes:** In addition to Classic, add a Timed Mode and a Tournament Mode.
+    -   **Social Sharing:** A button to share high scores on social media.
+    -   **User Profile:** A basic profile showing player level, XP, and high score.
+-   **UI/UX:** A sleek, modern, and polished design with smooth animations and intuitive navigation.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-A nearly complete and polished version of the Puzzle Master Blast game. The single-player mode is fully functional with all requested visual and audio effects, including vibrant blocks, game over/high score logic, and pixel-art combo text. The multiplayer feature is substantially built out: the backend supports creating/joining public and private (password-protected) rooms, and the frontend features a lobby with tabs for Public Rooms, Private Rooms, and Game History. The real-time game room () has been implemented to handle game state synchronization via Socket.IO. The app is stable and the user has approved the current feature set.
+A highly polished, nearly feature-complete version of the Puzzle Master Blast game. The application includes a redesigned home screen with four game modes (Classic, Timed, Multiplayer, Tournament), a comprehensive monetization system, and significant UI/UX enhancements. All new features like the coin economy, skins store, and daily rewards are fully implemented on the client-side. The backend supports the original multiplayer and leaderboard functionalities. The project is pending the final integration of the user's production AdMob IDs.
 
 **Last working item**:
--   Last item agent was working: The user, satisfied with the game's features, asked for instructions on how to publish the app to the Google Play Store and Apple App Store, and how to integrate ads. The agent began this task by updating the  file with necessary configurations for store submission and then started preparing a detailed markdown guide.
+-   Last item agent was working: Integrating the user-provided AdMob IDs for Android and iOS into the application's configuration files to make it ready for a production build. The agent successfully updated  with the new Ad Unit IDs. The next step was to update  with the App IDs.
 -   Status: IN PROGRESS
--   Agent Testing Done: N/A
--   Which testing method agent to use? N/A (This is a documentation task).
--   User Testing Done: Y (User has approved the state of the app before this request).
+-   Agent Testing Done: N
+-   Which testing method agent to use? Manual verification. The agent cannot test native AdMob functionality in the preview environment. The next step is to finalize the file edits and provide the user with instructions for building the native application, as they will be the one to test it on a real device.
+-   User Testing Done: N
 
 **All Pending/In progress Issue list**:
--   There are no user-reported bugs or issues at this time. The project has moved into the post-development phase.
+-   **Issue 1 (P0): Finalize AdMob Production ID Integration**
+    -   **Description:** The user has provided all necessary AdMob IDs (App ID, Banner, Interstitial, Rewarded). The agent has partially integrated them. The task is to complete this integration.
+    -   **Attempted fixes:** The agent successfully updated .
+    -   **Next debug checklist:**
+        1.  Open .
+        2.  Locate the  section for .
+        3.  Insert the user's Android and iOS App IDs into the configuration.
+        4.  Verify all IDs provided by the user have been correctly placed in  and .
+    -   **Why fix this issue and what will be achieved with the fix?** This is the final step required to link the application to the user's AdMob account, enabling monetization in the final published app.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Neither. The agent should provide build instructions to the user.
 
 **In progress Task List**:
--   **Task 1 (P0): Complete the App Store and Monetization Guide**
-    -   **Where to resume:** The agent was about to create a markdown file containing a detailed guide for the user.  has already been updated. The next step is to use  to create .
-    -   **What will be achieved with this?** This will provide the user with the necessary knowledge to independently build the app binaries, submit them to the app stores, and implement an ad strategy.
+-   **Task 1 (P0): Guide User for App Publication**
+    -   **Description:** After integrating the AdMob IDs, provide the user with a clear, final set of instructions for building the app using EAS Build and submitting it to the Google Play Store and Apple App Store.
+    -   **Where to resume:** The agent has already provided a detailed plan. This plan should be re-summarized and presented to the user as the final step.
+    -   **What will be achieved with this?** The user will be fully equipped to take the completed codebase and publish it independently.
     -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** N/A
-    -   **Blocked on something:** None.
+    -   **Blocked on something:** Finalize AdMob Production ID Integration issue.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **(P0) Full Multiplayer End-to-End Test:** While the components are built, a true two-player session has not been simulated or tested. This is critical to ensure the real-time logic, game state synchronization, and win/loss conditions in  and  work as expected.
-    -   **(P1) Ad Integration:** Based on the guide being created, implement a basic ad framework (e.g., using ) into the app. This would likely involve adding banner ads or interstitial ads between games.
-
+    -   **(P0) Implement Power-up Logic:** The UI and store state for Power-ups (Bomb, Shuffle) are complete. The next step is to implement their actual in-game functionality within  and .
+    -   **(P1) Implement Timed Mode Logic:** The home screen has a button for Timed Mode, but it currently launches the classic game. The logic for a timed session needs to be added to the game state.
+    -   **(P1) Implement Social Sharing:** The Share button on the game over screen is present. The  function needs to be implemented using  to allow users to share their scores.
+    -   **(P2) Implement Block Placement Animation:** The user requested a slick sliding effect when blocks are placed. This visual polish is pending.
 -   **Future Tasks:**
-    -   **(P1) Daily Quests Backend Implementation:** The UI for daily quests exists on the home screen, but the backend logic to generate, assign, track, and reward quests for users is not implemented. This would require new endpoints in  and new collections in the database.
-    -   **(P2) User Leveling/XP System:** The original PRD mentioned a user leveling system. This is not yet implemented. It would involve tracking XP earned from games and quests and associating a level with each user.
-    -   **(P2) Score Multipliers for Combos:** The game currently displays combo text (e.g., GREAT, WOW), but it's not confirmed if the scoring logic in  or  actually applies score multipliers for these consecutive clears. This should be implemented to enhance the scoring system.
-    -   **(P3) User Authentication:** Currently, multiplayer identity is transient. A full user authentication system (e.g., email/password or social login) would be needed to persist user profiles, levels, and game history across sessions and devices.
+    -   **(P1) Backend for Tournaments:** The tournament UI is complete, but the backend logic to manage tournament start/end times, leaderboards, and prize distribution is needed in .
+    -   **(P2) Backend for User State:** Move the user's economy (coins, skins, power-ups) from client-side  to the MongoDB database to enable persistence and cross-device syncing. This will require new API endpoints.
+    -   **(P2) Daily Quests Backend:** Implement the backend logic to generate, track, and reward daily quests.
+    -   **(P3) Full User Authentication:** Implement a persistent user authentication system (e.g., email/password) to securely manage user data.
 
 **Completed work in this session**
 -   **Recently completed:**
-    -   **Full Multiplayer System:** Implemented public/private (password-protected) rooms, a lobby UI, and real-time gameplay logic. (DONE)
-    -   **Leaderboard Bug Fix:** Resolved an issue where the leaderboard would not load due to a frontend/backend data key mismatch ( vs. ). (DONE)
-    -   **Game Over / High Score Logic:** Implemented correct logic and UI for Game Over and New High Score screens, including sound effects and custom icons. (DONE)
-    -   **Pixel-Art Combo Text:** Replaced the previous neon text with a custom-built, animated, pixel-art style text renderer for combos. (DONE)
-    -   **Block Visuals Enhancement:** Made blocks brighter, more colorful, and fill the grid cells more completely for a better visual appeal. (DONE)
-    -   **UI/Layout Fixes:** Made the home screen and game screen non-scrollable to fit mobile viewports. Moved the Daily Quests section into a modal. (DONE)
-    -   **Sound Effects:** Added and fixed sound effects for game over and new high scores. (DONE)
+    -   **Full Monetization Suite:** Implemented UIs and client-side logic for a Daily Login Reward system, a Skins store to customize blocks, and a Continue Game feature using rewarded ads. (DONE)
+    -   **New Game Modes & UI Overhaul:** Completely redesigned the home screen to feature four game modes (Classic, Timed, Multiplayer, Tournament) and added a functional UI for the new Tournament screen. (DONE)
+    -   **Power-ups System:** Added a UI bar in the game screen for Power-ups (Bomb, Shuffle) and integrated the state management for them. (DONE)
+    -   **Visual Enhancements:** Redesigned game blocks to be more vibrant and 3D. Fixed the Skins Modal, which now correctly displays all available themes. (DONE)
+    -   **Web Preview Stability:** Resolved numerous crashes in the web preview by creating mock services for the  library, allowing for continued development. (DONE)
+    -   **Documentation:** Created comprehensive guides (, ) for monetization and publishing. (DONE)
+    -   **AdMob ID Integration (Partial):** Began integrating the user's production AdMob keys into the configuration files. (IN PROGRESS)
 
 **Earlier issues found/mentioned but not fixed**
--   None. All user-reported issues from this session have been addressed.
+-   **Block placement sliding effect:** The user requested a more fluid sliding animation for when a block is placed on the board. This was acknowledged but not implemented in favor of larger features.
 
 **Known issue recurrence from previous fork**
 -   N/A
@@ -80,71 +85,67 @@ A nearly complete and polished version of the Puzzle Master Blast game. The sing
 
 
 **Key Technical Concepts**
--   **Frontend:** React Native, Expo, Expo Router, React Native Reanimated, Zustand (for state management), .
--   **Backend:** Python, FastAPI, , Uvicorn.
--   **Database:** MongoDB.
--   **Architecture:** Full-stack mobile application with a real-time multiplayer component using WebSockets.
+-   **Frontend:** React Native, Expo, Zustand, .
+-   **Backend:** Python, FastAPI, .
+-   **State Management:** Heavy reliance on a single Zustand store () persisted to  for all new features (coins, skins, power-ups, daily rewards).
+-   **Monetization:**  for Banner, Interstitial, and Rewarded ads. The implementation is carefully wrapped with  checks to prevent crashes in the web preview.
 
 **key DB schema**
--   : { , ,  }
--   : { , , ,  }
--   : { , , : [str], : str (optional), : str ('waiting', 'playing', 'finished') }
--   : (Implicitly needed for game history) { , , , ,  }
+No database changes were made. The following fields should be added to the  collection to support new features on the backend in the future:
+-   : { ..., **coins**: int, **unlocked_skins**: [str], **power_ups**: dict, **last_daily_reward_claim**: date, **daily_reward_streak**: int }
 
 **changes in tech stack**
--   No fundamental changes, but Zustand () has become central to managing complex game state.
+-   **Added:**  for monetization.
 
 **All files of reference**
--   : Just updated with store submission configurations (package name, version codes).
--   : To be created. This is the user's immediate request.
--   : Contains the new multiplayer lobby UI.
--   : Contains the real-time multiplayer gameplay logic. It is complex and needs end-to-end testing.
--   : Contains all new and updated endpoints and Socket.IO events for multiplayer functionality.
+-   : Contains the AdMob Ad Unit IDs provided by the user.
+-   : Requires final update with the user's AdMob App IDs.
+-   : Central hub for all client-side game and user state.
+-   : The completely redesigned home screen.
+-   : The main game screen, containing logic for power-ups and the continue game modal.
+-   : The user's primary guide to publishing and monetizing.
 
 **Areas that need refactoring**:
--   The multiplayer logic in  and the corresponding event handlers in  are complex and were recently written. They would benefit from a thorough review and possibly simplification after end-to-end testing reveals any race conditions or bugs.
+-   **Zustand Store:**  has become a monolith managing game logic, user profile, and UI state. It should be broken down into separate, domain-specific stores (e.g., , ).
+-   **Large Components:**  and  have grown very large and complex. They should be refactored into smaller, reusable child components to improve maintainability.
+-   **Client-Side State:** The entire economy (coins, skins) is client-side. This is insecure and does not support multi-device use. This data should be moved to the backend.
 
 **key api endpoints**
--   **REST:**
-    -   : GET to fetch leaderboard data.
-    -   : GET to list public/private rooms.
-    -   : POST to create a new room.
-    -   : GET to fetch a user's game history.
--   **Socket.IO Events:**
-    -   : {,  (optional)}
-    -   : {}
-    -   : Sent when a player is ready to start.
-    -   : Broadcasts game state between players.
-    -   : Sent when a player can no longer make a move.
-    -   : Declares a winner after all players are finished.
+-   No new backend API endpoints were created. All new features are client-side only.
 
 **Critical Info for New Agent**
--   The user's immediate priority is not new features, but guidance on publishing and monetizing the app. You must complete the guide started by the previous agent.
--   The multiplayer functionality, while feature-complete on paper, is the most complex and least tested part of the application. The most critical next step after providing the guide is to perform a full end-to-end test of the multiplayer flow.
--   The project has experienced frequent ngrok tunnel or Expo tunnel fell errors. If the preview becomes unresponsive, restarting the expo service (expo: ERROR (not running)
-expo: started) is the standard fix.
+-   The user's immediate and only priority is to **publish the app**. Your first task is to finalize the AdMob ID integration in  and then clearly re-state the build/publish instructions for the user.
+-   **AdMob only works on Native:** The AdMob features will **not** work in the web preview. The previous agent has implemented mocks to prevent crashes. Do not attempt to fix ad-related errors on the web. The final test must be done by the user on a native build.
+-   **Client-Side Logic:** Be aware that all new features (coins, skins, power-ups, daily rewards) are managed entirely on the client-side via . They are not secure and not synced to the backend. Future work should focus on migrating this state to the database.
 
-**documents created in this job**
--   None yet, but  is the next file to be created.
+**documents and test reports created in this job**
+-   
+-   
+-   
 
 **Last 10 User Messages and any pending HUMAN messages**
--   **[Chat 464]:** User is happy with the app's state (no problem seems to be visible) and asks how to turn it into a mobile app, list it on stores, and add ads. **Status: In Progress.**
--   **[Chat 425]:** User asks for the full implementation of the multiplayer logic and for the agent to prepare the app for mobile listing. **Status: Completed.**
--   **[Chat 398]:** User provides a detailed specification for the desired multiplayer functionality (public/private rooms, real-time play, game history). **Status: Completed.**
--   **[Chat 349]:** User reports that the leaderboard is still showing an error and the multiplayer room system is not working. **Status: Completed.**
--   **[Chat 316]:** User reports an error on the leaderboard page, asks for blocks to be made more eye-catching, and to then move on to the online mode. **Status: Completed.**
--   **[Chat 297]:** User reports that game-over sounds are not playing and the emojis in the game-over modal look bad. **Status: Completed.**
--   **[Chat 276]:** User reports a bug where the game always shows New High Score, even when it's not a record. **Status: Completed.**
--   **[Chat 211]:** User confirms the pixel-art combo text is good and requests Game Over/New High Score logic, brighter blocks, and a fix for grid shifting. **Status: Completed.**
--   **[Chat 198]:** User reports the blue stuff around the combo text is still present and requests a new pixel-art block style for the text. **Status: Completed.**
--   **[Chat 164]:** User confirms scrolling and quest modal are fixed but the combo text is still not right. **Status: Completed.**
+1.  **User (LATEST):** Provided their AdMob IDs for integration. **Status: In Progress.**
+2.  **User:** Asked for a concise, step-by-step plan for AdMob setup and publishing. **Status: Completed.**
+3.  **User:** Requested the agent to finish all game features first before adding AdMob. **Status: Completed.**
+4.  **User:** Expressed excitement and gave the agent creative freedom to implement all suggested features (power-ups, skins, new design) to make the game fly. **Status: Completed.**
+5.  **User:** Requested to test the Continue Game feature. **Status: Completed.**
+6.  **User:** Asked for strategies to maximize revenue. **Status: Completed.**
+7.  **User:** Requested the agent to prepare everything for monetization and store submission, and to provide instructions. **Status: Completed.**
+8.  **User:** Confirmed the agent should proceed with implementing the continue with ad feature and enhance the design. **Status: Completed.**
+9.  **User:** Asked the agent to choose the most profitable ad network for Turkey and integrate it. **Status: Completed.**
+10. **User:** Asked for guidance on publishing the app to the app stores and integrating ads. **Status: Completed.**
 
 **Project Health Check:**
 -   **Broken:** None.
--   **Mocked:** The Daily Quests feature is UI-only. The backend logic is missing.
+-   **Mocked:**
+    -   All AdMob functionality is mocked for the web preview.
+    -   The functional logic for using Power-ups.
+    -   The logic for Timed Mode.
+    -   The function for social sharing.
+    -   All backend logic for the Tournament mode.
 
 **3rd Party Integrations**
--   N/A
+-   **Google AdMob:** Integration in progress using . Requires final configuration with user-provided production keys.
 
 **Testing status**
 -   Testing agent used after significant changes: NO
@@ -156,8 +157,5 @@ expo: started) is the standard fix.
 -   N/A
 
 **What agent forgot to execute**
--   **Score Multipliers:** The original PRD mentioned a combo system with score multipliers. While the UI for combos exists, it's not confirmed if the scoring logic actually reflects these multipliers.
--   **Full Daily Quest Implementation:** The agent created the UI for daily quests but did not implement the backend logic to generate, track, or reward them.
--   **User Leveling/XP System:** This was part of the original PRD but has not been implemented.
-
-</analysis>
+-   The core logic for the features whose UI was built is still pending: using power-ups, the timer for Timed Mode, and the sharing mechanism for the social share button.
+-   The user's request for a sliding effect for block placement was not implemented.</analysis>

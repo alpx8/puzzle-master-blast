@@ -37,7 +37,7 @@
       },
       "config": {
         "usesNonExemptEncryption": false,
-        "googleMobileAdsAppId": "ca-app-pub-XXXXXXXXXXXXXXXX~ZZZZZZZZZZ"
+        "googleMobileAdsAppId": "ca-app-pub-1839067347385099~5884338608"
       }
     },
     "android": {
@@ -55,7 +55,7 @@
         "com.google.android.gms.permission.AD_ID"
       ],
       "config": {
-        "googleMobileAdsAppId": "ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY"
+        "googleMobileAdsAppId": "ca-app-pub-1839067347385099~5884338608"
       }
     },
     "web": {
@@ -72,6 +72,33 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#0a0a1a"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static",
+            "deploymentTarget": "15.1"
+          },
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "minSdkVersion": 24
+          }
+        }
+      ],
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "Bu uygulama, size daha alakalı reklamlar göstermek için izleme kullanır"
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-1839067347385099~5884338608",
+          "iosAppId": "ca-app-pub-1839067347385099~5884338608"
         }
       ]
     ],

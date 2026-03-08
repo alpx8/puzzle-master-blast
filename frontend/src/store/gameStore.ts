@@ -92,6 +92,10 @@ export interface GameActions {
   updateTimer: () => void;
   continueGame: () => void; // NEW: Continue after watching ad
   
+  // Power-up actions
+  useBomb: (centerRow: number, centerCol: number) => number; // Returns cells cleared
+  clearRow: (rowIndex: number) => number; // Returns cells cleared
+  
   // User actions
   setUsername: (name: string) => void;
   loadUserData: () => Promise<void>;
@@ -487,4 +491,71 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   },
 
   resetCombo: () => set({ combo: 0 }),
+
+  // Power-up: Bomb - Clear 3x3 area around center
+  useBomb: (centerRow, centerCol) => {
+    const { board, score, highScore } = get();
+    const newBoard = board.map(row => [...row]);
+    let cellsCleared = 0;
+    
+    // Clear 3x3 area around center
+    for (let r = centerRow - 1; r <= centerRow + 1; r++) {
+      for (let c = centerCol - 1; c <= centerCol + 1; c++) {
+        if (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
+          if (newBoard[r][c] !== null) {
+            newBoard[r][c] = null;
+            cellsCleared++;
+          }
+        }
+      }
+    }
+    
+    // Calculate score bonus for cleared cells
+    const bonusScore = cellsCleared * 5;
+    const newScore = score + bonusScore;
+    
+    set({
+      board: newBoard,
+      score: newScore,
+      highScore: Math.max(newScore, highScore),
+    });
+    
+    // Add XP for using power-up
+    get().addXP(cellsCleared * 2);
+    
+    return cellsCleared;
+  },
+
+  // Power-up: Clear entire row
+  clearRow: (rowIndex) => {
+    const { board, score, highScore } = get();
+    
+    if (rowIndex < 0 || rowIndex >= BOARD_SIZE) return 0;
+    
+    const newBoard = board.map(row => [...row]);
+    let cellsCleared = 0;
+    
+    // Clear the entire row
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (newBoard[rowIndex][c] !== null) {
+        newBoard[rowIndex][c] = null;
+        cellsCleared++;
+      }
+    }
+    
+    // Calculate score bonus
+    const bonusScore = cellsCleared * 3;
+    const newScore = score + bonusScore;
+    
+    set({
+      board: newBoard,
+      score: newScore,
+      highScore: Math.max(newScore, highScore),
+    });
+    
+    // Add XP
+    get().addXP(cellsCleared * 2);
+    
+    return cellsCleared;
+  },
 }));

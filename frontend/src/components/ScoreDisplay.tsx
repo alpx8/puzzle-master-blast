@@ -1,10 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useGameStore } from '@/src/store/gameStore';
 
 export const ScoreDisplay: React.FC = () => {
   const { score, highScore, combo, level, xp, xpToNextLevel, gameMode, timeRemaining } = useGameStore();
+  const timerPulse = useRef(new Animated.Value(1)).current;
+  const timerColor = useRef(new Animated.Value(0)).current;
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -12,7 +14,31 @@ export const ScoreDisplay: React.FC = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Timer warning animation
+  useEffect(() => {
+    if (gameMode === 'timed' && timeRemaining <= 10 && timeRemaining > 0) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(timerPulse, {
+            toValue: 1.15,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(timerPulse, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      timerPulse.setValue(1);
+    }
+  }, [timeRemaining, gameMode]);
+
   const xpProgress = (xp / xpToNextLevel) * 100;
+  const isUrgent = timeRemaining <= 10;
+  const isCritical = timeRemaining <= 5;
 
   return (
     <View style={styles.container}>
@@ -31,13 +57,26 @@ export const ScoreDisplay: React.FC = () => {
         </View>
 
         {gameMode === 'timed' && (
-          <View style={styles.scoreItem}>
-            <Ionicons name="time" size={20} color="#4ECDC4" />
+          <Animated.View style={[
+            styles.scoreItem, 
+            styles.timerItem,
+            isUrgent && styles.timerUrgent,
+            { transform: [{ scale: timerPulse }] }
+          ]}>
+            <Ionicons 
+              name="time" 
+              size={20} 
+              color={isCritical ? '#FF3366' : isUrgent ? '#FF6B6B' : '#4ECDC4'} 
+            />
             <Text style={styles.scoreLabel}>Süre</Text>
-            <Text style={[styles.scoreValue, timeRemaining <= 30 && styles.urgentTime]}>
+            <Text style={[
+              styles.scoreValue, 
+              isUrgent && styles.urgentTime,
+              isCritical && styles.criticalTime
+            ]}>
               {formatTime(timeRemaining)}
             </Text>
-          </View>
+          </Animated.View>
         )}
       </View>
 
@@ -96,6 +135,20 @@ const styles = StyleSheet.create({
   },
   urgentTime: {
     color: '#FF6B6B',
+  },
+  criticalTime: {
+    color: '#FF3366',
+    fontWeight: '900',
+  },
+  timerItem: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  timerUrgent: {
+    backgroundColor: 'rgba(255, 107, 107, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 107, 0.4)',
   },
   comboContainer: {
     flexDirection: 'row',

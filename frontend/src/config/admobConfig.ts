@@ -3,7 +3,7 @@
 
 import { Platform } from 'react-native';
 
-// Test Ad Unit IDs (Development)
+// Test Ad Unit IDs (Development - Web'de kullanılır)
 const TEST_IDS = {
   BANNER: 'ca-app-pub-3940256099942544/6300978111',
   INTERSTITIAL: 'ca-app-pub-3940256099942544/1033173712',
@@ -12,38 +12,46 @@ const TEST_IDS = {
   APP_OPEN: 'ca-app-pub-3940256099942544/9257395921',
 };
 
-// Production Ad Unit IDs - Replace with your actual IDs from AdMob Console
+// Production Ad Unit IDs - GERÇEK ID'LER
 const PRODUCTION_IDS = {
   android: {
-    APP_ID: 'ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY', // Your Android App ID
-    BANNER: 'ca-app-pub-XXXXXXXXXXXXXXXX/BANNER_ID',
-    INTERSTITIAL: 'ca-app-pub-XXXXXXXXXXXXXXXX/INTERSTITIAL_ID',
+    APP_ID: 'ca-app-pub-1839067347385099~5884338608',
+    BANNER: 'ca-app-pub-1839067347385099/9432013010',
+    INTERSTITIAL: 'ca-app-pub-1839067347385099/9240441320',
+    REWARDED: 'ca-app-pub-1839067347385099/2216556334',
+    REWARDED_INTERSTITIAL: 'ca-app-pub-1839067347385099/9248868543',
+    NATIVE: 'ca-app-pub-1839067347385099/7792792007',
+    APP_OPEN: 'ca-app-pub-1839067347385099/5109624621',
   },
   ios: {
-    APP_ID: 'ca-app-pub-XXXXXXXXXXXXXXXX~ZZZZZZZZZZ', // Your iOS App ID
-    BANNER: 'ca-app-pub-XXXXXXXXXXXXXXXX/BANNER_ID',
-    INTERSTITIAL: 'ca-app-pub-XXXXXXXXXXXXXXXX/INTERSTITIAL_ID',
+    // iOS için aynı ID'leri kullanıyoruz - iOS hesabı açıldığında güncellenecek
+    APP_ID: 'ca-app-pub-1839067347385099~5884338608',
+    BANNER: 'ca-app-pub-1839067347385099/9432013010',
+    INTERSTITIAL: 'ca-app-pub-1839067347385099/9240441320',
+    REWARDED: 'ca-app-pub-1839067347385099/2216556334',
+    REWARDED_INTERSTITIAL: 'ca-app-pub-1839067347385099/9248868543',
+    NATIVE: 'ca-app-pub-1839067347385099/7792792007',
+    APP_OPEN: 'ca-app-pub-1839067347385099/5109624621',
   },
 };
 
 // Check if we're in development mode
 const isDev = __DEV__;
 
-export const getAdUnitId = (type: 'BANNER' | 'INTERSTITIAL' | 'REWARDED' | 'APP_OPEN'): string => {
-  if (isDev) {
-    return TEST_IDS[type];
+export const getAdUnitId = (type: 'BANNER' | 'INTERSTITIAL' | 'REWARDED' | 'REWARDED_INTERSTITIAL' | 'APP_OPEN'): string => {
+  // Production'da gerçek ID'leri kullan
+  if (!isDev) {
+    const platformIds = Platform.OS === 'ios' ? PRODUCTION_IDS.ios : PRODUCTION_IDS.android;
+    return platformIds[type] || TEST_IDS[type];
   }
   
+  // Development'ta test ID'lerini kullan
+  return TEST_IDS[type];
+};
+
+export const getAppId = (): string => {
   const platformIds = Platform.OS === 'ios' ? PRODUCTION_IDS.ios : PRODUCTION_IDS.android;
-  
-  switch (type) {
-    case 'BANNER':
-      return platformIds.BANNER;
-    case 'INTERSTITIAL':
-      return platformIds.INTERSTITIAL;
-    default:
-      return TEST_IDS[type]; // Fallback to test IDs for unsupported types
-  }
+  return platformIds.APP_ID;
 };
 
 export const AdMobConfig = {
@@ -73,6 +81,8 @@ export const AdMobConfig = {
 
 export default {
   getAdUnitId,
+  getAppId,
   AdMobConfig,
   isDev,
+  PRODUCTION_IDS,
 };

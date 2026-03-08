@@ -5,6 +5,7 @@ import {
   Dimensions,
   Animated,
   Text,
+  TouchableOpacity,
 } from 'react-native';
 import { useGameStore } from '@/src/store/gameStore';
 
@@ -242,11 +243,17 @@ interface ParticleEffect {
 interface GameBoardProps {
   highlightCells?: { row: number; col: number }[];
   isValidPlacement?: boolean;
+  activePowerUp?: 'bomb' | 'clearRow' | null;
+  onBombUse?: (row: number, col: number) => void;
+  onClearRowUse?: (row: number) => void;
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({ 
   highlightCells = [], 
   isValidPlacement = false,
+  activePowerUp = null,
+  onBombUse,
+  onClearRowUse,
 }) => {
   const { board, boardSize, combo } = useGameStore();
   const cellSize = BOARD_WIDTH / boardSize;
@@ -264,6 +271,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const highlightSet = new Set(
     highlightCells.map(c => `${c.row}-${c.col}`)
   );
+
+  // Power-up cell tapping handler
+  const handleCellPress = (rowIndex: number, colIndex: number) => {
+    if (activePowerUp === 'bomb' && onBombUse) {
+      onBombUse(rowIndex, colIndex);
+    } else if (activePowerUp === 'clearRow' && onClearRowUse) {
+      onClearRowUse(rowIndex);
+    }
+  };
 
   // Detect combo changes for pixel popup
   useEffect(() => {
@@ -434,16 +450,21 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     const isHighlighted = highlightSet.has(key);
     const flashColor = flashingCells.get(key);
     const isFalling = fallingCells.some(f => f.row === rowIndex && f.col === colIndex);
+    
+    // Power-up targeting highlights
+    const isPowerUpTarget = activePowerUp === 'bomb' || activePowerUp === 'clearRow';
+    const isBombZone = activePowerUp === 'bomb';
+    const isClearRowTarget = activePowerUp === 'clearRow';
 
-    return (
+    const cellContent = (
       <View
-        key={colIndex}
         style={[
           styles.cell,
           {
             width: cellSize,
             height: cellSize,
           },
+          isPowerUpTarget && styles.powerUpTargetCell,
         ]}
       >
         {cell ? (
@@ -458,6 +479,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 styles.filledCell,
                 { backgroundColor: flashColor || cell },
                 flashColor && styles.flashingCell,
+                isBombZone && styles.bombTargetCell,
+                isClearRowTarget && styles.clearRowTargetCell,
               ]}
             >
               <View style={[styles.cellHighlight, { backgroundColor: lightenColor(flashColor || cell, 30) }]} />
@@ -473,11 +496,28 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   ? 'rgba(76, 175, 80, 0.4)' 
                   : 'rgba(244, 67, 54, 0.4)',
               },
+              isBombZone && styles.bombEmptyTargetCell,
+              isClearRowTarget && styles.clearRowEmptyTargetCell,
             ]} 
           />
         )}
       </View>
     );
+
+    // If power-up is active, wrap in touchable
+    if (isPowerUpTarget) {
+      return (
+        <TouchableOpacity
+          key={colIndex}
+          onPress={() => handleCellPress(rowIndex, colIndex)}
+          activeOpacity={0.7}
+        >
+          {cellContent}
+        </TouchableOpacity>
+      );
+    }
+
+    return <View key={colIndex}>{cellContent}</View>;
   };
 
   return (
@@ -999,6 +1039,41 @@ const styles = StyleSheet.create({
   flashingCell: {
     borderWidth: 2,
     borderColor: '#fff',
+  },
+  powerUpTargetCell: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 95, 31, 0.4)',
+    borderRadius: 4,
+  },
+  bombTargetCell: {
+    borderWidth: 2,
+    borderColor: '#FF5F1F',
+    shadowColor: '#FF5F1F',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  bombEmptyTargetCell: {
+    backgroundColor: 'rgba(255, 95, 31, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 95, 31, 0.4)',
+    borderStyle: 'dashed',
+  },
+  clearRowTargetCell: {
+    borderWidth: 2,
+    borderColor: '#39FF14',
+    shadowColor: '#39FF14',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  clearRowEmptyTargetCell: {
+    backgroundColor: 'rgba(57, 255, 20, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(57, 255, 20, 0.4)',
+    borderStyle: 'dashed',
   },
   cellHighlight: {
     position: 'absolute',
