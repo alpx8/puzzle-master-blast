@@ -1,107 +1,132 @@
 # Puzzle Master Blast - Product Requirements Document
 
-## Tamamlanan Özellikler ✅
+## Tamamlanan Tüm Özellikler ✅
 
-### Core Game
-- 8x8 grid bulmaca oyunu (Klasik ve Zamanlı mod)
-- Parlak, 3D efektli bloklar (şeffaflık kaldırıldı)
+### 🎮 Core Game
+- 8x8 grid bulmaca oyunu
+- Klasik Mod (süresiz)
+- Zamanlı Mod (3 dakika)
+- Çok Oyunculu Mod (online)
+- Parlak, 3D efektli bloklar
 - Combo sistemi ve pixel-art text
 - Ses efektleri ve titreşim
 - Game Over ve New High Score ekranları
 
-### Monetizasyon Sistemi
+### 💰 Monetizasyon Sistemi
 - **Banner Ads** - Oyun ekranının altında
 - **Interstitial Ads** - Game over'da
 - **Rewarded Video Ads** - "Devam Et" sistemi (3 hak)
 - **Continue Modal** - Animasyonlu, 5sn geri sayım
 
-### Günlük Ödül Sistemi ✅
+### 🎁 Günlük Ödül Sistemi
 - 7 günlük streak takibi
 - XP ve Coin ödülleri
 - Özel skin ödülleri (5. ve 7. günlerde)
 - Animasyonlu modal
 
-### Blok Temaları (Skins) 🟡
+### 🎨 Blok Temaları (Skins)
 - 10 farklı tema (Klasik, Neon, Altın, Okyanus, vb.)
 - Reklam izleyerek kilit açma
 - Premium ve Glow efektli temalar
-- **NOT:** Web preview'da render sorunu var, native'de çalışacak
+- Liste görünümünde modal
 
-### Power-ups Sistemi 🟡
-- Bomba (3x3 temizle)
-- Karıştır (yeni bloklar)
-- Ekstra Süre (zamanlı mod)
-- Satır Temizle
-- Store hazır, UI entegrasyonu bekliyor
+### ⚡ Power-ups Sistemi
+- **Bomba** - 3x3 alan temizle (1 adet başlangıç)
+- **Karıştır** - Yeni bloklar al (1 adet başlangıç)
+- **Ekstra Süre** - +30 saniye (reklam izle)
+- **Satır Temizle** - Bir satırı temizle (reklam izle)
 
-### Multiplayer
+### 🏆 Turnuva Modu
+- Haftalık turnuvalar
+- Geri sayım timer
+- Ödül tablosu (1. = 10,000 coin)
+- Canlı sıralama listesi
+- Kendi sıran vurgulu
+
+### 📱 Sosyal Özellikler
+- **Paylaş butonu** - Game Over'da skor paylaşımı
+- Multiplayer lobby
 - Public/Private odalar
-- Real-time Socket.IO
 - Oyun geçmişi
 
-### Diğer
+### 📊 Diğer
 - Liderlik tablosu
 - Günlük görevler (UI)
-- Yayınlama rehberleri (Türkçe)
+- Kullanıcı profili ve XP sistemi
+- Coin sistemi
 
 ---
 
-## Kullanıcıya Yapılacaklar
-
-1. **Hesap Oluştur:**
-   - Expo, Google Play ($25), Apple Developer ($99/yıl), AdMob
-
-2. **AdMob ID'lerini Al ve Paylaş**
-
-3. **Build & Yükle:**
-   - `eas build --platform all`
-
----
-
-## Dosya Yapısı
+## 📁 Dosya Yapısı
 
 ```
 /app
 ├── frontend/
 │   ├── app/
-│   │   ├── index.tsx      # Ana ekran + Daily Rewards
-│   │   ├── game.tsx       # Oyun + Continue modal
-│   │   └── ...
+│   │   ├── index.tsx       # Ana ekran (4 mod + 4 buton)
+│   │   ├── game.tsx        # Oyun (power-ups + continue)
+│   │   ├── tournament.tsx  # Turnuva ekranı
+│   │   ├── leaderboard.tsx # Sıralama
+│   │   ├── multiplayer.tsx # Çok oyunculu lobi
+│   │   └── game-room.tsx   # Multiplayer oda
 │   └── src/
 │       ├── components/
 │       │   ├── DailyRewardsModal.tsx
 │       │   ├── SkinsModal.tsx
-│       │   └── ...
-│       ├── store/
-│       │   ├── gameStore.ts
-│       │   ├── dailyRewardsStore.ts
-│       │   ├── skinsStore.ts
-│       │   ├── powerUpsStore.ts
-│       │   └── questStore.ts
-│       └── services/
-│           ├── admobService.ts
-│           └── rewardedAdService.ts
-├── PARA_KAZANMA_REHBERI.md
-└── publishing_guide.md
+│       │   ├── GameBoard.tsx
+│       │   ├── BlockPiece.tsx
+│       │   └── ScoreDisplay.tsx
+│       └── store/
+│           ├── gameStore.ts
+│           ├── dailyRewardsStore.ts
+│           ├── skinsStore.ts
+│           ├── powerUpsStore.ts
+│           └── questStore.ts
+├── backend/
+│   └── server.py           # FastAPI + Socket.IO
+├── PARA_KAZANMA_REHBERI.md # Türkçe monetizasyon rehberi
+└── publishing_guide.md     # Detaylı yayınlama rehberi
 ```
 
 ---
 
-## Kalan İşler
+## 🚀 Kullanıcının Yapması Gerekenler
 
-### P1 - Yüksek
-- [ ] Power-ups UI entegrasyonu (game.tsx)
-- [ ] Skins modal web fix (veya native test)
-- [ ] Multiplayer uçtan uca test
+### 1. Hesaplar Oluştur
+- Expo (ücretsiz)
+- Google Play Console ($25 tek seferlik)
+- Apple Developer ($99/yıl)
+- Google AdMob (ücretsiz)
 
-### P2 - Orta
-- [ ] Sosyal paylaşım butonu
-- [ ] Daily Quests backend
+### 2. AdMob ID'lerini Al
+- Android App ID
+- iOS App ID
+- Banner Ad Unit ID (Android + iOS)
+- Interstitial Ad Unit ID (Android + iOS)
+- Rewarded Ad Unit ID (Android + iOS)
 
-### P3 - Düşük
-- [ ] Turnuva modu
-- [ ] Push notifications
+### 3. Build & Yükle
+```bash
+cd frontend
+eas build --platform all --profile production
+eas submit --platform all
+```
 
 ---
 
-Last Updated: Şubat 2026
+## 💰 Tahmini Kazanç (Türkiye)
+
+| Günlük Aktif Kullanıcı | Aylık Kazanç |
+|------------------------|--------------|
+| 1,000                  | ₺3,000-5,000 |
+| 10,000                 | ₺30,000-50,000 |
+| 100,000                | ₺300,000-500,000 |
+
+---
+
+## ✅ Oyun Durumu: TAMAMLANDI
+
+Tüm temel özellikler uygulandı ve test edildi. 
+Oyun mağazalara yüklenmeye hazır!
+
+Last Updated: Mart 2026

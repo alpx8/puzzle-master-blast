@@ -400,6 +400,14 @@ export default function HomeScreen() {
               colors={['#667eea', '#764ba2']}
               onPress={() => router.push('/multiplayer')}
             />
+            
+            <GameModeButton
+              title="Turnuva"
+              subtitle="Haftalık ödüller!"
+              icon="trophy"
+              colors={['#FFD700', '#FF8C00']}
+              onPress={() => router.push('/tournament')}
+            />
           </View>
 
           {/* Bottom Row - Leaderboard & Quests & More */}

@@ -10,12 +10,14 @@ import {
   Animated,
   ScrollView,
   Platform,
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useGameStore, Block } from '@/src/store/gameStore';
 import { useQuestStore } from '@/src/store/questStore';
+import { usePowerUpsStore, PowerUpType } from '@/src/store/powerUpsStore';
 import { GameBoard } from '@/src/components/GameBoard';
 import { BlockPiece } from '@/src/components/BlockPiece';
 import { ScoreDisplay } from '@/src/components/ScoreDisplay';
@@ -67,6 +69,11 @@ export default function GameScreen() {
   } = useGameStore();
 
   const { loadQuests, updateQuestProgress, dailyQuests, claimReward } = useQuestStore();
+  
+  // Power-ups
+  const { powerUps, usePowerUp, setActivePowerUp, activePowerUp, loadPowerUps, watchAdForPowerUp } = usePowerUpsStore();
+  const [showPowerUpModal, setShowPowerUpModal] = useState(false);
+  const [selectedPowerUp, setSelectedPowerUp] = useState<PowerUpType | null>(null);
 
   const [draggingBlock, setDraggingBlock] = useState<Block | null>(null);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
@@ -102,6 +109,7 @@ export default function GameScreen() {
   // Initialize sounds and ads
   useEffect(() => {
     initSounds();
+    loadPowerUps();
     // AdMob sadece native'de çalışır - production build'de aktif olacak
     if (userId) {
       loadQuests(userId);
@@ -112,6 +120,53 @@ export default function GameScreen() {
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
   }, [userId]);
+  
+  // Power-up handlers
+  const handleUsePowerUp = (type: PowerUpType) => {
+    const powerUp = powerUps.find(p => p.id === type);
+    if (!powerUp) return;
+    
+    if (powerUp.count > 0) {
+      // Kullan
+      if (type === 'shuffle') {
+        // Yeni bloklar al
+        usePowerUp(type);
+        generateNewBlocks?.();
+        playClearSound();
+      } else if (type === 'extraTime' && gameMode === 'timed') {
+        // +30 saniye
+        usePowerUp(type);
+        useGameStore.setState(state => ({ timeRemaining: state.timeRemaining + 30 }));
+        playComboSound();
+      } else if (type === 'bomb' || type === 'clearRow') {
+        // Aktif power-up olarak seç
+        setActivePowerUp(type);
+        setShowPowerUpModal(false);
+      }
+    } else {
+      // Reklam izle
+      setSelectedPowerUp(type);
+      setShowPowerUpModal(true);
+    }
+  };
+  
+  const handleWatchAdForPowerUp = async () => {
+    if (!selectedPowerUp) return;
+    await watchAdForPowerUp(selectedPowerUp);
+    setShowPowerUpModal(false);
+    setSelectedPowerUp(null);
+  };
+  
+  // Sosyal paylaşım
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `Puzzle Master Blast'ta ${score.toLocaleString()} puan yaptım! Sen de dene! 🎮🏆`,
+      });
+    } catch (error) {
+      console.log('Share error:', error);
+    }
+  };
 
   useEffect(() => {
     const gameMode = (mode as 'classic' | 'timed' | 'multiplayer') || 'classic';
@@ -473,6 +528,34 @@ export default function GameScreen() {
       <View style={styles.scoreContainer}>
         <ScoreDisplay />
       </View>
+      
+      {/* Power-ups Bar */}
+      <View style={styles.powerUpsBar}>
+        {powerUps.slice(0, 3).map((powerUp) => (
+          <TouchableOpacity
+            key={powerUp.id}
+            style={[
+              styles.powerUpButton,
+              activePowerUp === powerUp.id && styles.powerUpButtonActive,
+              powerUp.count === 0 && styles.powerUpButtonEmpty,
+            ]}
+            onPress={() => handleUsePowerUp(powerUp.id)}
+          >
+            <Ionicons 
+              name={powerUp.icon as any} 
+              size={20} 
+              color={powerUp.count > 0 ? powerUp.color : '#555'} 
+            />
+            {powerUp.count > 0 ? (
+              <Text style={[styles.powerUpCount, { color: powerUp.color }]}>
+                {powerUp.count}
+              </Text>
+            ) : (
+              <Ionicons name="add" size={12} color="#FFD700" style={styles.powerUpPlus} />
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
 
       {/* Game Board */}
       <View style={styles.boardWrapper}>
@@ -692,6 +775,16 @@ export default function GameScreen() {
               <Ionicons name="refresh" size={24} color="#fff" />
               <Text style={styles.modalButtonText}>Tekrar Oyna</Text>
             </TouchableOpacity>
+            
+            {/* Share Button */}
+            <TouchableOpacity 
+              style={[styles.modalButton, styles.shareButton]} 
+              onPress={handleShare}
+            >
+              <Ionicons name="share-social" size={24} color="#fff" />
+              <Text style={styles.modalButtonText}>Paylaş</Text>
+            </TouchableOpacity>
+            
             <TouchableOpacity style={[styles.modalButton, styles.quitButton]} onPress={handleQuit}>
               <Ionicons name="home" size={24} color="#fff" />
               <Text style={styles.modalButtonText}>Ana Menü</Text>
@@ -1250,5 +1343,48 @@ const styles = StyleSheet.create({
   bannerPlaceholderText: {
     color: '#555',
     fontSize: 11,
+  },
+  // Power-ups Bar
+  powerUpsBar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    marginBottom: 4,
+  },
+  powerUpButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    marginHorizontal: 6,
+  },
+  powerUpButtonActive: {
+    borderWidth: 2,
+    borderColor: '#39FF14',
+    backgroundColor: 'rgba(57, 255, 20, 0.1)',
+  },
+  powerUpButtonEmpty: {
+    opacity: 0.6,
+  },
+  powerUpCount: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    position: 'absolute',
+    bottom: 4,
+    right: 6,
+  },
+  powerUpPlus: {
+    position: 'absolute',
+    bottom: 4,
+    right: 6,
+  },
+  // Share Button
+  shareButton: {
+    backgroundColor: '#1DA1F2',
+    marginTop: 8,
   },
 });
