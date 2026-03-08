@@ -11,6 +11,13 @@
 - Combo sistemi ve pixel-art text
 - Ses efektleri ve titreşim
 - Game Over ve New High Score ekranları
+- **Kaygan blok yerleştirme animasyonu** ✅ YENİ
+
+### 🎉 Görsel Efektler (YENİ!)
+- **Milestone Kutlamaları** - 100, 500, 1000, 2500, 5000, 10000, 25000, 50000 puanda özel animasyonlar
+- **Konfeti Efekti** - Yeni rekor kırıldığında
+- **Gelişmiş Haptic Feedback** - Yerleştirme, temizleme, combo, game over için farklı titreşimler
+- **Kaygan Blok Animasyonu** - Bloklar yukarıdan/yandan kayarak yerine oturur
 
 ### 💰 Monetizasyon Sistemi
 - **Banner Ads** - Oyun ekranının altında
@@ -50,8 +57,8 @@
 - Oyun geçmişi
 
 ### 📊 Diğer
-- Liderlik tablosu
-- Günlük görevler (UI)
+- Liderlik tablosu (XP ve Skor sıralaması)
+- Günlük görevler (3 farklı görev)
 - Kullanıcı profili ve XP sistemi
 - Coin sistemi
 
@@ -64,7 +71,7 @@
 ├── frontend/
 │   ├── app/
 │   │   ├── index.tsx       # Ana ekran (4 mod + 4 buton)
-│   │   ├── game.tsx        # Oyun (power-ups + continue)
+│   │   ├── game.tsx        # Oyun (power-ups + continue + milestone)
 │   │   ├── tournament.tsx  # Turnuva ekranı
 │   │   ├── leaderboard.tsx # Sıralama
 │   │   ├── multiplayer.tsx # Çok oyunculu lobi
@@ -73,15 +80,21 @@
 │       ├── components/
 │       │   ├── DailyRewardsModal.tsx
 │       │   ├── SkinsModal.tsx
-│       │   ├── GameBoard.tsx
+│       │   ├── GameBoard.tsx      # Gelişmiş animasyonlar
 │       │   ├── BlockPiece.tsx
-│       │   └── ScoreDisplay.tsx
-│       └── store/
-│           ├── gameStore.ts
-│           ├── dailyRewardsStore.ts
-│           ├── skinsStore.ts
-│           ├── powerUpsStore.ts
-│           └── questStore.ts
+│       │   ├── ScoreDisplay.tsx
+│       │   ├── StreakMilestone.tsx  # YENİ - Milestone kutlamaları
+│       │   ├── ConfettiCelebration.tsx # YENİ - Konfeti efekti
+│       │   ├── AnimatedBlock.tsx   # YENİ - Animasyonlu blok
+│       │   └── ScreenShake.tsx     # YENİ - Ekran sarsma efekti
+│       ├── store/
+│       │   ├── gameStore.ts
+│       │   ├── dailyRewardsStore.ts
+│       │   ├── skinsStore.ts
+│       │   ├── powerUpsStore.ts
+│       │   └── questStore.ts
+│       └── utils/
+│           └── sounds.ts           # Gelişmiş haptic feedback
 ├── backend/
 │   └── server.py           # FastAPI + Socket.IO
 ├── PARA_KAZANMA_REHBERI.md # Türkçe monetizasyon rehberi
@@ -90,27 +103,32 @@
 
 ---
 
-## 🚀 Kullanıcının Yapması Gerekenler
+## 🚀 Google Play Store'a Yükleme
 
 ### 1. Hesaplar Oluştur
-- Expo (ücretsiz)
-- Google Play Console ($25 tek seferlik)
-- Apple Developer ($99/yıl)
-- Google AdMob (ücretsiz)
+- Expo (ücretsiz): https://expo.dev
+- Google Play Console ($25 tek seferlik): https://play.google.com/console
+- Apple Developer ($99/yıl): https://developer.apple.com (isteğe bağlı)
+- Google AdMob (ücretsiz): https://admob.google.com
 
-### 2. AdMob ID'lerini Al
-- Android App ID
-- iOS App ID
-- Banner Ad Unit ID (Android + iOS)
-- Interstitial Ad Unit ID (Android + iOS)
-- Rewarded Ad Unit ID (Android + iOS)
+### 2. AdMob ID'lerini Al (TAMAMLANDI ✅)
+Production AdMob ID'leri app.json ve admobConfig.ts dosyalarına entegre edildi.
 
 ### 3. Build & Yükle
 ```bash
 cd frontend
-eas build --platform all --profile production
-eas submit --platform all
+npx eas login
+npx eas build --platform android --profile production
+npx eas submit --platform android
 ```
+
+### 4. Store Listing İçin Gerekli Materyaller
+- Uygulama adı: Puzzle Master Blast
+- Kısa açıklama (80 karakter)
+- Tam açıklama (4000 karakter)
+- Ekran görüntüleri (en az 2 adet)
+- İkon (512x512 PNG)
+- Feature Graphic (1024x500)
 
 ---
 
@@ -124,19 +142,45 @@ eas submit --platform all
 
 ---
 
-## ✅ Oyun Durumu: TAMAMLANDI
+## ✅ Oyun Durumu: TAMAMLANDI VE YAYINA HAZIR!
 
-Tüm temel özellikler uygulandı ve test edildi. 
+Tüm temel özellikler uygulandı ve test edildi (%100 başarı oranı).
 Oyun mağazalara yüklenmeye hazır!
 
-### Son Güncelleme: Mart 2026
+### Son Güncelleme: 8 Mart 2026
 
 **Bu seansta tamamlanan:**
+- ✅ Kaygan blok yerleştirme animasyonu (sliding effect)
+- ✅ Milestone kutlamaları (100, 500, 1K, 2.5K, 5K, 10K, 25K, 50K puanda)
+- ✅ Konfeti efekti (yeni rekor kırıldığında)
+- ✅ Gelişmiş haptic feedback (yerleştirme, temizleme, combo, game over)
 - ✅ Power-up oyun içi mantığı (Bomba, Karıştır, Satır Temizle, Ekstra Süre)
 - ✅ Zamanlı Mod göstergesi ve animasyonlu uyarı (son 10 saniye)
 - ✅ Sosyal paylaşım butonu çalışır durumda
+- ✅ AdMob production ID entegrasyonu tamamlandı
 
-**Bekleyen görevler:**
-- 🟡 AdMob production ID'lerinin entegrasyonu (kullanıcı ID'leri sağlayınca)
-- 🟡 Blok yerleştirme kayma animasyonu (P2)
-- 🟡 Tournament backend mantığı (P2)
+**Gelecek geliştirmeler (Opsiyonel):**
+- 🔮 Tournament backend mantığı (sunucu taraflı turnuva yönetimi)
+- 🔮 Kullanıcı verilerinin backend'e taşınması (cross-device sync)
+- 🔮 Günlük görevler backend entegrasyonu
+- 🔮 Push notifications
+
+---
+
+## 🧪 Test Raporu
+
+| Özellik | Durum |
+|---------|-------|
+| Ana Ekran | ✅ ÇALIŞIYOR |
+| Klasik Mod | ✅ ÇALIŞIYOR |
+| Zamanlı Mod | ✅ ÇALIŞIYOR |
+| Turnuva Ekranı | ✅ ÇALIŞIYOR |
+| Temalar/Skinler | ✅ ÇALIŞIYOR |
+| Günlük Ödüller | ✅ ÇALIŞIYOR |
+| Power-ups | ✅ ÇALIŞIYOR |
+| Skor/XP Gösterimi | ✅ ÇALIŞIYOR |
+| Liderlik Tablosu | ✅ ÇALIŞIYOR |
+| Günlük Görevler | ✅ ÇALIŞIYOR |
+| Paylaş Butonu | ✅ ÇALIŞIYOR |
+
+**Not:** AdMob reklamları web önizlemesinde MOCK'lanmıştır. Native build'de (APK/IPA) gerçek reklamlar gösterilecektir.
