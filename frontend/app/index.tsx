@@ -18,7 +18,12 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useGameStore } from '@/src/store/gameStore';
 import { useQuestStore } from '@/src/store/questStore';
+import { useDailyRewardsStore } from '@/src/store/dailyRewardsStore';
+import { useSkinsStore } from '@/src/store/skinsStore';
+import { usePowerUpsStore } from '@/src/store/powerUpsStore';
 import { initSounds } from '@/src/utils/sounds';
+import { DailyRewardsModal } from '@/src/components/DailyRewardsModal';
+import { SkinsModal } from '@/src/components/SkinsModal';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -174,16 +179,35 @@ export default function HomeScreen() {
   const router = useRouter();
   const { username, setUsername, loadUserData, saveUserData, level, highScore, userId } = useGameStore();
   const { loadQuests, dailyQuests, claimReward } = useQuestStore();
+  const { checkAndShowReward, loadRewardsData, totalCoins, currentStreak } = useDailyRewardsStore();
+  const { loadSkins } = useSkinsStore();
+  const { loadPowerUps } = usePowerUpsStore();
+  
   const [showNameInput, setShowNameInput] = useState(false);
   const [showQuestsModal, setShowQuestsModal] = useState(false);
+  const [showDailyReward, setShowDailyReward] = useState(false);
+  const [showSkinsModal, setShowSkinsModal] = useState(false);
   const [tempName, setTempName] = useState('');
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const titleGlow = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    loadUserData();
-    initSounds();
+    const initApp = async () => {
+      await loadUserData();
+      await loadRewardsData();
+      await loadSkins();
+      await loadPowerUps();
+      initSounds();
+      
+      // Günlük ödül kontrolü
+      const shouldShowReward = await checkAndShowReward();
+      if (shouldShowReward) {
+        setTimeout(() => setShowDailyReward(true), 500);
+      }
+    };
+    
+    initApp();
     
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -378,28 +402,59 @@ export default function HomeScreen() {
             />
           </View>
 
-          {/* Bottom Row - Leaderboard & Quests */}
-          <View style={styles.bottomRow}>
-            <TouchableOpacity 
-              style={styles.bottomButton}
-              onPress={() => router.push('/leaderboard')}
-            >
-              <Ionicons name="trophy" size={22} color="#FFD700" />
-              <Text style={styles.bottomButtonText}>Sıralama</Text>
-            </TouchableOpacity>
+          {/* Bottom Row - Leaderboard & Quests & More */}
+          <View style={styles.bottomGrid}>
+            <View style={styles.bottomGridRow}>
+              <TouchableOpacity 
+                style={styles.bottomButton}
+                onPress={() => router.push('/leaderboard')}
+              >
+                <Ionicons name="trophy" size={20} color="#FFD700" />
+                <Text style={styles.bottomButtonText}>Sıralama</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.bottomButton}
+                onPress={() => setShowDailyReward(true)}
+              >
+                <Ionicons name="gift" size={20} color="#FF6B6B" />
+                <Text style={styles.bottomButtonText}>Ödül</Text>
+                {currentStreak > 0 && (
+                  <View style={[styles.questBadge, { backgroundColor: '#FF6B6B' }]}>
+                    <Text style={styles.questBadgeText}>{currentStreak}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
             
-            <TouchableOpacity 
-              style={styles.bottomButton}
-              onPress={() => setShowQuestsModal(true)}
-            >
-              <Ionicons name="flag" size={22} color="#4ECDC4" />
-              <Text style={styles.bottomButtonText}>Görevler</Text>
-              {completedQuests > 0 && (
-                <View style={styles.questBadge}>
-                  <Text style={styles.questBadgeText}>{completedQuests}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+            <View style={styles.bottomGridRow}>
+              <TouchableOpacity 
+                style={styles.bottomButton}
+                onPress={() => setShowSkinsModal(true)}
+              >
+                <Ionicons name="color-palette" size={20} color="#BD00FF" />
+                <Text style={styles.bottomButtonText}>Temalar</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.bottomButton}
+                onPress={() => setShowQuestsModal(true)}
+              >
+                <Ionicons name="flag" size={20} color="#4ECDC4" />
+                <Text style={styles.bottomButtonText}>Görevler</Text>
+                {completedQuests > 0 && (
+                  <View style={styles.questBadge}>
+                    <Text style={styles.questBadgeText}>{completedQuests}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+          
+          {/* Coins Display */}
+          <View style={styles.coinsRow}>
+            <Ionicons name="logo-bitcoin" size={18} color="#F7931A" />
+            <Text style={styles.coinsText}>{totalCoins}</Text>
           </View>
         </Animated.View>
       </KeyboardAvoidingView>
@@ -461,6 +516,18 @@ export default function HomeScreen() {
           </View>
         </View>
       </Modal>
+      
+      {/* Daily Rewards Modal */}
+      <DailyRewardsModal 
+        visible={showDailyReward} 
+        onClose={() => setShowDailyReward(false)} 
+      />
+      
+      {/* Skins Modal */}
+      <SkinsModal 
+        visible={showSkinsModal} 
+        onClose={() => setShowSkinsModal(false)} 
+      />
     </SafeAreaView>
   );
 }
@@ -653,20 +720,28 @@ const styles = StyleSheet.create({
     gap: 12,
     marginTop: 12,
   },
+  bottomGrid: {
+    marginTop: 12,
+    gap: 10,
+  },
+  bottomGridRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
   bottomButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    padding: 14,
-    borderRadius: 14,
+    padding: 12,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    gap: 8,
+    gap: 6,
   },
   bottomButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#fff',
     fontWeight: '600',
   },
@@ -684,6 +759,18 @@ const styles = StyleSheet.create({
   questBadgeText: {
     color: '#fff',
     fontSize: 12,
+    fontWeight: 'bold',
+  },
+  coinsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+  },
+  coinsText: {
+    color: '#F7931A',
+    fontSize: 16,
     fontWeight: 'bold',
   },
   // Modal Styles

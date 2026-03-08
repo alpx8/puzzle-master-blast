@@ -1,95 +1,107 @@
 # Puzzle Master Blast - Product Requirements Document
 
-## Original Problem Statement
-Kullanıcı, "Block Blast" benzeri "Puzzle Master Blast" adında bir mobil oyun geliştirmek istedi.
+## Tamamlanan Özellikler ✅
+
+### Core Game
+- 8x8 grid bulmaca oyunu (Klasik ve Zamanlı mod)
+- Parlak, 3D efektli bloklar (şeffaflık kaldırıldı)
+- Combo sistemi ve pixel-art text
+- Ses efektleri ve titreşim
+- Game Over ve New High Score ekranları
+
+### Monetizasyon Sistemi
+- **Banner Ads** - Oyun ekranının altında
+- **Interstitial Ads** - Game over'da
+- **Rewarded Video Ads** - "Devam Et" sistemi (3 hak)
+- **Continue Modal** - Animasyonlu, 5sn geri sayım
+
+### Günlük Ödül Sistemi ✅
+- 7 günlük streak takibi
+- XP ve Coin ödülleri
+- Özel skin ödülleri (5. ve 7. günlerde)
+- Animasyonlu modal
+
+### Blok Temaları (Skins) 🟡
+- 10 farklı tema (Klasik, Neon, Altın, Okyanus, vb.)
+- Reklam izleyerek kilit açma
+- Premium ve Glow efektli temalar
+- **NOT:** Web preview'da render sorunu var, native'de çalışacak
+
+### Power-ups Sistemi 🟡
+- Bomba (3x3 temizle)
+- Karıştır (yeni bloklar)
+- Ekstra Süre (zamanlı mod)
+- Satır Temizle
+- Store hazır, UI entegrasyonu bekliyor
+
+### Multiplayer
+- Public/Private odalar
+- Real-time Socket.IO
+- Oyun geçmişi
+
+### Diğer
+- Liderlik tablosu
+- Günlük görevler (UI)
+- Yayınlama rehberleri (Türkçe)
 
 ---
 
-## Current Implementation Status (Şubat 2026)
+## Kullanıcıya Yapılacaklar
 
-### ✅ Tamamlanan Özellikler
-1. **Single Player Game** - Tam işlevsel
-2. **Classic Mode** - Süresiz oyun modu
-3. **Timed Mode** - 3 dakikalık zamanlı mod
-4. **Multiplayer System** - Public/private odalar, lobi UI
-5. **Leaderboard** - Skor takibi ve gösterim
-6. **Game Over / High Score Logic** - Özel UI ve sesler
-7. **Pixel-Art Combo Text** - Animasyonlu combo gösterimi
-8. **Block Visuals** - Parlak, renkli, 3D efektli bloklar
-9. **Sound Effects** - Tüm oyun sesleri
-10. **Mute Button** - Ses açma/kapama
-11. **Google AdMob Integration** - Banner ve Interstitial reklamlar
-12. **Continue System (YENİ)** - Oyun bitince reklam izle devam et
-    - Oyun başına 3 devam hakkı
-    - Animasyonlu modal ve geri sayım
-    - Rewarded video reklam entegrasyonu
-
-### 🟡 Kısmen Uygulandı
-1. **Daily Quests** - UI var, backend yok
-
-### ❌ Yapılmadı
-1. **Daily Quests Backend**
-2. **User Leveling/XP System**
-3. **Score Multipliers for Combos**
-4. **Full User Authentication**
-
----
-
-## Monetizasyon Stratejisi
-
-### Mevcut Uygulama
-1. **Banner Ads** - Oyun ekranının altında
-2. **Interstitial Ads** - Son game over'da
-3. **Rewarded Video Ads** - Devam etmek için reklam izle (3 hak)
-
-### Gelir Optimizasyonu İpuçları
-- Rewarded ads, banner ads'ten 3-5x daha fazla gelir getirir
-- Continue özelliği oturum süresini artırır = daha fazla reklam gösterimi
-- Ideal: 10 dakikalık oturumda 2-3 interstitial
-
----
-
-## Kullanıcının Yapması Gerekenler
-
-1. **Hesapları Oluştur:**
-   - Expo (ücretsiz)
-   - Google Play Console ($25)
-   - Apple Developer ($99/yıl)
-   - Google AdMob (ücretsiz)
+1. **Hesap Oluştur:**
+   - Expo, Google Play ($25), Apple Developer ($99/yıl), AdMob
 
 2. **AdMob ID'lerini Al ve Paylaş**
 
-3. **Build ve Yükle:**
+3. **Build & Yükle:**
    - `eas build --platform all`
-   - Mağazalara yükle
 
 ---
 
-## Dosyalar
-- `/app/PARA_KAZANMA_REHBERI.md` - Türkçe adım adım rehber
-- `/app/publishing_guide.md` - Detaylı yayınlama rehberi
-- `/app/frontend/eas.json` - EAS Build yapılandırması
-- `/app/frontend/assets/privacy-policy.html` - Gizlilik politikası
+## Dosya Yapısı
+
+```
+/app
+├── frontend/
+│   ├── app/
+│   │   ├── index.tsx      # Ana ekran + Daily Rewards
+│   │   ├── game.tsx       # Oyun + Continue modal
+│   │   └── ...
+│   └── src/
+│       ├── components/
+│       │   ├── DailyRewardsModal.tsx
+│       │   ├── SkinsModal.tsx
+│       │   └── ...
+│       ├── store/
+│       │   ├── gameStore.ts
+│       │   ├── dailyRewardsStore.ts
+│       │   ├── skinsStore.ts
+│       │   ├── powerUpsStore.ts
+│       │   └── questStore.ts
+│       └── services/
+│           ├── admobService.ts
+│           └── rewardedAdService.ts
+├── PARA_KAZANMA_REHBERI.md
+└── publishing_guide.md
+```
 
 ---
 
-## Öncelikli Backlog
+## Kalan İşler
 
-### P1 - Yüksek Öncelik
+### P1 - Yüksek
+- [ ] Power-ups UI entegrasyonu (game.tsx)
+- [ ] Skins modal web fix (veya native test)
 - [ ] Multiplayer uçtan uca test
-- [ ] Daily Quests Backend
-- [ ] Combo skor çarpanları
 
-### P2 - Orta Öncelik
-- [ ] User Leveling/XP sistemi
-- [ ] Günlük giriş ödülleri
-- [ ] Sosyal paylaşım
+### P2 - Orta
+- [ ] Sosyal paylaşım butonu
+- [ ] Daily Quests backend
 
-### P3 - Düşük Öncelik
-- [ ] Tam kullanıcı kimlik doğrulama
+### P3 - Düşük
+- [ ] Turnuva modu
 - [ ] Push notifications
-- [ ] Uygulama içi satın alma
 
 ---
 
-Last Updated: February 2026
+Last Updated: Şubat 2026
