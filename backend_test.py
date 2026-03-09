@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 
 # Base URL from frontend environment
-BASE_URL = "https://grid-puzzle-mobile.preview.emergentagent.com/api"
+BASE_URL = "https://puzzle-master-blast-1.preview.emergentagent.com/api"
 
 class BlockBlastAPITester:
     def __init__(self):

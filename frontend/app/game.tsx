@@ -657,7 +657,7 @@ export default function GameScreen() {
         </View>
       )}
 
-      {/* Game Board */}
+      {/* Game Board - Takes available space */}
       <View style={styles.boardWrapper}>
         <View
           ref={boardRef}
@@ -681,7 +681,7 @@ export default function GameScreen() {
         />
       </View>
 
-      {/* Block Selector - Fixed at bottom */}
+      {/* Block Selector - Fixed height, NO absolute positioning */}
       <View style={styles.blocksContainer}>
         <View style={styles.blocksRow}>
           {availableBlocks.map((block) => {
@@ -705,10 +705,11 @@ export default function GameScreen() {
             );
           })}
         </View>
-        {/* Banner Ad inside blocks container */}
-        <View style={styles.bannerPlaceholder}>
-          <Text style={styles.bannerPlaceholderText}>Reklam Alanı</Text>
-        </View>
+      </View>
+      
+      {/* Banner Ad - Always at the very bottom */}
+      <View style={styles.bannerContainer}>
+        <Text style={styles.bannerPlaceholderText}>Reklam Alanı</Text>
       </View>
 
       {/* Dragging Block Overlay */}
@@ -1018,24 +1019,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    maxHeight: '55%',
   },
   boardContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   blocksContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     paddingHorizontal: 12,
     paddingTop: 16,
     paddingBottom: 8,
     backgroundColor: 'rgba(30, 30, 50, 0.98)',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    zIndex: 100,
   },
   blocksRow: {
     flexDirection: 'row',
@@ -1451,11 +1446,7 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 16,
   },
-  bannerPlaceholder: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+  bannerContainer: {
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     paddingVertical: 12,
     alignItems: 'center',

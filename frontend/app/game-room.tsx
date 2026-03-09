@@ -22,7 +22,7 @@ import Constants from 'expo-constants';
 
 const API_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || 
                 process.env.EXPO_PUBLIC_BACKEND_URL || 
-                'https://grid-puzzle-mobile.preview.emergentagent.com';
+                'https://puzzle-master-blast-1.preview.emergentagent.com';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BOARD_SIZE = Math.min(SCREEN_WIDTH - 32, 300);

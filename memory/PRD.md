@@ -12,6 +12,7 @@
 - Ses efektleri ve titreşim
 - Game Over ve New High Score ekranları
 - **Kaygan blok yerleştirme animasyonu** ✅
+- **SABİT BLOK SEÇME ALANI** ✅ (9 Mart 2026 düzeltildi - kayma sorunu çözüldü)
 
 ### 📴 Çevrimdışı Destek (YENİ!)
 - Klasik ve Zamanlı mod internet olmadan oynanabilir
