@@ -45,13 +45,17 @@ export const ScoreDisplay: React.FC = () => {
       {/* Score Section */}
       <View style={styles.scoreSection}>
         <View style={styles.scoreItem}>
-          <Ionicons name="star" size={20} color="#FFD700" />
+          <View style={styles.iconContainer}>
+            <Ionicons name="star" size={22} color="#FFD700" />
+          </View>
           <Text style={styles.scoreLabel}>Skor</Text>
           <Text style={styles.scoreValue}>{score.toLocaleString()}</Text>
         </View>
         
         <View style={styles.scoreItem}>
-          <Ionicons name="trophy" size={20} color="#FF6B6B" />
+          <View style={[styles.iconContainer, { backgroundColor: 'rgba(255, 107, 107, 0.2)' }]}>
+            <Ionicons name="trophy" size={22} color="#FF6B6B" />
+          </View>
           <Text style={styles.scoreLabel}>En Yüksek</Text>
           <Text style={styles.scoreValue}>{highScore.toLocaleString()}</Text>
         </View>
@@ -63,11 +67,13 @@ export const ScoreDisplay: React.FC = () => {
             isUrgent && styles.timerUrgent,
             { transform: [{ scale: timerPulse }] }
           ]}>
-            <Ionicons 
-              name="time" 
-              size={20} 
-              color={isCritical ? '#FF3366' : isUrgent ? '#FF6B6B' : '#4ECDC4'} 
-            />
+            <View style={[styles.iconContainer, { backgroundColor: isUrgent ? 'rgba(255, 51, 102, 0.2)' : 'rgba(78, 205, 196, 0.2)' }]}>
+              <Ionicons 
+                name="time" 
+                size={22} 
+                color={isCritical ? '#FF3366' : isUrgent ? '#FF6B6B' : '#4ECDC4'} 
+              />
+            </View>
             <Text style={styles.scoreLabel}>Süre</Text>
             <Text style={[
               styles.scoreValue, 
@@ -122,6 +128,15 @@ const styles = StyleSheet.create({
   scoreItem: {
     alignItems: 'center',
     minWidth: 70,
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 2,
   },
   scoreLabel: {
     color: '#888',

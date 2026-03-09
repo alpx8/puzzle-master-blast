@@ -626,7 +626,7 @@ export default function GameScreen() {
           >
             <Ionicons 
               name={powerUp.icon as any} 
-              size={20} 
+              size={26} 
               color={powerUp.count > 0 ? powerUp.color : '#555'} 
             />
             {powerUp.count > 0 ? (
@@ -634,7 +634,7 @@ export default function GameScreen() {
                 {powerUp.count}
               </Text>
             ) : (
-              <Ionicons name="add" size={12} color="#FFD700" style={styles.powerUpPlus} />
+              <Ionicons name="add" size={14} color="#FFD700" style={styles.powerUpPlus} />
             )}
           </TouchableOpacity>
         ))}
@@ -1468,35 +1468,46 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   powerUpButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 54,
+    height: 54,
+    borderRadius: 16,
+    backgroundColor: 'rgba(30, 30, 50, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    marginHorizontal: 6,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    marginHorizontal: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   powerUpButtonActive: {
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: '#39FF14',
-    backgroundColor: 'rgba(57, 255, 20, 0.1)',
+    backgroundColor: 'rgba(57, 255, 20, 0.15)',
   },
   powerUpButtonEmpty: {
-    opacity: 0.6,
+    opacity: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   powerUpCount: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 'bold',
     position: 'absolute',
-    bottom: 4,
-    right: 6,
+    bottom: 3,
+    right: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 6,
+    overflow: 'hidden',
   },
   powerUpPlus: {
     position: 'absolute',
-    bottom: 4,
-    right: 6,
+    bottom: 3,
+    right: 5,
   },
   // Share Button
   shareButton: {
