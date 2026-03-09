@@ -174,7 +174,7 @@ Oyun mağazalara yüklenmeye hazır!
 
 ---
 
-## 🧪 Test Raporu
+### 🧪 Test Raporu (Güncel)
 
 | Özellik | Durum |
 |---------|-------|
@@ -189,5 +189,7 @@ Oyun mağazalara yüklenmeye hazır!
 | Liderlik Tablosu | ✅ ÇALIŞIYOR |
 | Günlük Görevler | ✅ ÇALIŞIYOR |
 | Paylaş Butonu | ✅ ÇALIŞIYOR |
+| **Skor İkonları** | ✅ DÜZELTİLDİ (daireli arka plan) |
+| **Power-up İkonları** | ✅ DÜZELTİLDİ (büyük ve belirgin) |
 
 **Not:** AdMob reklamları web önizlemesinde MOCK'lanmıştır. Native build'de (APK/IPA) gerçek reklamlar gösterilecektir.
