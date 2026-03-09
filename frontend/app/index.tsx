@@ -12,6 +12,7 @@ import {
   Easing,
   Modal,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -24,6 +25,7 @@ import { usePowerUpsStore } from '@/src/store/powerUpsStore';
 import { initSounds } from '@/src/utils/sounds';
 import { DailyRewardsModal } from '@/src/components/DailyRewardsModal';
 import { SkinsModal } from '@/src/components/SkinsModal';
+import { useNetworkStatus, requiresOnline } from '@/src/utils/offlineSupport';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -183,6 +185,10 @@ export default function HomeScreen() {
   const { loadSkins } = useSkinsStore();
   const { loadPowerUps } = usePowerUpsStore();
   
+  // Network status for offline support
+  const networkStatus = useNetworkStatus();
+  const isOffline = !networkStatus.isConnected;
+  
   const [showNameInput, setShowNameInput] = useState(false);
   const [showQuestsModal, setShowQuestsModal] = useState(false);
   const [showDailyReward, setShowDailyReward] = useState(false);
@@ -267,26 +273,33 @@ export default function HomeScreen() {
     subtitle, 
     icon, 
     colors, 
-    onPress 
+    onPress,
+    disabled = false
   }: { 
     title: string; 
     subtitle: string; 
     icon: keyof typeof Ionicons.glyphMap; 
     colors: string[]; 
     onPress: () => void;
+    disabled?: boolean;
   }) => (
     <TouchableOpacity 
-      style={styles.modeButton} 
+      style={[styles.modeButton, disabled && styles.modeButtonDisabled]} 
       onPress={onPress}
-      activeOpacity={0.8}
+      activeOpacity={disabled ? 1 : 0.8}
+      disabled={disabled}
     >
       <View style={[styles.modeGradient, { backgroundColor: colors[0] }]}>
-        <Ionicons name={icon} size={28} color="#fff" />
+        <Ionicons name={icon} size={28} color={disabled ? "rgba(255,255,255,0.5)" : "#fff"} />
         <View style={styles.modeTextContainer}>
-          <Text style={styles.modeTitle}>{title}</Text>
-          <Text style={styles.modeSubtitle}>{subtitle}</Text>
+          <Text style={[styles.modeTitle, disabled && styles.modeTitleDisabled]}>{title}</Text>
+          <Text style={[styles.modeSubtitle, disabled && styles.modeSubtitleDisabled]}>{subtitle}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.7)" />
+        {disabled ? (
+          <Ionicons name="cloud-offline" size={22} color="rgba(255,255,255,0.4)" />
+        ) : (
+          <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.7)" />
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -296,8 +309,32 @@ export default function HomeScreen() {
     outputRange: ['rgba(0, 217, 255, 0.3)', 'rgba(168, 85, 247, 0.6)'],
   });
 
+  // Handle game mode selection with offline check
+  const handleModePress = (mode: string, route: string) => {
+    if (requiresOnline(mode) && isOffline) {
+      Alert.alert(
+        'Çevrimdışı Mod',
+        `${mode === 'multiplayer' ? 'Çok Oyunculu' : 'Turnuva'} modu için internet bağlantısı gerekli.\n\nKlasik veya Zamanlı modu çevrimdışı oynayabilirsin!`,
+        [
+          { text: 'Tamam', style: 'cancel' },
+          { text: 'Klasik Oyna', onPress: () => router.push('/game?mode=classic') }
+        ]
+      );
+      return;
+    }
+    router.push(route as any);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
+      {/* Offline Banner */}
+      {isOffline && (
+        <View style={styles.offlineBanner}>
+          <Ionicons name="cloud-offline" size={16} color="#fff" />
+          <Text style={styles.offlineBannerText}>Çevrimdışı Mod - Klasik ve Zamanlı oynanabilir</Text>
+        </View>
+      )}
+      
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -379,7 +416,7 @@ export default function HomeScreen() {
           <View style={styles.modesSection}>
             <GameModeButton
               title="Klasik Mod"
-              subtitle="Süresiz oyna!"
+              subtitle={isOffline ? "Çevrimdışı oyna!" : "Süresiz oyna!"}
               icon="infinite"
               colors={['#4ECDC4', '#44A08D']}
               onPress={() => router.push('/game?mode=classic')}
@@ -387,7 +424,7 @@ export default function HomeScreen() {
             
             <GameModeButton
               title="Zamanlı Mod"
-              subtitle="3 dakikada en çok puan!"
+              subtitle={isOffline ? "Çevrimdışı oyna!" : "3 dakikada en çok puan!"}
               icon="timer"
               colors={['#FF6B6B', '#FF8E53']}
               onPress={() => router.push('/game?mode=timed')}
@@ -395,18 +432,20 @@ export default function HomeScreen() {
             
             <GameModeButton
               title="Çok Oyunculu"
-              subtitle="Online yarış!"
+              subtitle={isOffline ? "İnternet gerekli" : "Online yarış!"}
               icon="people"
-              colors={['#667eea', '#764ba2']}
-              onPress={() => router.push('/multiplayer')}
+              colors={isOffline ? ['#555', '#444'] : ['#667eea', '#764ba2']}
+              onPress={() => handleModePress('multiplayer', '/multiplayer')}
+              disabled={isOffline}
             />
             
             <GameModeButton
               title="Turnuva"
-              subtitle="Haftalık ödüller!"
+              subtitle={isOffline ? "İnternet gerekli" : "Haftalık ödüller!"}
               icon="trophy"
-              colors={['#FFD700', '#FF8C00']}
-              onPress={() => router.push('/tournament')}
+              colors={isOffline ? ['#555', '#444'] : ['#FFD700', '#FF8C00']}
+              onPress={() => handleModePress('tournament', '/tournament')}
+              disabled={isOffline}
             />
           </View>
 
@@ -605,6 +644,20 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
   },
+  offlineBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF6B6B',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  offlineBannerText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   title: {
     fontSize: 26,
     fontWeight: '900',
@@ -722,6 +775,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.8)',
     marginTop: 1,
+  },
+  modeButtonDisabled: {
+    opacity: 0.6,
+  },
+  modeTitleDisabled: {
+    color: 'rgba(255, 255, 255, 0.6)',
+  },
+  modeSubtitleDisabled: {
+    color: 'rgba(255, 255, 255, 0.4)',
   },
   bottomRow: {
     flexDirection: 'row',

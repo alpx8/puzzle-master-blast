@@ -4,14 +4,21 @@
 
 ### 🎮 Core Game
 - 8x8 grid bulmaca oyunu
-- Klasik Mod (süresiz)
-- Zamanlı Mod (3 dakika)
-- Çok Oyunculu Mod (online)
+- Klasik Mod (süresiz) - **ÇEVRİMDIŞI ÇALIŞIR** ✅
+- Zamanlı Mod (3 dakika) - **ÇEVRİMDIŞI ÇALIŞIR** ✅
+- Çok Oyunculu Mod (online) - İnternet gerekli
 - Parlak, 3D efektli bloklar
 - Combo sistemi ve pixel-art text
 - Ses efektleri ve titreşim
 - Game Over ve New High Score ekranları
-- **Kaygan blok yerleştirme animasyonu** ✅ YENİ
+- **Kaygan blok yerleştirme animasyonu** ✅
+
+### 📴 Çevrimdışı Destek (YENİ!)
+- Klasik ve Zamanlı mod internet olmadan oynanabilir
+- Tüm oyun verileri cihazda saklanır (AsyncStorage)
+- Çevrimdışı banner gösterimi
+- Online gerektiren modlar (Multiplayer, Turnuva) için uyarı
+- Otomatik network durumu izleme
 
 ### 🎉 Görsel Efektler (YENİ!)
 - **Milestone Kutlamaları** - 100, 500, 1000, 2500, 5000, 10000, 25000, 50000 puanda özel animasyonlar
