@@ -681,7 +681,7 @@ export default function GameScreen() {
         />
       </View>
 
-      {/* Block Selector */}
+      {/* Block Selector - Fixed at bottom */}
       <View style={styles.blocksContainer}>
         <View style={styles.blocksRow}>
           {availableBlocks.map((block) => {
@@ -705,11 +705,10 @@ export default function GameScreen() {
             );
           })}
         </View>
-      </View>
-
-      {/* Banner Ad Placeholder - Production'da aktif */}
-      <View style={styles.bannerPlaceholder}>
-        <Text style={styles.bannerPlaceholderText}>Reklam Alanı</Text>
+        {/* Banner Ad inside blocks container */}
+        <View style={styles.bannerPlaceholder}>
+          <Text style={styles.bannerPlaceholderText}>Reklam Alanı</Text>
+        </View>
       </View>
 
       {/* Dragging Block Overlay */}
@@ -1026,18 +1025,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   blocksContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 20,
-    backgroundColor: 'rgba(30, 30, 50, 0.95)',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 12,
+    paddingTop: 16,
+    paddingBottom: 8,
+    backgroundColor: 'rgba(30, 30, 50, 0.98)',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    zIndex: 100,
   },
   blocksRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    alignItems: 'center',
-    minHeight: 100,
+    alignItems: 'flex-end',
+    minHeight: 90,
   },
   blockWrapper: {
     alignItems: 'center',
