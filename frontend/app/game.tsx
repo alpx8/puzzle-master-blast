@@ -576,10 +576,10 @@ export default function GameScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
+      {/* Header - Compact */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handlePause} style={styles.headerButton}>
-          <Ionicons name="pause" size={24} color="#fff" />
+          <Ionicons name="pause" size={20} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{getModeTitle()}</Text>
         <View style={styles.headerRightButtons}>
@@ -589,7 +589,7 @@ export default function GameScreen() {
           >
             <Ionicons 
               name={isMuted ? "volume-mute" : "volume-high"} 
-              size={22} 
+              size={18} 
               color={isMuted ? "#FF6B6B" : "#4ECDC4"} 
             />
           </TouchableOpacity>
@@ -597,7 +597,7 @@ export default function GameScreen() {
             onPress={() => setShowQuestsModal(true)} 
             style={styles.headerButton}
           >
-            <Ionicons name="trophy" size={24} color="#FFD700" />
+            <Ionicons name="trophy" size={20} color="#FFD700" />
             {completedQuests > 0 && (
               <View style={styles.questBadge}>
                 <Text style={styles.questBadgeText}>{completedQuests}</Text>
@@ -607,12 +607,12 @@ export default function GameScreen() {
         </View>
       </View>
 
-      {/* Score Display */}
+      {/* Score Display - Compact */}
       <View style={styles.scoreContainer}>
         <ScoreDisplay />
       </View>
       
-      {/* Power-ups Bar */}
+      {/* Power-ups Bar - Visible and styled */}
       <View style={styles.powerUpsBar}>
         {powerUps.slice(0, 3).map((powerUp) => (
           <TouchableOpacity
@@ -626,38 +626,35 @@ export default function GameScreen() {
           >
             <Ionicons 
               name={powerUp.icon as any} 
-              size={26} 
-              color={powerUp.count > 0 ? powerUp.color : '#555'} 
+              size={22} 
+              color={powerUp.count > 0 ? powerUp.color : '#666'} 
             />
             {powerUp.count > 0 ? (
-              <Text style={[styles.powerUpCount, { color: powerUp.color }]}>
-                {powerUp.count}
-              </Text>
+              <View style={[styles.powerUpCountBadge, { backgroundColor: powerUp.color }]}>
+                <Text style={styles.powerUpCountText}>{powerUp.count}</Text>
+              </View>
             ) : (
-              <Ionicons name="add" size={14} color="#FFD700" style={styles.powerUpPlus} />
+              <View style={styles.powerUpAddBadge}>
+                <Ionicons name="add" size={10} color="#FFD700" />
+              </View>
             )}
           </TouchableOpacity>
         ))}
+        
+        {/* Active Power-up Indicator - Inline */}
+        {activePowerUp && (
+          <View style={styles.powerUpActiveTag}>
+            <Text style={styles.powerUpActiveText}>
+              {activePowerUp === 'bomb' ? '💣 Dokun!' : '➖ Satır!'}
+            </Text>
+            <TouchableOpacity onPress={() => setActivePowerUp(null)}>
+              <Ionicons name="close" size={14} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
-      
-      {/* Active Power-up Indicator */}
-      {activePowerUp && (
-        <View style={styles.powerUpIndicator}>
-          <Ionicons 
-            name={activePowerUp === 'bomb' ? 'flame' : 'remove-circle'} 
-            size={16} 
-            color={activePowerUp === 'bomb' ? '#FF5F1F' : '#39FF14'} 
-          />
-          <Text style={styles.powerUpIndicatorText}>
-            {activePowerUp === 'bomb' ? 'Bomba için tahtaya dokun!' : 'Temizlemek için satıra dokun!'}
-          </Text>
-          <TouchableOpacity onPress={() => setActivePowerUp(null)}>
-            <Ionicons name="close-circle" size={18} color="#FF6B6B" />
-          </TouchableOpacity>
-        </View>
-      )}
 
-      {/* Game Board - Takes available space */}
+      {/* Game Board - Main area */}
       <View style={styles.boardWrapper}>
         <View
           ref={boardRef}
@@ -681,7 +678,7 @@ export default function GameScreen() {
         />
       </View>
 
-      {/* Block Selector - Fixed height, NO absolute positioning */}
+      {/* Block Selector - Compact and stylish */}
       <View style={styles.blocksContainer}>
         <View style={styles.blocksRow}>
           {availableBlocks.map((block) => {
@@ -698,7 +695,7 @@ export default function GameScreen() {
                 {...panResponder.panHandlers}
               >
                 <View style={styles.blockInner}>
-                  <BlockPiece block={block} cellSize={22} opacity={isDragging ? 0.3 : 1} />
+                  <BlockPiece block={block} cellSize={18} opacity={isDragging ? 0.3 : 1} />
                 </View>
                 <Text style={styles.blockPoints}>+{block.points}</Text>
               </View>
@@ -707,9 +704,9 @@ export default function GameScreen() {
         </View>
       </View>
       
-      {/* Banner Ad - Always at the very bottom */}
+      {/* Banner Ad */}
       <View style={styles.bannerContainer}>
-        <Text style={styles.bannerPlaceholderText}>Reklam Alanı</Text>
+        <Text style={styles.bannerPlaceholderText}>Ad Space</Text>
       </View>
 
       {/* Dragging Block Overlay */}
@@ -971,13 +968,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
   headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -985,34 +982,34 @@ const styles = StyleSheet.create({
   headerRightButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   muteButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
   },
   questBadge: {
     position: 'absolute',
-    top: -4,
-    right: -4,
+    top: -2,
+    right: -2,
     backgroundColor: '#FF6B6B',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
   questBadgeText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: 'bold',
   },
   scoreContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 4,
   },
   boardWrapper: {
@@ -1025,36 +1022,39 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   blocksContainer: {
-    paddingHorizontal: 12,
-    paddingTop: 16,
-    paddingBottom: 8,
-    backgroundColor: 'rgba(30, 30, 50, 0.98)',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 4,
+    backgroundColor: 'rgba(30, 30, 50, 0.95)',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   blocksRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    alignItems: 'flex-end',
-    minHeight: 90,
+    alignItems: 'center',
+    minHeight: 70,
   },
   blockWrapper: {
     alignItems: 'center',
-    padding: 6,
+    padding: 4,
   },
   blockInner: {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    padding: 8,
-    borderRadius: 12,
-    minWidth: 70,
-    minHeight: 70,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 6,
+    borderRadius: 10,
+    minWidth: 60,
+    minHeight: 60,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   blockPoints: {
-    color: '#888',
-    fontSize: 12,
-    marginTop: 4,
+    color: '#4ECDC4',
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
   },
   draggingBlock: {
     opacity: 0.3,
@@ -1455,76 +1455,80 @@ const styles = StyleSheet.create({
     color: '#555',
     fontSize: 11,
   },
-  // Power-ups Bar
+  // Power-ups Bar - Compact and visible
   powerUpsBar: {
     flexDirection: 'row',
     justifyContent: 'center',
-    paddingVertical: 8,
-    marginBottom: 4,
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    gap: 8,
   },
   powerUpButton: {
-    width: 54,
-    height: 54,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     backgroundColor: 'rgba(30, 30, 50, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    marginHorizontal: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   powerUpButtonActive: {
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: '#39FF14',
     backgroundColor: 'rgba(57, 255, 20, 0.15)',
   },
   powerUpButtonEmpty: {
-    opacity: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    opacity: 0.6,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
-  powerUpCount: {
-    fontSize: 13,
+  powerUpCountBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#1a1a2e',
+  },
+  powerUpCountText: {
+    color: '#fff',
+    fontSize: 10,
     fontWeight: 'bold',
-    position: 'absolute',
-    bottom: 3,
-    right: 5,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 6,
-    overflow: 'hidden',
   },
-  powerUpPlus: {
+  powerUpAddBadge: {
     position: 'absolute',
-    bottom: 3,
-    right: 5,
+    bottom: -2,
+    right: -2,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 215, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  powerUpActiveTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 107, 107, 0.9)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginLeft: 8,
+    gap: 6,
+  },
+  powerUpActiveText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   // Share Button
   shareButton: {
     backgroundColor: '#1DA1F2',
     marginTop: 8,
-  },
-  // Power-up Indicator
-  powerUpIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    marginHorizontal: 16,
-    borderRadius: 20,
-    gap: 8,
-    marginBottom: 4,
-  },
-  powerUpIndicatorText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
   },
 });
