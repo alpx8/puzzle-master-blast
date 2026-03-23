@@ -7,7 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "puzzlemasterblast",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
@@ -17,24 +16,6 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.puzzlemasterblast.app",
       "buildNumber": "1",
-      "infoPlist": {
-        "NSCameraUsageDescription": "Profil fotoğrafı için kamera erişimi",
-        "NSPhotoLibraryUsageDescription": "Profil fotoğrafı seçmek için galeri erişimi",
-        "UIBackgroundModes": ["audio"],
-        "NSUserTrackingUsageDescription": "Bu uygulama, size daha alakalı reklamlar göstermek için izleme kullanır",
-        "SKAdNetworkItems": [
-          { "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork" },
-          { "SKAdNetworkIdentifier": "4fzdc2evr5.skadnetwork" },
-          { "SKAdNetworkIdentifier": "4pfyvq9l8r.skadnetwork" },
-          { "SKAdNetworkIdentifier": "2fnua5tdw4.skadnetwork" },
-          { "SKAdNetworkIdentifier": "ydx93a7ass.skadnetwork" },
-          { "SKAdNetworkIdentifier": "5a6flpkh64.skadnetwork" },
-          { "SKAdNetworkIdentifier": "p78axxw29g.skadnetwork" },
-          { "SKAdNetworkIdentifier": "v72qych5uu.skadnetwork" },
-          { "SKAdNetworkIdentifier": "ludvb6z3bs.skadnetwork" },
-          { "SKAdNetworkIdentifier": "cp8zw746q7.skadnetwork" }
-        ]
-      },
       "config": {
         "usesNonExemptEncryption": false,
         "googleMobileAdsAppId": "ca-app-pub-1839067347385099~5884338608"
@@ -47,7 +28,6 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#0a0a1a"
       },
-      "edgeToEdgeEnabled": true,
       "permissions": [
         "INTERNET",
         "VIBRATE",
@@ -77,21 +57,11 @@
       [
         "expo-build-properties",
         {
-          "ios": {
-            "useFrameworks": "static",
-            "deploymentTarget": "15.1"
-          },
           "android": {
-            "compileSdkVersion": 35,
-            "targetSdkVersion": 35,
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
             "minSdkVersion": 24
           }
-        }
-      ],
-      [
-        "expo-tracking-transparency",
-        {
-          "userTrackingPermission": "Bu uygulama, size daha alakalı reklamlar göstermek için izleme kullanır"
         }
       ],
       [
@@ -107,15 +77,15 @@
     },
     "extra": {
       "eas": {
-        "projectId": "your-project-id-here"
+        "projectId": "5d68f9ae-3d6e-4eda-a35d-cb5b87043147"
       }
     },
-    "owner": "your-expo-username",
+    "owner": "alpx88",
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/your-project-id-here"
+      "url": "https://u.expo.dev/5d68f9ae-3d6e-4eda-a35d-cb5b87043147"
     }
   }
 }
