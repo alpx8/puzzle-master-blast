@@ -157,7 +157,16 @@ Oyun mağazalara yüklenmeye hazır!
 
 ### Son Güncelleme: 29 Mart 2026
 
-**Bu seansta düzeltilen (29 Mart 2026):**
+**Bu seansta düzeltilen (29 Mart 2026 - Güncelleme 2):**
+- ✅ Oyun tahtası şık çerçeve ile yeniden tasarlandı (köşe süslemeleri, glow efekti)
+- ✅ Tahta hücreleri daha belirgin ve şık hale getirildi (border, daha iyi kontrast)
+- ✅ Blok yerleştirme hızlandırıldı (150ms animasyon - önceki 280ms)
+- ✅ Snap-to-grid özelliği eklendi (bloklar en yakın hücreye otomatik hizalanıyor)
+- ✅ Blok yerleştirme hassasiyeti artırıldı (parmak pozisyonu hesaplama iyileştirildi)
+- ✅ Highlight renkleri daha belirgin hale getirildi (yeşil/kırmızı göstergeler)
+- ✅ Günlük Ödül modalına kapatma butonu eklendi
+
+**Önceki güncellemeler (29 Mart 2026 - Güncelleme 1):**
 - ✅ Ana ekran layout sorunu - Tüm elementler sabit ve görünür
 - ✅ İsim girişi modal sorunu - Artık düzgün modal açılıyor, sayfa kayması yok
 - ✅ Çok oyunculu oda oluşturma hatası - Daha iyi hata yönetimi eklendi

@@ -436,11 +436,18 @@ export default function GameScreen() {
 
   const calculateBoardPosition = (touchX: number, touchY: number, block: Block) => {
     const boardPos = boardPositionRef.current;
-    const relativeX = touchX - boardPos.x;
-    const relativeY = touchY - boardPos.y - (block.shape.length * GAME_CELL_SIZE / 2);
+    
+    // Bloğun merkezi için offset hesapla
+    const blockWidth = block.shape[0].length * GAME_CELL_SIZE;
+    const blockHeight = block.shape.length * GAME_CELL_SIZE;
+    
+    // Parmak pozisyonunu bloğun merkezine göre ayarla
+    const relativeX = touchX - boardPos.x - (blockWidth / 2) + (GAME_CELL_SIZE / 2);
+    const relativeY = touchY - boardPos.y - blockHeight - 20; // Parmağın üstünde göster
 
-    const col = Math.floor(relativeX / GAME_CELL_SIZE);
-    const row = Math.floor(relativeY / GAME_CELL_SIZE);
+    // Snap-to-grid: En yakın hücreye otomatik hizala
+    const col = Math.round(relativeX / GAME_CELL_SIZE);
+    const row = Math.round(relativeY / GAME_CELL_SIZE);
 
     return { row, col };
   };
@@ -461,6 +468,13 @@ export default function GameScreen() {
     setDraggingBlock(block);
     setDragPosition({ x: touchX, y: touchY });
     measureBoard();
+    
+    // İlk highlight'ı hemen göster
+    const { row, col } = calculateBoardPosition(touchX, touchY, block);
+    const cells = getHighlightCells(block, row, col);
+    const valid = canPlaceBlock(block, row, col);
+    setHighlightCells(cells);
+    setIsValidPlacement(valid);
   };
 
   const handleDragMove = (touchX: number, touchY: number) => {
@@ -489,12 +503,11 @@ export default function GameScreen() {
       
       // Check if lines were cleared
       if (result) {
-        // Count cleared lines (this is approximate, actual count is in store)
         setTimeout(() => {
           playClearSound();
           triggerClearHaptic();
           updateQuestProgress('clear_lines', 1);
-        }, 200);
+        }, 150);
       }
     }
 

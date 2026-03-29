@@ -10,12 +10,19 @@ import {
 import { useGameStore } from '@/src/store/gameStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const BOARD_PADDING = 16;
+const BOARD_PADDING = 12;
 const BOARD_WIDTH = Math.min(SCREEN_WIDTH - BOARD_PADDING * 2, 360);
 
 // Colors for row and column clearing effects
 const ROW_CLEAR_COLOR = '#00F5A0';
 const COL_CLEAR_COLOR = '#FF6B6B';
+
+// Board frame gradient colors
+const BOARD_FRAME_COLORS = {
+  outer: '#2a2a4a',
+  inner: '#1a1a35',
+  glow: '#4ECDC4',
+};
 
 // Vibrant neon colors for combo levels
 const COMBO_COLORS = [
@@ -494,8 +501,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               styles.emptyCell,
               isHighlighted && {
                 backgroundColor: isValidPlacement 
-                  ? 'rgba(76, 175, 80, 0.4)' 
-                  : 'rgba(244, 67, 54, 0.4)',
+                  ? 'rgba(78, 205, 196, 0.45)' 
+                  : 'rgba(255, 82, 82, 0.4)',
+                borderColor: isValidPlacement
+                  ? 'rgba(78, 205, 196, 0.8)'
+                  : 'rgba(255, 82, 82, 0.7)',
+                borderWidth: 2,
               },
               isBombZone && styles.bombEmptyTargetCell,
               isClearRowTarget && styles.clearRowEmptyTargetCell,
@@ -522,128 +533,142 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   };
 
   return (
-    <View style={[styles.boardContainer, { width: BOARD_WIDTH, height: BOARD_WIDTH }]}>
-      <View style={styles.board}>
-        {board.map((row, rowIndex) => (
-          <View key={rowIndex} style={styles.row}>
-            {row.map((cell, colIndex) => renderCell(cell, rowIndex, colIndex))}
+    <View style={styles.boardWrapper}>
+      {/* Outer Frame Glow */}
+      <View style={styles.outerFrame}>
+        {/* Corner Decorations */}
+        <View style={[styles.cornerDecor, styles.cornerTopLeft]} />
+        <View style={[styles.cornerDecor, styles.cornerTopRight]} />
+        <View style={[styles.cornerDecor, styles.cornerBottomLeft]} />
+        <View style={[styles.cornerDecor, styles.cornerBottomRight]} />
+        
+        {/* Inner Board Container */}
+        <View style={[styles.boardContainer, { width: BOARD_WIDTH, height: BOARD_WIDTH }]}>
+          <View style={styles.board}>
+            {board.map((row, rowIndex) => (
+              <View key={rowIndex} style={styles.row}>
+                {row.map((cell, colIndex) => renderCell(cell, rowIndex, colIndex))}
+              </View>
+            ))}
           </View>
-        ))}
-      </View>
-      
-      {/* Clear Line Effects */}
-      {clearEffects.map(effect => (
-        <ClearLineEffect key={effect.id} effect={effect} cellSize={cellSize} boardSize={boardSize} />
-      ))}
-      
-      {/* Particle Effects */}
-      {particles.map(particle => (
-        <ParticleComponent key={particle.id} particle={particle} />
-      ))}
-      
-      {/* Score Popups */}
-      {scorePopups.map(popup => (
-        <ScorePopupComponent key={popup.id} popup={popup} />
-      ))}
-      
-      {/* Pixel Block Combo Popups */}
-      {comboPopups.map(popup => (
-        <PixelComboPopup key={popup.id} combo={popup.combo} />
-      ))}
-      
-      {/* Grid lines overlay */}
-      <View style={styles.gridOverlay} pointerEvents="none">
-        {Array(boardSize + 1).fill(null).map((_, i) => (
-          <View
-            key={`h-${i}`}
-            style={[
-              styles.gridLine,
-              styles.horizontalLine,
-              { top: i * cellSize },
-            ]}
-          />
-        ))}
-        {Array(boardSize + 1).fill(null).map((_, i) => (
-          <View
-            key={`v-${i}`}
-            style={[
-              styles.gridLine,
-              styles.verticalLine,
-              { left: i * cellSize },
-            ]}
-          />
-        ))}
+          
+          {/* Clear Line Effects */}
+          {clearEffects.map(effect => (
+            <ClearLineEffect key={effect.id} effect={effect} cellSize={cellSize} boardSize={boardSize} />
+          ))}
+          
+          {/* Particle Effects */}
+          {particles.map(particle => (
+            <ParticleComponent key={particle.id} particle={particle} />
+          ))}
+          
+          {/* Score Popups */}
+          {scorePopups.map(popup => (
+            <ScorePopupComponent key={popup.id} popup={popup} />
+          ))}
+          
+          {/* Pixel Block Combo Popups */}
+          {comboPopups.map(popup => (
+            <PixelComboPopup key={popup.id} combo={popup.combo} />
+          ))}
+          
+          {/* Grid lines overlay */}
+          <View style={styles.gridOverlay} pointerEvents="none">
+            {Array(boardSize + 1).fill(null).map((_, i) => (
+              <View
+                key={`h-${i}`}
+                style={[
+                  styles.gridLine,
+                  styles.horizontalLine,
+                  { top: i * cellSize },
+                  (i === 0 || i === boardSize) && styles.gridLineBorder,
+                ]}
+              />
+            ))}
+            {Array(boardSize + 1).fill(null).map((_, i) => (
+              <View
+                key={`v-${i}`}
+                style={[
+                  styles.gridLine,
+                  styles.verticalLine,
+                  { left: i * cellSize },
+                  (i === 0 || i === boardSize) && styles.gridLineBorder,
+                ]}
+              />
+            ))}
+          </View>
+        </View>
       </View>
     </View>
   );
 };
 
-// Falling Cell Animation - Enhanced with sliding effect
+// Falling Cell Animation - Enhanced with faster sliding effect
 const FallingCellComponent: React.FC<{ color: string; cellSize: number; fromDirection?: 'top' | 'left' | 'right' }> = ({ 
   color, 
   cellSize,
   fromDirection = 'top'
 }) => {
-  const translateY = useRef(new Animated.Value(fromDirection === 'top' ? -cellSize * 4 : 0)).current;
+  const translateY = useRef(new Animated.Value(fromDirection === 'top' ? -cellSize * 2 : 0)).current;
   const translateX = useRef(new Animated.Value(
-    fromDirection === 'left' ? -cellSize * 3 : fromDirection === 'right' ? cellSize * 3 : 0
+    fromDirection === 'left' ? -cellSize * 2 : fromDirection === 'right' ? cellSize * 2 : 0
   )).current;
-  const scaleAnim = useRef(new Animated.Value(0.6)).current;
+  const scaleAnim = useRef(new Animated.Value(0.7)).current;
   const bounceAnim = useRef(new Animated.Value(1)).current;
-  const rotateAnim = useRef(new Animated.Value(fromDirection === 'top' ? 0 : 10)).current;
+  const rotateAnim = useRef(new Animated.Value(fromDirection === 'top' ? 0 : 5)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Smooth slide-in animation with easing
+    // Fast smooth slide-in animation
     Animated.parallel([
       Animated.timing(translateY, {
         toValue: 0,
-        duration: 280,
+        duration: 150,
         useNativeDriver: true,
-        easing: require('react-native').Easing.out(require('react-native').Easing.cubic),
+        easing: require('react-native').Easing.out(require('react-native').Easing.quad),
       }),
       Animated.timing(translateX, {
         toValue: 0,
-        duration: 280,
+        duration: 150,
         useNativeDriver: true,
-        easing: require('react-native').Easing.out(require('react-native').Easing.cubic),
+        easing: require('react-native').Easing.out(require('react-native').Easing.quad),
       }),
       Animated.timing(scaleAnim, {
         toValue: 1,
-        duration: 280,
+        duration: 120,
         useNativeDriver: true,
-        easing: require('react-native').Easing.out(require('react-native').Easing.back(1.5)),
+        easing: require('react-native').Easing.out(require('react-native').Easing.back(1.2)),
       }),
       Animated.timing(rotateAnim, {
         toValue: 0,
-        duration: 280,
+        duration: 150,
         useNativeDriver: true,
       }),
-      // Glow effect on placement
+      // Quick glow effect on placement
       Animated.sequence([
         Animated.timing(glowAnim, {
           toValue: 1,
-          duration: 150,
+          duration: 80,
           useNativeDriver: true,
         }),
         Animated.timing(glowAnim, {
           toValue: 0,
-          duration: 300,
+          duration: 200,
           useNativeDriver: true,
         }),
       ]),
     ]).start(() => {
-      // Satisfying bounce on landing
+      // Quick satisfying bounce on landing
       Animated.sequence([
         Animated.timing(bounceAnim, {
-          toValue: 0.88,
-          duration: 60,
+          toValue: 0.92,
+          duration: 40,
           useNativeDriver: true,
         }),
         Animated.spring(bounceAnim, {
           toValue: 1,
-          friction: 3,
-          tension: 250,
+          friction: 4,
+          tension: 300,
           useNativeDriver: true,
         }),
       ]).start();
@@ -1055,15 +1080,53 @@ const darkenColor = (color: string, percent: number): string => {
 };
 
 const styles = StyleSheet.create({
-  boardContainer: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#1e1e32',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+  boardWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  outerFrame: {
+    backgroundColor: '#252550',
+    borderRadius: 16,
+    padding: 6,
+    borderWidth: 3,
+    borderColor: '#3a3a6a',
+    shadowColor: '#4ECDC4',
+    shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: 12,
+    elevation: 12,
+    position: 'relative',
+  },
+  cornerDecor: {
+    position: 'absolute',
+    width: 12,
+    height: 12,
+    backgroundColor: '#4ECDC4',
+    borderRadius: 3,
+    opacity: 0.8,
+  },
+  cornerTopLeft: {
+    top: -4,
+    left: -4,
+  },
+  cornerTopRight: {
+    top: -4,
+    right: -4,
+  },
+  cornerBottomLeft: {
+    bottom: -4,
+    left: -4,
+  },
+  cornerBottomRight: {
+    bottom: -4,
+    right: -4,
+  },
+  boardContainer: {
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: '#12122a',
+    borderWidth: 2,
+    borderColor: '#1e1e45',
   },
   board: {
     flex: 1,
@@ -1074,19 +1137,24 @@ const styles = StyleSheet.create({
   cell: {
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 1,
   },
   emptyCell: {
-    width: '96%',
-    height: '96%',
-    backgroundColor: '#1a1a35',
-    borderRadius: 4,
+    width: '94%',
+    height: '94%',
+    backgroundColor: '#181838',
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#252555',
   },
   filledCell: {
-    width: '96%',
-    height: '96%',
-    borderRadius: 5,
+    width: '94%',
+    height: '94%',
+    borderRadius: 6,
     overflow: 'hidden',
     position: 'relative',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   flashingCell: {
     borderWidth: 2,
@@ -1131,19 +1199,19 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 2,
     left: 2,
-    width: '40%',
-    height: '30%',
-    borderRadius: 3,
-    opacity: 0.6,
+    width: '45%',
+    height: '35%',
+    borderRadius: 4,
+    opacity: 0.7,
   },
   cellShadow: {
     position: 'absolute',
     bottom: 2,
     right: 2,
-    width: '50%',
-    height: '35%',
-    borderRadius: 3,
-    opacity: 0.5,
+    width: '55%',
+    height: '40%',
+    borderRadius: 4,
+    opacity: 0.6,
   },
   gridOverlay: {
     position: 'absolute',
@@ -1154,7 +1222,10 @@ const styles = StyleSheet.create({
   },
   gridLine: {
     position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: 'rgba(100, 100, 180, 0.12)',
+  },
+  gridLineBorder: {
+    backgroundColor: 'rgba(78, 205, 196, 0.25)',
   },
   horizontalLine: {
     left: 0,

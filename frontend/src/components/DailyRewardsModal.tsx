@@ -67,6 +67,9 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({ visible, o
         >
           {/* Header */}
           <View style={styles.header}>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Ionicons name="close" size={24} color="#888" />
+            </TouchableOpacity>
             <Ionicons name="gift" size={32} color="#FFD700" />
             <Text style={styles.title}>Günlük Ödül</Text>
             <Text style={styles.subtitle}>
@@ -184,6 +187,16 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 16,
+    position: 'relative',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
+    zIndex: 10,
   },
   title: {
     fontSize: 24,
