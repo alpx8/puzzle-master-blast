@@ -155,9 +155,15 @@ npx eas submit --platform android
 Tüm temel özellikler uygulandı ve test edildi (%100 başarı oranı).
 Oyun mağazalara yüklenmeye hazır!
 
-### Son Güncelleme: 8 Mart 2026
+### Son Güncelleme: 29 Mart 2026
 
-**Bu seansta tamamlanan:**
+**Bu seansta düzeltilen (29 Mart 2026):**
+- ✅ Ana ekran layout sorunu - Tüm elementler sabit ve görünür
+- ✅ İsim girişi modal sorunu - Artık düzgün modal açılıyor, sayfa kayması yok
+- ✅ Çok oyunculu oda oluşturma hatası - Daha iyi hata yönetimi eklendi
+- ✅ Temalar ve Görevler modalları - Ekranın ortasında düzgün açılıyor
+
+**Önceki güncellemeler (8 Mart 2026):**
 - ✅ Kaygan blok yerleştirme animasyonu (sliding effect)
 - ✅ Milestone kutlamaları (100, 500, 1K, 2.5K, 5K, 10K, 25K, 50K puanda)
 - ✅ Konfeti efekti (yeni rekor kırıldığında)

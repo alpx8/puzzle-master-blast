@@ -131,15 +131,19 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
   },
   container: {
     backgroundColor: '#11112B',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '75%',
+    borderRadius: 20,
+    maxHeight: '80%',
+    width: '100%',
+    maxWidth: 360,
     paddingTop: 20,
     paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   header: {
     flexDirection: 'row',
@@ -149,13 +153,15 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
     marginLeft: 10,
   },
   closeBtn: {
     padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
   },
   scrollView: {
     flex: 1,

@@ -7,12 +7,12 @@ import {
   TextInput,
   Dimensions,
   Animated,
-  KeyboardAvoidingView,
   Platform,
   Easing,
   Modal,
   ScrollView,
   Alert,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -194,9 +194,6 @@ export default function HomeScreen() {
   const [showDailyReward, setShowDailyReward] = useState(false);
   const [showSkinsModal, setShowSkinsModal] = useState(false);
   const [tempName, setTempName] = useState('');
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
-  const titleGlow = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const initApp = async () => {
@@ -214,35 +211,6 @@ export default function HomeScreen() {
     };
     
     initApp();
-    
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 8,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(titleGlow, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: false,
-        }),
-        Animated.timing(titleGlow, {
-          toValue: 0,
-          duration: 2000,
-          useNativeDriver: false,
-        }),
-      ])
-    ).start();
   }, []);
 
   useEffect(() => {
@@ -255,8 +223,15 @@ export default function HomeScreen() {
     if (tempName.trim()) {
       setUsername(tempName.trim());
       await saveUserData();
+      Keyboard.dismiss();
       setShowNameInput(false);
     }
+  };
+
+  const handleCancelNameInput = () => {
+    Keyboard.dismiss();
+    setShowNameInput(false);
+    setTempName(username);
   };
 
   const handleClaimQuest = async (questId: string) => {
@@ -304,11 +279,6 @@ export default function HomeScreen() {
     </TouchableOpacity>
   );
 
-  const glowColor = titleGlow.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['rgba(0, 217, 255, 0.3)', 'rgba(168, 85, 247, 0.6)'],
-  });
-
   // Handle game mode selection with offline check
   const handleModePress = (mode: string, route: string) => {
     if (requiresOnline(mode) && isOffline) {
@@ -331,180 +301,158 @@ export default function HomeScreen() {
       {isOffline && (
         <View style={styles.offlineBanner}>
           <Ionicons name="cloud-offline" size={16} color="#fff" />
-          <Text style={styles.offlineBannerText}>Çevrimdışı Mod - Klasik ve Zamanlı oynanabilir</Text>
+          <Text style={styles.offlineBannerText}>Çevrimdışı Mod</Text>
         </View>
       )}
       
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <Animated.View 
-          style={[
-            styles.content,
-            { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }
-          ]}
+      <View style={styles.mainContent}>
+        {/* Logo Section - Fixed at top */}
+        <View style={styles.logoSection}>
+          <AnimatedLogo />
+          <Text style={styles.title}>PUZZLE MASTER</Text>
+          <Text style={styles.titleBlast}>BLAST</Text>
+        </View>
+
+        {/* User Stats - Fixed */}
+        <TouchableOpacity 
+          style={styles.userSection}
+          onPress={() => {
+            setTempName(username);
+            setShowNameInput(true);
+          }}
         >
-          {/* Logo Section - Compact */}
-          <View style={styles.logoSection}>
-            <AnimatedLogo />
-            
-            <Animated.Text 
-              style={[styles.title, { textShadowColor: glowColor }]}
-            >
-              PUZZLE MASTER
-            </Animated.Text>
-            <Animated.Text 
-              style={[styles.titleBlast, { textShadowColor: glowColor }]}
-            >
-              BLAST
-            </Animated.Text>
+          <View style={styles.avatarContainer}>
+            <Ionicons name="person" size={18} color="#fff" />
           </View>
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>{username || 'İsim Gir'}</Text>
+            <Text style={styles.userStats}>Lv.{level} • Rekor: {highScore}</Text>
+          </View>
+          <Ionicons name="pencil" size={14} color="#888" />
+        </TouchableOpacity>
 
-          {/* User Stats - Compact */}
-          <View style={styles.statsContainer}>
+        {/* Game Mode Buttons - Fixed height */}
+        <View style={styles.modesSection}>
+          <GameModeButton
+            title="Klasik Mod"
+            subtitle={isOffline ? "Çevrimdışı" : "Süresiz oyna!"}
+            icon="infinite"
+            colors={['#4ECDC4', '#44A08D']}
+            onPress={() => router.push('/game?mode=classic')}
+          />
+          
+          <GameModeButton
+            title="Zamanlı Mod"
+            subtitle={isOffline ? "Çevrimdışı" : "3 dakika!"}
+            icon="timer"
+            colors={['#FF6B6B', '#FF8E53']}
+            onPress={() => router.push('/game?mode=timed')}
+          />
+          
+          <GameModeButton
+            title="Çok Oyunculu"
+            subtitle={isOffline ? "İnternet gerekli" : "Online yarış!"}
+            icon="people"
+            colors={isOffline ? ['#555', '#444'] : ['#667eea', '#764ba2']}
+            onPress={() => handleModePress('multiplayer', '/multiplayer')}
+            disabled={isOffline}
+          />
+          
+          <GameModeButton
+            title="Turnuva"
+            subtitle={isOffline ? "İnternet gerekli" : "Haftalık ödüller!"}
+            icon="trophy"
+            colors={isOffline ? ['#555', '#444'] : ['#FFD700', '#FF8C00']}
+            onPress={() => handleModePress('tournament', '/tournament')}
+            disabled={isOffline}
+          />
+        </View>
+
+        {/* Bottom Row - Fixed at bottom */}
+        <View style={styles.bottomSection}>
+          <View style={styles.bottomGridRow}>
             <TouchableOpacity 
-              style={styles.userSection}
-              onPress={() => {
-                setTempName(username);
-                setShowNameInput(true);
-              }}
+              style={styles.bottomButton}
+              onPress={() => router.push('/leaderboard')}
             >
-              <View style={styles.avatarContainer}>
-                <Ionicons name="person" size={20} color="#fff" />
-              </View>
-              <View style={styles.userInfo}>
-                <Text style={styles.userName}>
-                  {username || 'İsim Gir'}
-                </Text>
-                <Text style={styles.userStats}>Lv.{level} • Rekor: {highScore}</Text>
-              </View>
-              <Ionicons name="pencil" size={16} color="#888" />
+              <Ionicons name="trophy" size={18} color="#FFD700" />
+              <Text style={styles.bottomButtonText}>Sıralama</Text>
             </TouchableOpacity>
-          </View>
-
-          {/* Name Input Modal */}
-          {showNameInput && (
-            <View style={styles.nameInputContainer}>
-              <TextInput
-                style={styles.nameInput}
-                value={tempName}
-                onChangeText={setTempName}
-                placeholder="İsmini gir..."
-                placeholderTextColor="#666"
-                maxLength={20}
-                autoFocus
-              />
-              <View style={styles.inputButtons}>
-                <TouchableOpacity 
-                  style={styles.cancelButton}
-                  onPress={() => setShowNameInput(false)}
-                >
-                  <Text style={styles.cancelButtonText}>İptal</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.saveButton}
-                  onPress={handleSaveName}
-                >
-                  <Text style={styles.saveButtonText}>Kaydet</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-
-          {/* Game Mode Buttons */}
-          <View style={styles.modesSection}>
-            <GameModeButton
-              title="Klasik Mod"
-              subtitle={isOffline ? "Çevrimdışı oyna!" : "Süresiz oyna!"}
-              icon="infinite"
-              colors={['#4ECDC4', '#44A08D']}
-              onPress={() => router.push('/game?mode=classic')}
-            />
             
-            <GameModeButton
-              title="Zamanlı Mod"
-              subtitle={isOffline ? "Çevrimdışı oyna!" : "3 dakikada en çok puan!"}
-              icon="timer"
-              colors={['#FF6B6B', '#FF8E53']}
-              onPress={() => router.push('/game?mode=timed')}
-            />
+            <TouchableOpacity 
+              style={styles.bottomButton}
+              onPress={() => setShowDailyReward(true)}
+            >
+              <Ionicons name="gift" size={18} color="#FF6B6B" />
+              <Text style={styles.bottomButtonText}>Ödül</Text>
+              {currentStreak > 0 && (
+                <View style={[styles.questBadge, { backgroundColor: '#FF6B6B' }]}>
+                  <Text style={styles.questBadgeText}>{currentStreak}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
             
-            <GameModeButton
-              title="Çok Oyunculu"
-              subtitle={isOffline ? "İnternet gerekli" : "Online yarış!"}
-              icon="people"
-              colors={isOffline ? ['#555', '#444'] : ['#667eea', '#764ba2']}
-              onPress={() => handleModePress('multiplayer', '/multiplayer')}
-              disabled={isOffline}
-            />
+            <TouchableOpacity 
+              style={styles.bottomButton}
+              onPress={() => setShowSkinsModal(true)}
+            >
+              <Ionicons name="color-palette" size={18} color="#BD00FF" />
+              <Text style={styles.bottomButtonText}>Temalar</Text>
+            </TouchableOpacity>
             
-            <GameModeButton
-              title="Turnuva"
-              subtitle={isOffline ? "İnternet gerekli" : "Haftalık ödüller!"}
-              icon="trophy"
-              colors={isOffline ? ['#555', '#444'] : ['#FFD700', '#FF8C00']}
-              onPress={() => handleModePress('tournament', '/tournament')}
-              disabled={isOffline}
-            />
-          </View>
-
-          {/* Bottom Row - Leaderboard & Quests & More */}
-          <View style={styles.bottomGrid}>
-            <View style={styles.bottomGridRow}>
-              <TouchableOpacity 
-                style={styles.bottomButton}
-                onPress={() => router.push('/leaderboard')}
-              >
-                <Ionicons name="trophy" size={20} color="#FFD700" />
-                <Text style={styles.bottomButtonText}>Sıralama</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.bottomButton}
-                onPress={() => setShowDailyReward(true)}
-              >
-                <Ionicons name="gift" size={20} color="#FF6B6B" />
-                <Text style={styles.bottomButtonText}>Ödül</Text>
-                {currentStreak > 0 && (
-                  <View style={[styles.questBadge, { backgroundColor: '#FF6B6B' }]}>
-                    <Text style={styles.questBadgeText}>{currentStreak}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.bottomGridRow}>
-              <TouchableOpacity 
-                style={styles.bottomButton}
-                onPress={() => setShowSkinsModal(true)}
-              >
-                <Ionicons name="color-palette" size={20} color="#BD00FF" />
-                <Text style={styles.bottomButtonText}>Temalar</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.bottomButton}
-                onPress={() => setShowQuestsModal(true)}
-              >
-                <Ionicons name="flag" size={20} color="#4ECDC4" />
-                <Text style={styles.bottomButtonText}>Görevler</Text>
-                {completedQuests > 0 && (
-                  <View style={styles.questBadge}>
-                    <Text style={styles.questBadgeText}>{completedQuests}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity 
+              style={styles.bottomButton}
+              onPress={() => setShowQuestsModal(true)}
+            >
+              <Ionicons name="flag" size={18} color="#4ECDC4" />
+              <Text style={styles.bottomButtonText}>Görevler</Text>
+              {completedQuests > 0 && (
+                <View style={styles.questBadge}>
+                  <Text style={styles.questBadgeText}>{completedQuests}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
           
           {/* Coins Display */}
           <View style={styles.coinsRow}>
-            <Ionicons name="logo-bitcoin" size={18} color="#F7931A" />
+            <Ionicons name="logo-bitcoin" size={16} color="#F7931A" />
             <Text style={styles.coinsText}>{totalCoins}</Text>
           </View>
-        </Animated.View>
-      </KeyboardAvoidingView>
+        </View>
+      </View>
+
+      {/* Name Input Modal - Proper Modal */}
+      <Modal visible={showNameInput} transparent animationType="fade">
+        <View style={styles.nameModalOverlay}>
+          <View style={styles.nameModalContent}>
+            <Text style={styles.nameModalTitle}>İsim Değiştir</Text>
+            <TextInput
+              style={styles.nameInput}
+              value={tempName}
+              onChangeText={setTempName}
+              placeholder="İsmini gir..."
+              placeholderTextColor="#666"
+              maxLength={20}
+              autoFocus
+            />
+            <View style={styles.nameModalButtons}>
+              <TouchableOpacity 
+                style={styles.cancelBtn}
+                onPress={handleCancelNameInput}
+              >
+                <Text style={styles.cancelBtnText}>İptal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.saveBtn}
+                onPress={handleSaveName}
+              >
+                <Text style={styles.saveBtnText}>Kaydet</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Quests Modal */}
       <Modal visible={showQuestsModal} transparent animationType="slide">
@@ -584,44 +532,40 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0a0a1a',
   },
-  keyboardView: {
+  mainContent: {
     flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    justifyContent: 'space-between',
-    paddingBottom: 16,
+    paddingHorizontal: 16,
   },
   logoSection: {
     alignItems: 'center',
     paddingTop: 8,
+    paddingBottom: 4,
   },
   logoOuterContainer: {
-    width: 110,
-    height: 110,
+    width: 80,
+    height: 80,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   logoGrid: {
-    width: 100,
-    height: 100,
+    width: 75,
+    height: 75,
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoBlockWrapper: {
-    width: 30,
-    height: 30,
+    width: 22,
+    height: 22,
     margin: 1,
     perspective: 1000,
   },
   logoBlock: {
     width: '100%',
     height: '100%',
-    borderRadius: 6,
+    borderRadius: 4,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -629,68 +573,68 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 2,
     left: 2,
-    width: '45%',
-    height: '45%',
+    width: '40%',
+    height: '40%',
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    borderRadius: 3,
+    borderRadius: 2,
   },
   blockShadow: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: '30%',
+    height: '25%',
     opacity: 0.5,
-    borderBottomLeftRadius: 6,
-    borderBottomRightRadius: 6,
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 4,
   },
   offlineBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FF6B6B',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    gap: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    gap: 6,
   },
   offlineBannerText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
   },
   title: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '900',
     color: '#fff',
-    letterSpacing: 2,
+    letterSpacing: 1,
+    textShadowColor: 'rgba(0, 217, 255, 0.5)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 15,
+    textShadowRadius: 10,
   },
   titleBlast: {
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: '900',
     color: '#FFD93D',
-    letterSpacing: 4,
+    letterSpacing: 3,
+    textShadowColor: 'rgba(255, 217, 61, 0.5)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 20,
-    marginTop: -4,
-  },
-  statsContainer: {
-    marginVertical: 12,
+    textShadowRadius: 10,
+    marginTop: -2,
   },
   userSection: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    padding: 12,
-    borderRadius: 14,
+    padding: 10,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginVertical: 8,
   },
   avatarContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: '#4ECDC4',
     justifyContent: 'center',
     alignItems: 'center',
@@ -700,81 +644,43 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   userName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#fff',
   },
   userStats: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#888',
     marginTop: 1,
-  },
-  nameInputContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    padding: 16,
-    borderRadius: 14,
-    marginBottom: 12,
-  },
-  nameInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 12,
-    borderRadius: 10,
-    fontSize: 16,
-    color: '#fff',
-    marginBottom: 10,
-  },
-  inputButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 10,
-  },
-  cancelButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  cancelButtonText: {
-    color: '#888',
-    fontSize: 14,
-  },
-  saveButton: {
-    backgroundColor: '#4ECDC4',
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
   },
   modesSection: {
     flex: 1,
     justifyContent: 'center',
+    paddingVertical: 4,
   },
   modeButton: {
-    marginBottom: 10,
-    borderRadius: 14,
+    marginBottom: 8,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   modeGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 14,
+    padding: 12,
+    borderRadius: 12,
   },
   modeTextContainer: {
     flex: 1,
-    marginLeft: 14,
+    marginLeft: 12,
   },
   modeTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#fff',
   },
   modeSubtitle: {
-    fontSize: 12,
+    fontSize: 11,
     color: 'rgba(255, 255, 255, 0.8)',
-    marginTop: 1,
   },
   modeButtonDisabled: {
     opacity: 0.6,
@@ -785,18 +691,12 @@ const styles = StyleSheet.create({
   modeSubtitleDisabled: {
     color: 'rgba(255, 255, 255, 0.4)',
   },
-  bottomRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 12,
-  },
-  bottomGrid: {
-    marginTop: 12,
-    gap: 10,
+  bottomSection: {
+    paddingBottom: 8,
   },
   bottomGridRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
   bottomButton: {
     flex: 1,
@@ -804,56 +704,121 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    padding: 12,
-    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    gap: 6,
+    gap: 4,
+    position: 'relative',
   },
   bottomButtonText: {
-    fontSize: 13,
+    fontSize: 11,
     color: '#fff',
     fontWeight: '600',
   },
   questBadge: {
     position: 'absolute',
-    top: -6,
-    right: -6,
-    backgroundColor: '#FF6B6B',
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    top: -4,
+    right: -4,
+    backgroundColor: '#4ECDC4',
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 4,
   },
   questBadgeText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: 'bold',
   },
   coinsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
+    gap: 4,
+    paddingVertical: 6,
   },
   coinsText: {
     color: '#F7931A',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
   },
-  // Modal Styles
+  // Name Input Modal
+  nameModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  nameModalContent: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    maxWidth: 320,
+  },
+  nameModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  nameInput: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 12,
+    borderRadius: 10,
+    fontSize: 16,
+    color: '#fff',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  nameModalButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+  },
+  cancelBtnText: {
+    color: '#888',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  saveBtn: {
+    flex: 1,
+    backgroundColor: '#4ECDC4',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  saveBtnText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  // Quests Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
   },
   modalContent: {
     backgroundColor: '#1a1a2e',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderRadius: 20,
     padding: 20,
+    width: '100%',
+    maxWidth: 360,
     maxHeight: SCREEN_HEIGHT * 0.7,
   },
   modalHeader: {
@@ -863,7 +828,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
   },
@@ -873,26 +838,26 @@ const styles = StyleSheet.create({
   questItem: {
     flexDirection: 'row',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
   },
   questInfo: {
     flex: 1,
   },
   questTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: '#fff',
-    marginBottom: 3,
+    marginBottom: 2,
   },
   questDescription: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#888',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   questProgressBar: {
-    height: 6,
+    height: 5,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 3,
     overflow: 'hidden',
@@ -903,44 +868,44 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   questProgressText: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#666',
-    marginTop: 4,
+    marginTop: 3,
   },
   questReward: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 14,
-    minWidth: 60,
+    marginLeft: 12,
+    minWidth: 50,
   },
   questXP: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#FFD700',
   },
   questXPLabel: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#FFD700',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   claimButton: {
     backgroundColor: '#4ECDC4',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 6,
   },
   claimButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 13,
+    fontSize: 12,
   },
   noQuests: {
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 30,
   },
   noQuestsText: {
     color: '#666',
-    marginTop: 12,
-    fontSize: 14,
+    marginTop: 10,
+    fontSize: 13,
   },
 });

@@ -19,9 +19,17 @@ import axios from 'axios';
 import { useGameStore } from '@/src/store/gameStore';
 import Constants from 'expo-constants';
 
-const API_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || 
-                process.env.EXPO_PUBLIC_BACKEND_URL || 
-                'https://puzzle-game-56.preview.emergentagent.com';
+// Get API URL from environment
+const getApiUrl = () => {
+  // Try multiple sources for API URL
+  const envUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
+  const configUrl = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL;
+  
+  // Return the first available URL or fallback
+  return envUrl || configUrl || 'https://puzzle-game-56.preview.emergentagent.com';
+};
+
+const API_URL = getApiUrl();
 
 interface Room {
   id: string;
@@ -120,23 +128,48 @@ export default function MultiplayerScreen() {
 
     setCreating(true);
     try {
+      console.log('Creating room with API_URL:', API_URL);
       const response = await axios.post(`${API_URL}/api/rooms`, {
         name: roomName,
         host_id: playerId,
         host_name: playerName,
         password: isPrivate ? roomPassword : null,
         is_private: isPrivate,
+      }, {
+        timeout: 10000,
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
+      
+      console.log('Room created:', response.data);
       
       setShowCreateModal(false);
       setRoomName('');
       setRoomPassword('');
       setIsPrivate(false);
       
-      router.push(`/game-room?roomId=${response.data.id}&isHost=true`);
-    } catch (error) {
+      if (response.data && response.data.id) {
+        router.push(`/game-room?roomId=${response.data.id}&isHost=true`);
+      } else {
+        Alert.alert('Hata', 'Oda oluşturuldu ancak yönlendirilemedi');
+      }
+    } catch (error: any) {
       console.error('Error creating room:', error);
-      Alert.alert('Hata', 'Oda oluşturulamadı');
+      console.error('Error details:', error.response?.data || error.message);
+      
+      let errorMessage = 'Oda oluşturulamadı. ';
+      if (error.code === 'ECONNABORTED') {
+        errorMessage += 'Bağlantı zaman aşımına uğradı.';
+      } else if (error.response?.status === 500) {
+        errorMessage += 'Sunucu hatası oluştu.';
+      } else if (!error.response) {
+        errorMessage += 'İnternet bağlantınızı kontrol edin.';
+      } else {
+        errorMessage += error.response?.data?.detail || 'Lütfen tekrar deneyin.';
+      }
+      
+      Alert.alert('Bağlantı Hatası', errorMessage);
     } finally {
       setCreating(false);
     }
