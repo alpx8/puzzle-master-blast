@@ -157,30 +157,33 @@ Oyun mağazalara yüklenmeye hazır!
 
 ### Son Güncelleme: 29 Mart 2026
 
-**Bu seansta düzeltilen (29 Mart 2026 - Güncelleme 2):**
-- ✅ Oyun tahtası şık çerçeve ile yeniden tasarlandı (köşe süslemeleri, glow efekti)
-- ✅ Tahta hücreleri daha belirgin ve şık hale getirildi (border, daha iyi kontrast)
-- ✅ Blok yerleştirme hızlandırıldı (150ms animasyon - önceki 280ms)
-- ✅ Snap-to-grid özelliği eklendi (bloklar en yakın hücreye otomatik hizalanıyor)
-- ✅ Blok yerleştirme hassasiyeti artırıldı (parmak pozisyonu hesaplama iyileştirildi)
-- ✅ Highlight renkleri daha belirgin hale getirildi (yeşil/kırmızı göstergeler)
+**Bu seansta tamamlanan (29 Mart 2026 - Büyük Güncelleme):**
+- ✅ Temalar sayfası tamamen yeniden yazıldı (14 farklı blok teması)
+  - Blok temaları: Klasik, Neon, Okyanus, Gün Batımı, Şeker, Orman, Ateş, Buz, Galaksi, Gökkuşağı, Altın, Elmas, Aurora, Gece Yarısı
+  - Arka plan temaları: Klasik Gece, Okyanus Derinliği, Gün Batımı, Gece Ormanı, Galaksi, Neon Şehir, Volkanik, Buzul
+  - Reklam izleyerek tema açma sistemi
+- ✅ Görevler sayfası tamamen yeniden yazıldı
+  - Günlük görevler: Puan toplama, satır temizleme, combo yapma, oyun oynama, seviye atlama
+  - Görev tamamlandığında coin ödülü
+  - Görsel ilerleme çubukları ve modern tasarım
+- ✅ "Oyunlarım" sayfası eklendi (/my-games)
+  - Maç geçmişi görüntüleme
+  - Galibiyet/mağlubiyet istatistikleri
+  - Kazanma oranı hesaplama
+  - Rakip skoru karşılaştırma
+- ✅ Ana ekran alt menüsüne "Oyunlarım" butonu eklendi
+- ✅ Multiplayer match history backend API'leri zaten mevcut
+
+**Önceki güncellemeler (29 Mart 2026 - Güncelleme 2):**
+- ✅ Oyun tahtası şık çerçeve ile yeniden tasarlandı
+- ✅ Blok yerleştirme hızlandırıldı ve snap-to-grid eklendi
 - ✅ Günlük Ödül modalına kapatma butonu eklendi
 
 **Önceki güncellemeler (29 Mart 2026 - Güncelleme 1):**
-- ✅ Ana ekran layout sorunu - Tüm elementler sabit ve görünür
-- ✅ İsim girişi modal sorunu - Artık düzgün modal açılıyor, sayfa kayması yok
-- ✅ Çok oyunculu oda oluşturma hatası - Daha iyi hata yönetimi eklendi
-- ✅ Temalar ve Görevler modalları - Ekranın ortasında düzgün açılıyor
-
-**Önceki güncellemeler (8 Mart 2026):**
-- ✅ Kaygan blok yerleştirme animasyonu (sliding effect)
-- ✅ Milestone kutlamaları (100, 500, 1K, 2.5K, 5K, 10K, 25K, 50K puanda)
-- ✅ Konfeti efekti (yeni rekor kırıldığında)
-- ✅ Gelişmiş haptic feedback (yerleştirme, temizleme, combo, game over)
-- ✅ Power-up oyun içi mantığı (Bomba, Karıştır, Satır Temizle, Ekstra Süre)
-- ✅ Zamanlı Mod göstergesi ve animasyonlu uyarı (son 10 saniye)
-- ✅ Sosyal paylaşım butonu çalışır durumda
-- ✅ AdMob production ID entegrasyonu tamamlandı
+- ✅ Ana ekran layout sorunu düzeltildi
+- ✅ İsim girişi modal sorunu düzeltildi
+- ✅ Çok oyunculu oda oluşturma hatası düzeltildi
+- ✅ Temalar ve Görevler modalları düzeltildi
 
 **Gelecek geliştirmeler (Opsiyonel):**
 - 🔮 Tournament backend mantığı (sunucu taraflı turnuva yönetimi)

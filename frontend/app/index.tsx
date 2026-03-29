@@ -25,6 +25,7 @@ import { usePowerUpsStore } from '@/src/store/powerUpsStore';
 import { initSounds } from '@/src/utils/sounds';
 import { DailyRewardsModal } from '@/src/components/DailyRewardsModal';
 import { SkinsModal } from '@/src/components/SkinsModal';
+import { QuestsModal } from '@/src/components/QuestsModal';
 import { useNetworkStatus, requiresOnline } from '@/src/utils/offlineSupport';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -381,6 +382,14 @@ export default function HomeScreen() {
             
             <TouchableOpacity 
               style={styles.bottomButton}
+              onPress={() => router.push('/my-games')}
+            >
+              <Ionicons name="game-controller" size={18} color="#667eea" />
+              <Text style={styles.bottomButtonText}>Oyunlarım</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.bottomButton}
               onPress={() => setShowDailyReward(true)}
             >
               <Ionicons name="gift" size={18} color="#FF6B6B" />
@@ -391,7 +400,9 @@ export default function HomeScreen() {
                 </View>
               )}
             </TouchableOpacity>
-            
+          </View>
+          
+          <View style={[styles.bottomGridRow, { marginTop: 8 }]}>
             <TouchableOpacity 
               style={styles.bottomButton}
               onPress={() => setShowSkinsModal(true)}
@@ -455,62 +466,10 @@ export default function HomeScreen() {
       </Modal>
 
       {/* Quests Modal */}
-      <Modal visible={showQuestsModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Günlük Görevler</Text>
-              <TouchableOpacity onPress={() => setShowQuestsModal(false)}>
-                <Ionicons name="close-circle" size={32} color="#888" />
-              </TouchableOpacity>
-            </View>
-            
-            <ScrollView style={styles.questList} showsVerticalScrollIndicator={false}>
-              {dailyQuests.length > 0 ? (
-                dailyQuests.map((quest) => (
-                  <View key={quest.id} style={styles.questItem}>
-                    <View style={styles.questInfo}>
-                      <Text style={styles.questTitle}>{quest.title}</Text>
-                      <Text style={styles.questDescription}>{quest.description}</Text>
-                      <View style={styles.questProgressBar}>
-                        <View 
-                          style={[
-                            styles.questProgressFill, 
-                            { width: `${Math.min(100, (quest.progress / quest.target) * 100)}%` }
-                          ]} 
-                        />
-                      </View>
-                      <Text style={styles.questProgressText}>
-                        {quest.progress} / {quest.target}
-                      </Text>
-                    </View>
-                    
-                    <View style={styles.questReward}>
-                      <Text style={styles.questXP}>+{quest.xpReward}</Text>
-                      <Text style={styles.questXPLabel}>XP</Text>
-                      {quest.completed && !quest.claimed ? (
-                        <TouchableOpacity 
-                          style={styles.claimButton}
-                          onPress={() => handleClaimQuest(quest.id)}
-                        >
-                          <Text style={styles.claimButtonText}>AL</Text>
-                        </TouchableOpacity>
-                      ) : quest.claimed ? (
-                        <Ionicons name="checkmark-circle" size={28} color="#4ECDC4" />
-                      ) : null}
-                    </View>
-                  </View>
-                ))
-              ) : (
-                <View style={styles.noQuests}>
-                  <Ionicons name="flag-outline" size={48} color="#444" />
-                  <Text style={styles.noQuestsText}>Görev bulunamadı</Text>
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+      <QuestsModal 
+        visible={showQuestsModal} 
+        onClose={() => setShowQuestsModal(false)} 
+      />
       
       {/* Daily Rewards Modal */}
       <DailyRewardsModal 

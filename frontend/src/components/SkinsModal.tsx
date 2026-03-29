@@ -1,4 +1,4 @@
-// Skins Shop Modal - Blok tema mağazası (Fixed for Web)
+// Skins Modal - Tema ve Arka Plan Seçimi
 import React, { useState } from 'react';
 import {
   View,
@@ -8,119 +8,272 @@ import {
   Modal,
   ScrollView,
   Dimensions,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSkinsStore, BlockSkin } from '@/src/store/skinsStore';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = (SCREEN_WIDTH - 80) / 2;
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface SkinsModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
+// Arka plan temaları
+const BACKGROUNDS = [
+  { id: 'default', name: 'Klasik Gece', colors: ['#0a0a1a', '#1a1a35'], free: true },
+  { id: 'ocean', name: 'Okyanus Derinliği', colors: ['#0a192f', '#172a45'], adCost: 2 },
+  { id: 'sunset', name: 'Gün Batımı', colors: ['#1a0a0a', '#2d1f1f'], adCost: 2 },
+  { id: 'forest', name: 'Gece Ormanı', colors: ['#0a1a0f', '#1a352a'], adCost: 2 },
+  { id: 'galaxy', name: 'Galaksi', colors: ['#0f0a1a', '#1f1a35'], adCost: 3 },
+  { id: 'neon', name: 'Neon Şehir', colors: ['#0a0a15', '#15152a'], adCost: 3 },
+  { id: 'fire', name: 'Volkanik', colors: ['#1a0a0a', '#351a1a'], adCost: 4 },
+  { id: 'ice', name: 'Buzul', colors: ['#0a1a1f', '#1a3540'], adCost: 4 },
+];
+
 export const SkinsModal: React.FC<SkinsModalProps> = ({ visible, onClose }) => {
-  const { skins: storeSkins, activeSkin, unlockedSkins, setSkin, watchAdToUnlock } = useSkinsStore();
-  const [loading, setLoading] = useState<string | null>(null);
-  
-  // Fallback skins if store is empty
-  const defaultSkins: BlockSkin[] = [
-    { id: 'default', name: 'Klasik', colors: ['#FF5252', '#00E5FF', '#69F0AE', '#FFD740'] },
-    { id: 'neon', name: 'Neon', colors: ['#00F0FF', '#FF0099', '#39FF14', '#FAFF00'], glow: true, adCost: 3 },
-    { id: 'gold', name: 'Altın', colors: ['#FFD700', '#FFA500', '#FF8C00', '#DAA520'], premium: true, adCost: 5 },
-    { id: 'ocean', name: 'Okyanus', colors: ['#00CED1', '#20B2AA', '#48D1CC', '#40E0D0'], adCost: 3 },
-    { id: 'sunset', name: 'Gün Batımı', colors: ['#FF6B6B', '#FF8E53', '#FFA07A', '#FFB347'], adCost: 3 },
-    { id: 'galaxy', name: 'Galaksi', colors: ['#9B59B6', '#8E44AD', '#663399', '#4B0082'], glow: true, premium: true, adCost: 7 },
-  ];
-  
-  const skins = storeSkins && storeSkins.length > 0 ? storeSkins : defaultSkins;
-  
-  const handleSelect = (skinId: string) => {
-    if (unlockedSkins.includes(skinId)) {
-      setSkin(skinId);
+  const { skins, activeSkin, unlockedSkins, setSkin, watchAdToUnlock } = useSkinsStore();
+  const [activeTab, setActiveTab] = useState<'blocks' | 'backgrounds'>('blocks');
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [activeBackground, setActiveBackground] = useState('default');
+  const [unlockedBackgrounds, setUnlockedBackgrounds] = useState(['default']);
+
+  const handleSelectSkin = (skin: BlockSkin) => {
+    if (unlockedSkins.includes(skin.id)) {
+      setSkin(skin.id);
+    } else {
+      // Reklam izle ve aç
+      handleWatchAdForSkin(skin);
     }
   };
-  
-  const handleUnlock = async (skin: BlockSkin) => {
-    setLoading(skin.id);
-    await watchAdToUnlock(skin.id);
-    setLoading(null);
+
+  const handleWatchAdForSkin = async (skin: BlockSkin) => {
+    Alert.alert(
+      'Reklam İzle',
+      `"${skin.name}" temasını açmak için ${skin.adCost || 1} reklam izlemeniz gerekiyor. İzlemek ister misiniz?`,
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        { 
+          text: 'Reklam İzle',
+          onPress: async () => {
+            setLoadingId(skin.id);
+            try {
+              // Simüle edilmiş reklam izleme
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              await watchAdToUnlock(skin.id);
+              Alert.alert('Tebrikler!', `"${skin.name}" teması açıldı!`);
+            } catch (error) {
+              Alert.alert('Hata', 'Reklam yüklenemedi. Lütfen tekrar deneyin.');
+            } finally {
+              setLoadingId(null);
+            }
+          }
+        },
+      ]
+    );
   };
-  
-  // Skins'i 2'li gruplara böl
-  const skinPairs: BlockSkin[][] = [];
-  for (let i = 0; i < skins.length; i += 2) {
-    skinPairs.push(skins.slice(i, i + 2));
-  }
-  
+
+  const handleSelectBackground = (bg: typeof BACKGROUNDS[0]) => {
+    if (unlockedBackgrounds.includes(bg.id)) {
+      setActiveBackground(bg.id);
+    } else {
+      handleWatchAdForBackground(bg);
+    }
+  };
+
+  const handleWatchAdForBackground = async (bg: typeof BACKGROUNDS[0]) => {
+    Alert.alert(
+      'Reklam İzle',
+      `"${bg.name}" arka planını açmak için ${bg.adCost || 1} reklam izlemeniz gerekiyor.`,
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        {
+          text: 'Reklam İzle',
+          onPress: async () => {
+            setLoadingId(bg.id);
+            try {
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              setUnlockedBackgrounds(prev => [...prev, bg.id]);
+              setActiveBackground(bg.id);
+              Alert.alert('Tebrikler!', `"${bg.name}" arka planı açıldı!`);
+            } catch (error) {
+              Alert.alert('Hata', 'Reklam yüklenemedi.');
+            } finally {
+              setLoadingId(null);
+            }
+          }
+        },
+      ]
+    );
+  };
+
+  const renderBlockPreview = (colors: string[]) => {
+    return (
+      <View style={styles.blockPreview}>
+        {colors.slice(0, 4).map((color, index) => (
+          <View key={index} style={[styles.previewBlock, { backgroundColor: color }]}>
+            <View style={[styles.previewHighlight, { backgroundColor: `${color}99` }]} />
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
-            <Ionicons name="color-palette" size={28} color="#BD00FF" />
-            <Text style={styles.title}>Blok Temaları</Text>
+            <Ionicons name="color-palette" size={24} color="#BD00FF" />
+            <Text style={styles.title}>Temalar</Text>
             <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
               <Ionicons name="close" size={24} color="#888" />
             </TouchableOpacity>
           </View>
-          
-          {/* Skins List */}
-          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-            {skins.map((skin, index) => {
-              const isUnlocked = unlockedSkins.includes(skin.id);
-              const isActive = activeSkin === skin.id;
-              const isLoading = loading === skin.id;
-              
-              return (
-                <TouchableOpacity
-                  key={skin.id}
-                  style={[
-                    styles.skinRow,
-                    isActive && styles.skinRowActive,
-                  ]}
-                  onPress={() => isUnlocked ? handleSelect(skin.id) : handleUnlock(skin)}
-                  disabled={isLoading}
-                >
-                  {/* Color Preview */}
-                  <View style={styles.colorRow}>
-                    {skin.colors.slice(0, 4).map((color, i) => (
-                      <View 
-                        key={i} 
-                        style={[styles.colorDot, { backgroundColor: color }]} 
-                      />
-                    ))}
-                  </View>
-                  
-                  {/* Name & Status */}
-                  <View style={styles.skinInfo}>
-                    <Text style={styles.skinName}>{skin.name}</Text>
-                    {skin.glow && <Ionicons name="sparkles" size={14} color="#00F0FF" style={{ marginLeft: 6 }} />}
-                    {skin.premium && <Ionicons name="diamond" size={14} color="#FFD700" style={{ marginLeft: 6 }} />}
-                  </View>
-                  
-                  {/* Action */}
-                  {isActive ? (
-                    <View style={styles.activeBadge}>
-                      <Ionicons name="checkmark-circle" size={18} color="#39FF14" />
-                    </View>
-                  ) : isUnlocked ? (
-                    <TouchableOpacity style={styles.selectBtn} onPress={() => handleSelect(skin.id)}>
-                      <Text style={styles.selectText}>Seç</Text>
+
+          {/* Tabs */}
+          <View style={styles.tabs}>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'blocks' && styles.activeTab]}
+              onPress={() => setActiveTab('blocks')}
+            >
+              <Ionicons name="cube" size={18} color={activeTab === 'blocks' ? '#BD00FF' : '#666'} />
+              <Text style={[styles.tabText, activeTab === 'blocks' && styles.activeTabText]}>
+                Bloklar
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'backgrounds' && styles.activeTab]}
+              onPress={() => setActiveTab('backgrounds')}
+            >
+              <Ionicons name="image" size={18} color={activeTab === 'backgrounds' ? '#BD00FF' : '#666'} />
+              <Text style={[styles.tabText, activeTab === 'backgrounds' && styles.activeTabText]}>
+                Arka Plan
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Content */}
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            {activeTab === 'blocks' ? (
+              <View style={styles.grid}>
+                {skins.map((skin) => {
+                  const isUnlocked = unlockedSkins.includes(skin.id);
+                  const isActive = activeSkin === skin.id;
+                  const isLoading = loadingId === skin.id;
+
+                  return (
+                    <TouchableOpacity
+                      key={skin.id}
+                      style={[
+                        styles.skinCard,
+                        isActive && styles.activeSkinCard,
+                        !isUnlocked && styles.lockedSkinCard,
+                      ]}
+                      onPress={() => handleSelectSkin(skin)}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <ActivityIndicator size="small" color="#BD00FF" />
+                      ) : (
+                        <>
+                          {renderBlockPreview(skin.colors)}
+                          <Text style={styles.skinName}>{skin.name}</Text>
+                          
+                          {!isUnlocked && (
+                            <View style={styles.lockBadge}>
+                              <Ionicons name="play-circle" size={14} color="#FFD700" />
+                              <Text style={styles.lockText}>{skin.adCost || 1}</Text>
+                            </View>
+                          )}
+                          
+                          {isActive && (
+                            <View style={styles.activeBadge}>
+                              <Ionicons name="checkmark-circle" size={16} color="#4ECDC4" />
+                            </View>
+                          )}
+                          
+                          {skin.glow && (
+                            <View style={styles.glowBadge}>
+                              <Ionicons name="sparkles" size={12} color="#FFD700" />
+                            </View>
+                          )}
+                          
+                          {skin.premium && (
+                            <View style={styles.premiumBadge}>
+                              <Ionicons name="diamond" size={12} color="#BD00FF" />
+                            </View>
+                          )}
+                        </>
+                      )}
                     </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity style={styles.unlockBtn} onPress={() => handleUnlock(skin)} disabled={isLoading}>
-                      <Ionicons name="play-circle" size={14} color="#FFD700" />
-                      <Text style={styles.unlockText}>{isLoading ? '...' : `${skin.adCost || 1}`}</Text>
+                  );
+                })}
+              </View>
+            ) : (
+              <View style={styles.grid}>
+                {BACKGROUNDS.map((bg) => {
+                  const isUnlocked = unlockedBackgrounds.includes(bg.id);
+                  const isActive = activeBackground === bg.id;
+                  const isLoading = loadingId === bg.id;
+
+                  return (
+                    <TouchableOpacity
+                      key={bg.id}
+                      style={[
+                        styles.bgCard,
+                        isActive && styles.activeBgCard,
+                        !isUnlocked && styles.lockedBgCard,
+                      ]}
+                      onPress={() => handleSelectBackground(bg)}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <ActivityIndicator size="small" color="#BD00FF" />
+                      ) : (
+                        <>
+                          <LinearGradient
+                            colors={bg.colors as [string, string]}
+                            style={styles.bgPreview}
+                          >
+                            <View style={styles.bgMiniBoard}>
+                              {[0, 1, 2, 3].map(i => (
+                                <View key={i} style={styles.bgMiniCell} />
+                              ))}
+                            </View>
+                          </LinearGradient>
+                          <Text style={styles.bgName}>{bg.name}</Text>
+                          
+                          {!isUnlocked && (
+                            <View style={styles.lockBadge}>
+                              <Ionicons name="play-circle" size={14} color="#FFD700" />
+                              <Text style={styles.lockText}>{bg.adCost}</Text>
+                            </View>
+                          )}
+                          
+                          {isActive && (
+                            <View style={styles.activeBadge}>
+                              <Ionicons name="checkmark-circle" size={16} color="#4ECDC4" />
+                            </View>
+                          )}
+                        </>
+                      )}
                     </TouchableOpacity>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-            <View style={styles.bottomSpacer} />
+                  );
+                })}
+              </View>
+            )}
           </ScrollView>
+
+          {/* Info */}
+          <View style={styles.infoBar}>
+            <Ionicons name="information-circle" size={16} color="#666" />
+            <Text style={styles.infoText}>Reklam izleyerek temaları açabilirsiniz</Text>
+          </View>
         </View>
       </View>
     </Modal>
@@ -138,9 +291,9 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#11112B',
     borderRadius: 20,
-    maxHeight: '80%',
     width: '100%',
-    maxWidth: 360,
+    maxWidth: 380,
+    maxHeight: SCREEN_HEIGHT * 0.8,
     paddingTop: 20,
     paddingHorizontal: 16,
     paddingBottom: 16,
@@ -153,7 +306,7 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
     marginLeft: 10,
@@ -163,71 +316,178 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 20,
   },
-  scrollView: {
-    flex: 1,
-  },
-  skinRow: {
+  tabs: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1A1A3F',
+    marginBottom: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-  },
-  skinRowActive: {
-    borderWidth: 2,
-    borderColor: '#39FF14',
-  },
-  colorRow: {
-    flexDirection: 'row',
-    marginRight: 12,
-  },
-  colorDot: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    marginRight: 4,
-  },
-  skinInfo: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  skinName: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  activeBadge: {
     padding: 4,
   },
-  selectBtn: {
-    backgroundColor: '#4ECDC4',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 10,
-  },
-  selectText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
-  unlockBtn: {
+  tab: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    justifyContent: 'center',
+    paddingVertical: 10,
     borderRadius: 10,
+    gap: 6,
   },
-  unlockText: {
+  activeTab: {
+    backgroundColor: 'rgba(189, 0, 255, 0.2)',
+  },
+  tabText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '600',
+  },
+  activeTabText: {
+    color: '#BD00FF',
+  },
+  content: {
+    flex: 1,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingBottom: 16,
+  },
+  skinCard: {
+    width: '48%',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    alignItems: 'center',
+    position: 'relative',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  activeSkinCard: {
+    borderColor: '#4ECDC4',
+    backgroundColor: 'rgba(78, 205, 196, 0.1)',
+  },
+  lockedSkinCard: {
+    opacity: 0.8,
+  },
+  blockPreview: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: 50,
+    height: 50,
+    marginBottom: 8,
+  },
+  previewBlock: {
+    width: 22,
+    height: 22,
+    margin: 1,
+    borderRadius: 4,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  previewHighlight: {
+    position: 'absolute',
+    top: 2,
+    left: 2,
+    width: 8,
+    height: 8,
+    borderRadius: 2,
+  },
+  skinName: {
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  lockBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    gap: 2,
+  },
+  lockText: {
+    fontSize: 10,
     color: '#FFD700',
-    fontSize: 13,
     fontWeight: 'bold',
-    marginLeft: 6,
   },
-  bottomSpacer: {
+  activeBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+  },
+  glowBadge: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+  },
+  premiumBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+  },
+  bgCard: {
+    width: '48%',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 8,
+    marginBottom: 12,
+    alignItems: 'center',
+    position: 'relative',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  activeBgCard: {
+    borderColor: '#4ECDC4',
+    backgroundColor: 'rgba(78, 205, 196, 0.1)',
+  },
+  lockedBgCard: {
+    opacity: 0.8,
+  },
+  bgPreview: {
+    width: '100%',
+    height: 60,
+    borderRadius: 8,
+    marginBottom: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bgMiniBoard: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: 30,
     height: 30,
+  },
+  bgMiniCell: {
+    width: 12,
+    height: 12,
+    margin: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 2,
+  },
+  bgName: {
+    fontSize: 11,
+    color: '#fff',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  infoBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    gap: 6,
+  },
+  infoText: {
+    fontSize: 12,
+    color: '#666',
   },
 });
 
