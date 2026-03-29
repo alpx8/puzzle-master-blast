@@ -312,6 +312,86 @@ async def cannot_move(sid, data):
             del game_states[room_id]
 
 @sio.event
+async def player_game_over(sid, data):
+    """Player's game is over (no more valid moves)"""
+    room_id = data.get('room_id')
+    player_id = data.get('player_id')
+    final_score = data.get('score', 0)
+    
+    logging.info(f"Player {player_id} game over in room {room_id} with score {final_score}")
+    
+    # Update player state in database
+    await db.rooms.update_one(
+        {"id": room_id, "players.id": player_id},
+        {"$set": {
+            "players.$.game_over": True,
+            "players.$.score": final_score,
+            "players.$.can_move": False
+        }}
+    )
+    
+    # Update game state
+    if room_id in game_states:
+        game_states[room_id]['scores'][player_id] = final_score
+        game_states[room_id]['can_move'][player_id] = False
+        if 'game_over' not in game_states[room_id]:
+            game_states[room_id]['game_over'] = {}
+        game_states[room_id]['game_over'][player_id] = True
+    
+    # Notify other players
+    await sio.emit('player_game_over', {
+        'player_id': player_id,
+        'score': final_score
+    }, room=room_id)
+    
+    # Check if all players are done
+    room = await db.rooms.find_one({"id": room_id})
+    if room and len(room['players']) >= 2:
+        all_game_over = all(p.get('game_over', False) for p in room['players'])
+        
+        if all_game_over:
+            # Determine winner by score
+            scores = {p['id']: p.get('score', 0) for p in room['players']}
+            winner_id = max(scores, key=scores.get)
+            winner = next((p for p in room['players'] if p['id'] == winner_id), None)
+            
+            # Update room status
+            await db.rooms.update_one(
+                {"id": room_id},
+                {"$set": {"status": "finished", "winner_id": winner_id}}
+            )
+            
+            # Save game results for both players
+            for player in room['players']:
+                is_winner = player['id'] == winner_id
+                opponent = next((p for p in room['players'] if p['id'] != player['id']), None)
+                
+                if opponent:
+                    game_result = {
+                        "id": str(uuid.uuid4()),
+                        "user_id": player['id'],
+                        "result": "win" if is_winner else "loss",
+                        "opponent_name": opponent.get('name', 'Rakip'),
+                        "my_score": player.get('score', 0),
+                        "opponent_score": opponent.get('score', 0),
+                        "room_id": room_id,
+                        "created_at": datetime.utcnow()
+                    }
+                    await db.game_results.insert_one(game_result)
+            
+            # Emit game ended event
+            await sio.emit('game_ended', {
+                'winner_id': winner_id,
+                'winner_name': winner.get('name', 'Kazanan') if winner else 'Bilinmiyor',
+                'players': room['players'],
+                'scores': scores
+            }, room=room_id)
+            
+            # Clean up game state
+            if room_id in game_states:
+                del game_states[room_id]
+
+@sio.event
 async def chat_message(sid, data):
     """Chat message in room"""
     room_id = data.get('room_id')

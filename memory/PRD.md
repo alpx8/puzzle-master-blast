@@ -172,7 +172,15 @@ Oyun mağazalara yüklenmeye hazır!
   - Kazanma oranı hesaplama
   - Rakip skoru karşılaştırma
 - ✅ Ana ekran alt menüsüne "Oyunlarım" butonu eklendi
-- ✅ Multiplayer match history backend API'leri zaten mevcut
+- ✅ Multiplayer sistemi geliştirildi:
+  - Backend'e `player_game_over` event'i eklendi
+  - Oyun bittiğinde sonuçlar kaydediliyor
+  - Kazanan/kaybeden belirleme sistemi
+  - Oyun sonuçları veritabanına kaydediliyor
+- ✅ Online oyuna katılmadan önce reklam ekranı eklendi
+  - 3 saniyelik reklam simülasyonu
+  - İlerleme çubuğu ve ipucu metinleri
+  - Şık gradient tasarım
 
 **Önceki güncellemeler (29 Mart 2026 - Güncelleme 2):**
 - ✅ Oyun tahtası şık çerçeve ile yeniden tasarlandı

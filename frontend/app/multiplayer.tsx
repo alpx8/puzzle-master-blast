@@ -11,13 +11,17 @@ import {
   Alert,
   RefreshControl,
   Switch,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { useGameStore } from '@/src/store/gameStore';
+import { LinearGradient } from 'expo-linear-gradient';
 import Constants from 'expo-constants';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Get API URL from environment
 const getApiUrl = () => {
@@ -64,6 +68,9 @@ export default function MultiplayerScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showAdModal, setShowAdModal] = useState(false);
+  const [adProgress, setAdProgress] = useState(0);
+  const [pendingRoomId, setPendingRoomId] = useState<string | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [roomName, setRoomName] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
@@ -190,8 +197,34 @@ export default function MultiplayerScreen() {
       setSelectedRoom(room);
       setShowPasswordModal(true);
     } else {
-      joinRoom(room.id, null);
+      // Reklam göster, sonra odaya katıl
+      showAdBeforeJoin(room.id, null);
     }
+  };
+
+  const showAdBeforeJoin = (roomId: string, password: string | null) => {
+    setPendingRoomId(roomId);
+    setShowPasswordModal(false);
+    setShowAdModal(true);
+    setAdProgress(0);
+    
+    // Reklam simülasyonu - 3 saniye
+    const interval = setInterval(() => {
+      setAdProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return prev + 5;
+      });
+    }, 150);
+    
+    // 3 saniye sonra odaya katıl
+    setTimeout(() => {
+      clearInterval(interval);
+      setShowAdModal(false);
+      joinRoom(roomId, password);
+    }, 3000);
   };
 
   const joinRoom = async (roomId: string, password: string | null) => {
@@ -474,11 +507,38 @@ export default function MultiplayerScreen() {
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.confirmButton}
-                onPress={() => selectedRoom && joinRoom(selectedRoom.id, joinPassword)}
+                onPress={() => selectedRoom && showAdBeforeJoin(selectedRoom.id, joinPassword)}
               >
                 <Text style={styles.confirmButtonText}>Katıl</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Ad Modal - Shown before joining room */}
+      <Modal visible={showAdModal} transparent animationType="fade">
+        <View style={styles.adModalOverlay}>
+          <View style={styles.adModalContent}>
+            <LinearGradient
+              colors={['#667eea', '#764ba2']}
+              style={styles.adGradient}
+            >
+              <Ionicons name="game-controller" size={60} color="#fff" />
+              <Text style={styles.adTitle}>Oyuna Hazırlanıyor</Text>
+              <Text style={styles.adSubtitle}>Reklam izleniyor...</Text>
+              
+              <View style={styles.adProgressContainer}>
+                <View style={[styles.adProgressBar, { width: `${adProgress}%` }]} />
+              </View>
+              
+              <Text style={styles.adProgressText}>{Math.round(adProgress)}%</Text>
+              
+              <View style={styles.adTips}>
+                <Ionicons name="bulb" size={16} color="rgba(255,255,255,0.7)" />
+                <Text style={styles.adTipText}>İpucu: Komboları yakalamak puanınızı katlar!</Text>
+              </View>
+            </LinearGradient>
           </View>
         </View>
       </Modal>
@@ -789,5 +849,67 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     backgroundColor: '#888',
+  },
+  // Ad Modal Styles
+  adModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  adModalContent: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  adGradient: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  adTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginTop: 16,
+  },
+  adSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  adProgressContainer: {
+    width: '100%',
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  adProgressBar: {
+    height: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 4,
+  },
+  adProgressText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginTop: 12,
+  },
+  adTips: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 24,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.2)',
+    gap: 8,
+  },
+  adTipText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.7)',
+    flex: 1,
   },
 });
