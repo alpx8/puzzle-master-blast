@@ -22,8 +22,8 @@
       }
     },
     "android": {
-      "package": "com.puzzlemasterblast.game",
-      "versionCode": 1,
+      "package": "com.puzzlemasterblast.app",
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#0a0a1a"
