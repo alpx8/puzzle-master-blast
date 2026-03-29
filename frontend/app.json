@@ -8,7 +8,7 @@
     "scheme": "puzzlemasterblast",
     "userInterfaceStyle": "dark",
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/splash-image.png",
       "resizeMode": "contain",
       "backgroundColor": "#0a0a1a"
     },
@@ -48,7 +48,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/splash-image.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#0a0a1a"
