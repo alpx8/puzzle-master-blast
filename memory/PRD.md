@@ -157,7 +157,32 @@ Oyun mağazalara yüklenmeye hazır!
 
 ### Son Güncelleme: 30 Mart 2026
 
-**Bu seansta tamamlanan (30 Mart 2026 - IAP & Envanter Güncellemesi):**
+**Bu seansta tamamlanan (30 Mart 2026 - Multiplayer & Backend Güncellemesi):**
+- ✅ **MongoDB Kullanıcı Profil Sistemi:**
+  - Kalıcı kullanıcı profilleri (coin, tema, joker, istatistikler)
+  - POST /api/profiles - Profil oluştur/getir
+  - PUT /api/profiles/{id}/sync - Tam profil senkronizasyonu
+  - POST /api/profiles/{id}/coins - Coin ekleme
+  - GET /api/game_results/{id} - Oyun geçmişi
+- ✅ **Hızlı Eşleşme (Quick Match) Sistemi:**
+  - Tek tuşla rastgele rakip bulma
+  - Socket.IO gerçek zamanlı eşleşme
+  - Animasyonlu arama ekranı
+  - Otomatik oda oluşturma
+- ✅ **Oyun Sonu Ödülleri:**
+  - Kazanan: 100 coin + 50 XP
+  - Kaybeden: 25 coin + 15 XP
+  - Ödül modalı ile görsel gösterim
+- ✅ **Multiplayer Ekranı Yenilendi:**
+  - Stats bar (kullanıcı adı, galibiyet, oran, coin)
+  - Hızlı Eşleşme gradient butonu
+  - Geçmiş sekmesi (oyun sonuçları)
+  - Oyun geçmişi kartları (galibiyet/mağlubiyet)
+- ✅ **UserSyncService oluşturuldu:**
+  - Frontend-Backend senkronizasyonu
+  - Offline-first yaklaşım
+
+**Önceki güncelleme (30 Mart 2026 - IAP & Envanter Güncellemesi):**
 - ✅ **Google Play In-App Purchase Entegrasyonu:**
   - Coin Mağazası modalı oluşturuldu
   - 4 coin paketi: 500 (₺19.99), 1200 (₺39.99), 3000 (₺79.99), 8000 (₺149.99)
@@ -237,10 +262,15 @@ Oyun mağazalara yüklenmeye hazır!
 | Liderlik Tablosu | ✅ ÇALIŞIYOR |
 | Günlük Görevler | ✅ ÇALIŞIYOR |
 | Paylaş Butonu | ✅ ÇALIŞIYOR |
-| **Jokerler Modalı** | ✅ YENİ EKLENDI |
-| **Coin ile Joker Satın Al** | ✅ YENİ EKLENDI |
-| **Reklam ile Joker Kazan** | ✅ YENİ EKLENDI |
+| **Jokerler Modalı** | ✅ ÇALIŞIYOR |
+| **Coin ile Joker Satın Al** | ✅ ÇALIŞIYOR |
+| **Reklam ile Joker Kazan** | ✅ ÇALIŞIYOR |
 | **Blok Üretimi** | ✅ DÜZELTİLDİ |
+| **MongoDB Profil Sistemi** | ✅ YENİ |
+| **Hızlı Eşleşme** | ✅ YENİ |
+| **Oyun Sonu Ödülleri** | ✅ YENİ |
+| **Multiplayer Stats Bar** | ✅ YENİ |
+| **Oyun Geçmişi** | ✅ YENİ |
 
 **Not:** AdMob reklamları web önizlemesinde MOCK'lanmıştır. Native build'de (APK/IPA) gerçek reklamlar gösterilecektir.
 
@@ -251,7 +281,8 @@ Oyun mağazalara yüklenmeye hazır!
 | Öncelik | Özellik | Açıklama |
 |---------|---------|----------|
 | P1 | Kaygan Blok Animasyonu | Bloklar yerine yerleşirken "slide" efekti |
-| P2 | Backend Turnuva Yönetimi | Sunucu taraflı turnuva mantığı |
-| P2 | Kullanıcı Verisi Senkronizasyonu | Cross-device coin/skin/progress sync |
+| P1 | Backend Turnuva Yönetimi | Sunucu taraflı turnuva mantığı |
+| P2 | Native IAP Doğrulama | Google Play Billing backend entegrasyonu |
+| P2 | Cihazlar Arası Senkronizasyon | Uygulama açılışında otomatik profil yükleme |
 | P3 | Push Notifications | Günlük ödül hatırlatıcıları |
 | P3 | Sosyal Giriş | Google/Apple ile giriş |
