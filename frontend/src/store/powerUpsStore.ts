@@ -12,6 +12,7 @@ interface PowerUp {
   color: string;
   count: number;
   adCost: number; // Kaç reklam izlenerek kazanılır
+  coinCost: number; // Coin ile satın alma fiyatı
 }
 
 interface PowerUpsState {
@@ -24,7 +25,9 @@ interface PowerUpsState {
   setActivePowerUp: (type: PowerUpType | null) => void;
   loadPowerUps: () => Promise<void>;
   savePowerUps: () => Promise<void>;
-  watchAdForPowerUp: (type: PowerUpType) => Promise<void>;
+  watchAdForPowerUp: (type: PowerUpType) => Promise<boolean>;
+  purchasePowerUp: (type: PowerUpType, deductCoins: (amount: number) => boolean) => boolean;
+  getPowerUp: (type: PowerUpType) => PowerUp | undefined;
 }
 
 const DEFAULT_POWERUPS: PowerUp[] = [
@@ -36,6 +39,7 @@ const DEFAULT_POWERUPS: PowerUp[] = [
     color: '#FF5F1F',
     count: 1,
     adCost: 1,
+    coinCost: 200,
   },
   {
     id: 'shuffle',
@@ -45,6 +49,7 @@ const DEFAULT_POWERUPS: PowerUp[] = [
     color: '#BD00FF',
     count: 1,
     adCost: 1,
+    coinCost: 150,
   },
   {
     id: 'extraTime',
@@ -54,6 +59,7 @@ const DEFAULT_POWERUPS: PowerUp[] = [
     color: '#00F0FF',
     count: 0,
     adCost: 2,
+    coinCost: 300,
   },
   {
     id: 'clearRow',
@@ -63,6 +69,7 @@ const DEFAULT_POWERUPS: PowerUp[] = [
     color: '#39FF14',
     count: 0,
     adCost: 2,
+    coinCost: 250,
   },
 ];
 
@@ -103,14 +110,32 @@ export const usePowerUpsStore = create<PowerUpsState>((set, get) => ({
     set({ activePowerUp: type });
   },
   
+  getPowerUp: (type) => {
+    return get().powerUps.find(p => p.id === type);
+  },
+  
   watchAdForPowerUp: async (type) => {
-    // Reklam izleme simülasyonu
+    // Reklam izleme - Web'de simülasyon, Native'de gerçek AdMob
     return new Promise((resolve) => {
+      // Native'de gerçek reklam gösterilecek
+      // Web'de 1.5 saniye bekle (simülasyon)
       setTimeout(() => {
         get().addPowerUp(type);
-        resolve();
+        resolve(true);
       }, 1500);
     });
+  },
+  
+  purchasePowerUp: (type, deductCoins) => {
+    const powerUp = get().getPowerUp(type);
+    if (!powerUp) return false;
+    
+    const success = deductCoins(powerUp.coinCost);
+    if (success) {
+      get().addPowerUp(type);
+      return true;
+    }
+    return false;
   },
   
   loadPowerUps: async () => {

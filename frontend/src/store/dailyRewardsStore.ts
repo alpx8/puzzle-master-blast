@@ -22,6 +22,8 @@ interface DailyRewardsState {
   claimReward: () => Promise<void>;
   loadRewardsData: () => Promise<void>;
   saveRewardsData: () => Promise<void>;
+  addCoins: (amount: number) => void;
+  deductCoins: (amount: number) => boolean;
 }
 
 const DAILY_REWARDS: Omit<DailyReward, 'claimed'>[] = [
@@ -145,6 +147,22 @@ export const useDailyRewardsStore = create<DailyRewardsState>((set, get) => ({
     } catch (error) {
       console.error('Failed to save rewards data:', error);
     }
+  },
+  
+  addCoins: (amount: number) => {
+    const { totalCoins } = get();
+    set({ totalCoins: totalCoins + amount });
+    get().saveRewardsData();
+  },
+  
+  deductCoins: (amount: number) => {
+    const { totalCoins } = get();
+    if (totalCoins >= amount) {
+      set({ totalCoins: totalCoins - amount });
+      get().saveRewardsData();
+      return true;
+    }
+    return false;
   },
 }));
 

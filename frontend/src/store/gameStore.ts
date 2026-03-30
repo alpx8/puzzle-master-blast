@@ -310,9 +310,16 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     // Add XP
     get().addXP(xpGained);
 
-    // Generate new blocks if all placed
-    if (newAvailableBlocks.length === 0) {
-      get().generateNewBlocks();
+    // Generate new blocks if all placed - use immediate state check
+    const currentBlocks = get().availableBlocks;
+    if (currentBlocks.length === 0) {
+      // Generate 3 new blocks immediately
+      const newBlocks = [
+        generateRandomBlock(),
+        generateRandomBlock(),
+        generateRandomBlock(),
+      ];
+      set({ availableBlocks: newBlocks });
     }
 
     // Check game over
@@ -326,6 +333,7 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   },
 
   generateNewBlocks: () => {
+    // Always generate exactly 3 blocks
     const newBlocks = [
       generateRandomBlock(),
       generateRandomBlock(),

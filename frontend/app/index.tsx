@@ -26,6 +26,7 @@ import { initSounds } from '@/src/utils/sounds';
 import { DailyRewardsModal } from '@/src/components/DailyRewardsModal';
 import { SkinsModal } from '@/src/components/SkinsModal';
 import { QuestsModal } from '@/src/components/QuestsModal';
+import { PowerUpsModal } from '@/src/components/PowerUpsModal';
 import { useNetworkStatus, requiresOnline } from '@/src/utils/offlineSupport';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -194,6 +195,7 @@ export default function HomeScreen() {
   const [showQuestsModal, setShowQuestsModal] = useState(false);
   const [showDailyReward, setShowDailyReward] = useState(false);
   const [showSkinsModal, setShowSkinsModal] = useState(false);
+  const [showPowerUpsModal, setShowPowerUpsModal] = useState(false);
   const [tempName, setTempName] = useState('');
 
   useEffect(() => {
@@ -413,6 +415,14 @@ export default function HomeScreen() {
             
             <TouchableOpacity 
               style={styles.bottomButton}
+              onPress={() => setShowPowerUpsModal(true)}
+            >
+              <Ionicons name="flash" size={18} color="#FFD700" />
+              <Text style={styles.bottomButtonText}>Jokerler</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.bottomButton}
               onPress={() => setShowQuestsModal(true)}
             >
               <Ionicons name="flag" size={18} color="#4ECDC4" />
@@ -481,6 +491,12 @@ export default function HomeScreen() {
       <SkinsModal 
         visible={showSkinsModal} 
         onClose={() => setShowSkinsModal(false)} 
+      />
+      
+      {/* PowerUps Modal */}
+      <PowerUpsModal 
+        visible={showPowerUpsModal} 
+        onClose={() => setShowPowerUpsModal(false)} 
       />
     </SafeAreaView>
   );

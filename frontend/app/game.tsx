@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useGameStore, Block } from '@/src/store/gameStore';
 import { useQuestStore } from '@/src/store/questStore';
 import { usePowerUpsStore, PowerUpType } from '@/src/store/powerUpsStore';
+import { useDailyRewardsStore } from '@/src/store/dailyRewardsStore';
 import { GameBoard } from '@/src/components/GameBoard';
 import { BlockPiece } from '@/src/components/BlockPiece';
 import { ScoreDisplay } from '@/src/components/ScoreDisplay';
@@ -80,9 +81,11 @@ export default function GameScreen() {
   const { loadQuests, updateQuestProgress, dailyQuests, claimReward } = useQuestStore();
   
   // Power-ups
-  const { powerUps, usePowerUp, setActivePowerUp, activePowerUp, loadPowerUps, watchAdForPowerUp } = usePowerUpsStore();
+  const { powerUps, usePowerUp, setActivePowerUp, activePowerUp, loadPowerUps, watchAdForPowerUp, purchasePowerUp } = usePowerUpsStore();
+  const { totalCoins, deductCoins, addCoins } = useDailyRewardsStore();
   const [showPowerUpModal, setShowPowerUpModal] = useState(false);
   const [selectedPowerUp, setSelectedPowerUp] = useState<PowerUpType | null>(null);
+  const [purchaseLoading, setPurchaseLoading] = useState(false);
 
   const [draggingBlock, setDraggingBlock] = useState<Block | null>(null);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
@@ -211,9 +214,26 @@ export default function GameScreen() {
   
   const handleWatchAdForPowerUp = async () => {
     if (!selectedPowerUp) return;
-    await watchAdForPowerUp(selectedPowerUp);
-    setShowPowerUpModal(false);
-    setSelectedPowerUp(null);
+    setPurchaseLoading(true);
+    try {
+      await watchAdForPowerUp(selectedPowerUp);
+      updateQuestProgress('watch_ad', 1);
+    } catch (error) {
+      console.error('Ad failed:', error);
+    } finally {
+      setPurchaseLoading(false);
+      setShowPowerUpModal(false);
+      setSelectedPowerUp(null);
+    }
+  };
+  
+  const handleBuyPowerUpWithCoins = () => {
+    if (!selectedPowerUp) return;
+    const success = purchasePowerUp(selectedPowerUp, deductCoins);
+    if (success) {
+      setShowPowerUpModal(false);
+      setSelectedPowerUp(null);
+    }
   };
   
   // Sosyal paylaşım
@@ -913,6 +933,80 @@ export default function GameScreen() {
         </View>
       </Modal>
 
+      {/* PowerUp Purchase Modal - Joker Satın Alma */}
+      <Modal visible={showPowerUpModal && selectedPowerUp !== null} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.powerUpPurchaseModal}>
+            <Text style={styles.powerUpModalTitle}>Joker Al</Text>
+            
+            {selectedPowerUp && (
+              <>
+                <View style={styles.powerUpIconLarge}>
+                  <Ionicons 
+                    name={powerUps.find(p => p.id === selectedPowerUp)?.icon as any || 'flash'} 
+                    size={48} 
+                    color={powerUps.find(p => p.id === selectedPowerUp)?.color || '#FFD700'} 
+                  />
+                </View>
+                <Text style={styles.powerUpNameLarge}>
+                  {powerUps.find(p => p.id === selectedPowerUp)?.name}
+                </Text>
+                <Text style={styles.powerUpDescLarge}>
+                  {powerUps.find(p => p.id === selectedPowerUp)?.description}
+                </Text>
+                
+                {/* Coin Display */}
+                <View style={styles.coinDisplayRow}>
+                  <Ionicons name="logo-bitcoin" size={18} color="#F7931A" />
+                  <Text style={styles.coinDisplayText}>{totalCoins} Coin</Text>
+                </View>
+                
+                {/* Purchase Options */}
+                <View style={styles.purchaseOptions}>
+                  <TouchableOpacity 
+                    style={styles.watchAdOption}
+                    onPress={handleWatchAdForPowerUp}
+                    disabled={purchaseLoading}
+                  >
+                    <Ionicons name="play-circle" size={24} color="#fff" />
+                    <Text style={styles.watchAdOptionText}>
+                      {purchaseLoading ? 'Yükleniyor...' : 'Reklam İzle'}
+                    </Text>
+                    <View style={styles.freeBadge}>
+                      <Text style={styles.freeBadgeText}>ÜCRETSİZ</Text>
+                    </View>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[
+                      styles.buyOption,
+                      totalCoins < (powerUps.find(p => p.id === selectedPowerUp)?.coinCost || 0) && styles.buyOptionDisabled
+                    ]}
+                    onPress={handleBuyPowerUpWithCoins}
+                    disabled={totalCoins < (powerUps.find(p => p.id === selectedPowerUp)?.coinCost || 0)}
+                  >
+                    <Ionicons name="logo-bitcoin" size={20} color="#fff" />
+                    <Text style={styles.buyOptionText}>
+                      {powerUps.find(p => p.id === selectedPowerUp)?.coinCost} Coin
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                
+                <TouchableOpacity 
+                  style={styles.cancelOption}
+                  onPress={() => {
+                    setShowPowerUpModal(false);
+                    setSelectedPowerUp(null);
+                  }}
+                >
+                  <Text style={styles.cancelOptionText}>Vazgeç</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
       {/* Daily Quests Modal */}
       <Modal visible={showQuestsModal} transparent animationType="slide">
         <View style={styles.questModalOverlay}>
@@ -1543,5 +1637,119 @@ const styles = StyleSheet.create({
   shareButton: {
     backgroundColor: '#1DA1F2',
     marginTop: 8,
+  },
+  // PowerUp Purchase Modal
+  powerUpPurchaseModal: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    width: SCREEN_WIDTH * 0.85,
+    maxWidth: 340,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+  },
+  powerUpModalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    marginBottom: 16,
+  },
+  powerUpIconLarge: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  powerUpNameLarge: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  powerUpDescLarge: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  coinDisplayRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(247, 147, 26, 0.15)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
+    marginBottom: 20,
+  },
+  coinDisplayText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#F7931A',
+  },
+  purchaseOptions: {
+    width: '100%',
+    gap: 10,
+  },
+  watchAdOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4ECDC4',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    gap: 10,
+    position: 'relative',
+  },
+  watchAdOptionText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  freeBadge: {
+    position: 'absolute',
+    top: -8,
+    right: 10,
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  freeBadgeText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#1a1a2e',
+  },
+  buyOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F7931A',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    gap: 8,
+  },
+  buyOptionDisabled: {
+    backgroundColor: '#555',
+    opacity: 0.6,
+  },
+  buyOptionText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  cancelOption: {
+    marginTop: 16,
+    paddingVertical: 10,
+  },
+  cancelOptionText: {
+    fontSize: 14,
+    color: '#666',
   },
 });
