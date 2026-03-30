@@ -157,26 +157,26 @@ Oyun mağazalara yüklenmeye hazır!
 
 ### Son Güncelleme: 30 Mart 2026
 
-**Bu seansta tamamlanan (30 Mart 2026 - Joker & Reklam Güncellemesi):**
-- ✅ **Jokerler Modalı Tamamen Yeniden Yazıldı:**
+**Bu seansta tamamlanan (30 Mart 2026 - IAP & Envanter Güncellemesi):**
+- ✅ **Google Play In-App Purchase Entegrasyonu:**
+  - Coin Mağazası modalı oluşturuldu
+  - 4 coin paketi: 500 (₺19.99), 1200 (₺39.99), 3000 (₺79.99), 8000 (₺149.99)
+  - POPÜLER ve EN İYİ DEĞER etiketleri
+  - Bonus yüzdeleri: +20%, +50%, +100%
+  - Web'de simülasyon, Native'de gerçek satın alma
+- ✅ **Kalıcı Envanter Sistemi:**
+  - inventoryStore.ts oluşturuldu
+  - Satın alınan temalar/arka planlar kalıcı olarak kaydediliyor
+  - AsyncStorage ile persistence sağlandı
+- ✅ **Ana Ekran Güncellendi:**
+  - Mağaza butonu alt menüye eklendi
+  - Coin bakiyesi gösterimi iyileştirildi
+- ✅ **Önceki Joker Güncellemesi (aynı seans):**
   - 4 joker: Bomba, Karıştır, Ekstra Süre, Satır Temizle
   - Reklam izleyerek ÜCRETSİZ joker kazanma
   - Coin ile joker satın alma (150-300 coin)
-  - Her jokerin envanter sayısı görünür
-  - Modern kart tasarımı
-- ✅ **dailyRewardsStore'a addCoins/deductCoins eklendi:**
-  - Coin ekleme ve çıkarma fonksiyonları
-  - Joker satın alma işlemi çalışıyor
-- ✅ **Ana ekrana Jokerler butonu eklendi:**
-  - Alt menüde Temalar ve Görevler arasında
-  - ⚡ ikonu ile görünür
-- ✅ **Oyun içi joker satın alma modalı eklendi:**
-  - Reklam izle (ÜCRETSİZ) butonu
-  - Coin ile satın al butonu
-  - Yetersiz coin uyarısı
-- ✅ **Blok üretimi hatası DÜZELTİLDİ:**
+- ✅ **Blok Üretimi Hatası DÜZELTİLDİ:**
   - 3 blok yerleştirildiğinde bazen 1 blok üretilme sorunu çözüldü
-  - Immediate state check ile senkronizasyon iyileştirildi
 
 **Önceki güncellemeler (29 Mart 2026 - Büyük Güncelleme):**
 - ✅ Temalar sayfası tamamen yeniden yazıldı (14 farklı blok teması)
