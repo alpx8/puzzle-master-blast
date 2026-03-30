@@ -27,6 +27,8 @@ import { DailyRewardsModal } from '@/src/components/DailyRewardsModal';
 import { SkinsModal } from '@/src/components/SkinsModal';
 import { QuestsModal } from '@/src/components/QuestsModal';
 import { PowerUpsModal } from '@/src/components/PowerUpsModal';
+import { CoinShopModal } from '@/src/components/CoinShopModal';
+import { useInventoryStore } from '@/src/store/inventoryStore';
 import { useNetworkStatus, requiresOnline } from '@/src/utils/offlineSupport';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -196,7 +198,11 @@ export default function HomeScreen() {
   const [showDailyReward, setShowDailyReward] = useState(false);
   const [showSkinsModal, setShowSkinsModal] = useState(false);
   const [showPowerUpsModal, setShowPowerUpsModal] = useState(false);
+  const [showCoinShop, setShowCoinShop] = useState(false);
   const [tempName, setTempName] = useState('');
+  
+  // Inventory store
+  const { loadInventory } = useInventoryStore();
 
   useEffect(() => {
     const initApp = async () => {
@@ -204,6 +210,7 @@ export default function HomeScreen() {
       await loadRewardsData();
       await loadSkins();
       await loadPowerUps();
+      await loadInventory();
       initSounds();
       
       // Günlük ödül kontrolü
@@ -334,6 +341,21 @@ export default function HomeScreen() {
           <Ionicons name="pencil" size={14} color="#888" />
         </TouchableOpacity>
 
+        {/* Coin Balance Bar with Shop Button */}
+        <TouchableOpacity 
+          style={styles.coinBalanceBar}
+          onPress={() => setShowCoinShop(true)}
+          testID="coin-shop-button"
+        >
+          <View style={styles.coinBalanceLeft}>
+            <Ionicons name="logo-bitcoin" size={22} color="#FFD700" />
+            <Text style={styles.coinBalanceText}>{totalCoins.toLocaleString()}</Text>
+          </View>
+          <View style={styles.coinShopButton}>
+            <Ionicons name="add" size={18} color="#1a1a2e" />
+          </View>
+        </TouchableOpacity>
+
         {/* Game Mode Buttons - Fixed height */}
         <View style={styles.modesSection}>
           <GameModeButton
@@ -423,6 +445,16 @@ export default function HomeScreen() {
             
             <TouchableOpacity 
               style={styles.bottomButton}
+              onPress={() => setShowCoinShop(true)}
+            >
+              <Ionicons name="storefront" size={18} color="#F7931A" />
+              <Text style={styles.bottomButtonText}>Mağaza</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={[styles.bottomGridRow, { marginTop: 8 }]}>
+            <TouchableOpacity 
+              style={styles.bottomButton}
               onPress={() => setShowQuestsModal(true)}
             >
               <Ionicons name="flag" size={18} color="#4ECDC4" />
@@ -433,12 +465,12 @@ export default function HomeScreen() {
                 </View>
               )}
             </TouchableOpacity>
-          </View>
-          
-          {/* Coins Display */}
-          <View style={styles.coinsRow}>
-            <Ionicons name="logo-bitcoin" size={16} color="#F7931A" />
-            <Text style={styles.coinsText}>{totalCoins}</Text>
+            
+            {/* Coin Balance Display */}
+            <View style={styles.coinDisplayButton}>
+              <Ionicons name="logo-bitcoin" size={18} color="#F7931A" />
+              <Text style={styles.coinDisplayText}>{totalCoins}</Text>
+            </View>
           </View>
         </View>
       </View>
@@ -497,6 +529,12 @@ export default function HomeScreen() {
       <PowerUpsModal 
         visible={showPowerUpsModal} 
         onClose={() => setShowPowerUpsModal(false)} 
+      />
+      
+      {/* Coin Shop Modal */}
+      <CoinShopModal 
+        visible={showCoinShop} 
+        onClose={() => setShowCoinShop(false)} 
       />
     </SafeAreaView>
   );
@@ -628,6 +666,37 @@ const styles = StyleSheet.create({
     color: '#888',
     marginTop: 1,
   },
+  coinBalanceBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    borderRadius: 12,
+    padding: 10,
+    marginHorizontal: 0,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+    zIndex: 10,
+  },
+  coinBalanceLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  coinBalanceText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFD700',
+  },
+  coinShopButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFD700',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modesSection: {
     flex: 1,
     justifyContent: 'center',
@@ -720,6 +789,55 @@ const styles = StyleSheet.create({
     color: '#F7931A',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  shopButtonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 8,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+  },
+  shopButtonText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#FFD700',
+  },
+  shopCoinBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(247, 147, 26, 0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+    marginLeft: 8,
+  },
+  shopCoinText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#F7931A',
+  },
+  coinDisplayButton: {
+    flex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(247, 147, 26, 0.15)',
+    borderRadius: 10,
+    padding: 8,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(247, 147, 26, 0.3)',
+  },
+  coinDisplayText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#F7931A',
   },
   // Name Input Modal
   nameModalOverlay: {

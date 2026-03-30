@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSkinsStore, BlockSkin, Background } from '@/src/store/skinsStore';
 import { useDailyRewardsStore } from '@/src/store/dailyRewardsStore';
 import { useQuestStore } from '@/src/store/questStore';
+import { useInventoryStore } from '@/src/store/inventoryStore';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -42,6 +43,7 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({ visible, onClose }) => {
   
   const { totalCoins, deductCoins } = useDailyRewardsStore();
   const { updateQuestProgress } = useQuestStore();
+  const { addTheme, addBackground: addBgToInventory, hasTheme, hasBackground: hasBgInInventory } = useInventoryStore();
   
   const [activeTab, setActiveTab] = useState<'blocks' | 'backgrounds'>('blocks');
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -79,9 +81,11 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({ visible, onClose }) => {
               }
               
               await watchAdToUnlock(skin.id);
+              // Also save to permanent inventory
+              addTheme(skin.id, 'ad');
               updateQuestProgress('watch_ad', adCount);
               
-              Alert.alert('Tebrikler! 🎉', `"${skin.name}" teması açıldı ve aktif edildi!`);
+              Alert.alert('Tebrikler! 🎉', `"${skin.name}" teması açıldı ve envanterinize eklendi!`);
             } catch (error) {
               Alert.alert('Hata', 'Reklam yüklenemedi. Lütfen tekrar deneyin.');
             } finally {
@@ -105,7 +109,7 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({ visible, onClose }) => {
     if (totalCoins < bg.coinCost) {
       Alert.alert(
         'Yetersiz Coin',
-        `Bu arka plan için ${bg.coinCost} coin gerekiyor.\n\nMevcut: ${totalCoins} coin\n\nGörevleri tamamlayarak ve günlük ödülleri alarak coin kazanabilirsiniz!`
+        `Bu arka plan için ${bg.coinCost} coin gerekiyor.\n\nMevcut: ${totalCoins} coin\n\nCoin satın almak için ana ekrandaki coin bakiyenize dokunun!`
       );
       return;
     }
@@ -122,7 +126,9 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({ visible, onClose }) => {
             try {
               const success = await purchaseBackground(bg.id, totalCoins, deductCoins);
               if (success) {
-                Alert.alert('Tebrikler! 🎉', `"${bg.name}" arka planı satın alındı ve aktif edildi!`);
+                // Also save to permanent inventory
+                addBgToInventory(bg.id, 'purchase');
+                Alert.alert('Tebrikler! 🎉', `"${bg.name}" arka planı envanterinize eklendi ve asla kaybolmayacak!`);
               }
             } catch (error) {
               Alert.alert('Hata', 'Satın alma başarısız. Lütfen tekrar deneyin.');
