@@ -155,9 +155,30 @@ npx eas submit --platform android
 Tüm temel özellikler uygulandı ve test edildi (%100 başarı oranı).
 Oyun mağazalara yüklenmeye hazır!
 
-### Son Güncelleme: 29 Mart 2026
+### Son Güncelleme: 30 Mart 2026
 
-**Bu seansta tamamlanan (29 Mart 2026 - Büyük Güncelleme):**
+**Bu seansta tamamlanan (30 Mart 2026 - Joker & Reklam Güncellemesi):**
+- ✅ **Jokerler Modalı Tamamen Yeniden Yazıldı:**
+  - 4 joker: Bomba, Karıştır, Ekstra Süre, Satır Temizle
+  - Reklam izleyerek ÜCRETSİZ joker kazanma
+  - Coin ile joker satın alma (150-300 coin)
+  - Her jokerin envanter sayısı görünür
+  - Modern kart tasarımı
+- ✅ **dailyRewardsStore'a addCoins/deductCoins eklendi:**
+  - Coin ekleme ve çıkarma fonksiyonları
+  - Joker satın alma işlemi çalışıyor
+- ✅ **Ana ekrana Jokerler butonu eklendi:**
+  - Alt menüde Temalar ve Görevler arasında
+  - ⚡ ikonu ile görünür
+- ✅ **Oyun içi joker satın alma modalı eklendi:**
+  - Reklam izle (ÜCRETSİZ) butonu
+  - Coin ile satın al butonu
+  - Yetersiz coin uyarısı
+- ✅ **Blok üretimi hatası DÜZELTİLDİ:**
+  - 3 blok yerleştirildiğinde bazen 1 blok üretilme sorunu çözüldü
+  - Immediate state check ile senkronizasyon iyileştirildi
+
+**Önceki güncellemeler (29 Mart 2026 - Büyük Güncelleme):**
 - ✅ Temalar sayfası tamamen yeniden yazıldı (14 farklı blok teması)
   - Blok temaları: Klasik, Neon, Okyanus, Gün Batımı, Şeker, Orman, Ateş, Buz, Galaksi, Gökkuşağı, Altın, Elmas, Aurora, Gece Yarısı
   - Arka plan temaları: Klasik Gece, Okyanus Derinliği, Gün Batımı, Gece Ormanı, Galaksi, Neon Şehir, Volkanik, Buzul
@@ -201,7 +222,7 @@ Oyun mağazalara yüklenmeye hazır!
 
 ---
 
-### 🧪 Test Raporu (Güncel)
+### 🧪 Test Raporu (Güncel - 30 Mart 2026)
 
 | Özellik | Durum |
 |---------|-------|
@@ -216,7 +237,21 @@ Oyun mağazalara yüklenmeye hazır!
 | Liderlik Tablosu | ✅ ÇALIŞIYOR |
 | Günlük Görevler | ✅ ÇALIŞIYOR |
 | Paylaş Butonu | ✅ ÇALIŞIYOR |
-| **Skor İkonları** | ✅ DÜZELTİLDİ (daireli arka plan) |
-| **Power-up İkonları** | ✅ DÜZELTİLDİ (büyük ve belirgin) |
+| **Jokerler Modalı** | ✅ YENİ EKLENDI |
+| **Coin ile Joker Satın Al** | ✅ YENİ EKLENDI |
+| **Reklam ile Joker Kazan** | ✅ YENİ EKLENDI |
+| **Blok Üretimi** | ✅ DÜZELTİLDİ |
 
 **Not:** AdMob reklamları web önizlemesinde MOCK'lanmıştır. Native build'de (APK/IPA) gerçek reklamlar gösterilecektir.
+
+---
+
+### 📋 Backlog / Gelecek Özellikler
+
+| Öncelik | Özellik | Açıklama |
+|---------|---------|----------|
+| P1 | Kaygan Blok Animasyonu | Bloklar yerine yerleşirken "slide" efekti |
+| P2 | Backend Turnuva Yönetimi | Sunucu taraflı turnuva mantığı |
+| P2 | Kullanıcı Verisi Senkronizasyonu | Cross-device coin/skin/progress sync |
+| P3 | Push Notifications | Günlük ödül hatırlatıcıları |
+| P3 | Sosyal Giriş | Google/Apple ile giriş |
