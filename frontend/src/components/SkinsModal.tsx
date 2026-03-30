@@ -1,5 +1,5 @@
 // Skins Modal - Tema ve Arka Plan Seçimi
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,12 @@ import {
   Dimensions,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSkinsStore, BlockSkin } from '@/src/store/skinsStore';
+import { useSkinsStore, BlockSkin, Background } from '@/src/store/skinsStore';
+import { useDailyRewardsStore } from '@/src/store/dailyRewardsStore';
+import { useQuestStore } from '@/src/store/questStore';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -22,49 +25,63 @@ interface SkinsModalProps {
   onClose: () => void;
 }
 
-// Arka plan temaları
-const BACKGROUNDS = [
-  { id: 'default', name: 'Klasik Gece', colors: ['#0a0a1a', '#1a1a35'], free: true },
-  { id: 'ocean', name: 'Okyanus Derinliği', colors: ['#0a192f', '#172a45'], adCost: 2 },
-  { id: 'sunset', name: 'Gün Batımı', colors: ['#1a0a0a', '#2d1f1f'], adCost: 2 },
-  { id: 'forest', name: 'Gece Ormanı', colors: ['#0a1a0f', '#1a352a'], adCost: 2 },
-  { id: 'galaxy', name: 'Galaksi', colors: ['#0f0a1a', '#1f1a35'], adCost: 3 },
-  { id: 'neon', name: 'Neon Şehir', colors: ['#0a0a15', '#15152a'], adCost: 3 },
-  { id: 'fire', name: 'Volkanik', colors: ['#1a0a0a', '#351a1a'], adCost: 4 },
-  { id: 'ice', name: 'Buzul', colors: ['#0a1a1f', '#1a3540'], adCost: 4 },
-];
-
 export const SkinsModal: React.FC<SkinsModalProps> = ({ visible, onClose }) => {
-  const { skins, activeSkin, unlockedSkins, setSkin, watchAdToUnlock } = useSkinsStore();
+  const { 
+    skins, 
+    backgrounds,
+    activeSkin, 
+    activeBackground,
+    unlockedSkins, 
+    unlockedBackgrounds,
+    setSkin, 
+    setBackground,
+    watchAdToUnlock,
+    purchaseBackground,
+    loadSkins,
+  } = useSkinsStore();
+  
+  const { totalCoins, deductCoins } = useDailyRewardsStore();
+  const { updateQuestProgress } = useQuestStore();
+  
   const [activeTab, setActiveTab] = useState<'blocks' | 'backgrounds'>('blocks');
   const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [activeBackground, setActiveBackground] = useState('default');
-  const [unlockedBackgrounds, setUnlockedBackgrounds] = useState(['default']);
+
+  useEffect(() => {
+    if (visible) {
+      loadSkins();
+    }
+  }, [visible]);
 
   const handleSelectSkin = (skin: BlockSkin) => {
     if (unlockedSkins.includes(skin.id)) {
       setSkin(skin.id);
     } else {
-      // Reklam izle ve aç
       handleWatchAdForSkin(skin);
     }
   };
 
   const handleWatchAdForSkin = async (skin: BlockSkin) => {
+    const adCount = skin.adCost || 1;
+    
     Alert.alert(
-      'Reklam İzle',
-      `"${skin.name}" temasını açmak için ${skin.adCost || 1} reklam izlemeniz gerekiyor. İzlemek ister misiniz?`,
+      'Tema Aç',
+      `"${skin.name}" temasını açmak için ${adCount} reklam izlemeniz gerekiyor.\n\nİzlemek ister misiniz?`,
       [
         { text: 'Vazgeç', style: 'cancel' },
         { 
-          text: 'Reklam İzle',
+          text: `${adCount} Reklam İzle`,
           onPress: async () => {
             setLoadingId(skin.id);
             try {
-              // Simüle edilmiş reklam izleme
-              await new Promise(resolve => setTimeout(resolve, 2000));
+              // Simulated ad watching - In production, use AdMob rewarded ads
+              for (let i = 0; i < adCount; i++) {
+                await new Promise(resolve => setTimeout(resolve, 1500));
+              }
+              
               await watchAdToUnlock(skin.id);
-              Alert.alert('Tebrikler!', `"${skin.name}" teması açıldı!`);
+              updateQuestProgress('watch_ad', adCount);
+              
+              Alert.alert('Tebrikler! 🎉', `"${skin.name}" teması açıldı ve aktif edildi!`);
             } catch (error) {
               Alert.alert('Hata', 'Reklam yüklenemedi. Lütfen tekrar deneyin.');
             } finally {
@@ -76,31 +93,39 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({ visible, onClose }) => {
     );
   };
 
-  const handleSelectBackground = (bg: typeof BACKGROUNDS[0]) => {
+  const handleSelectBackground = (bg: Background) => {
     if (unlockedBackgrounds.includes(bg.id)) {
-      setActiveBackground(bg.id);
+      setBackground(bg.id);
     } else {
-      handleWatchAdForBackground(bg);
+      handlePurchaseBackground(bg);
     }
   };
 
-  const handleWatchAdForBackground = async (bg: typeof BACKGROUNDS[0]) => {
+  const handlePurchaseBackground = async (bg: Background) => {
+    if (totalCoins < bg.coinCost) {
+      Alert.alert(
+        'Yetersiz Coin',
+        `Bu arka plan için ${bg.coinCost} coin gerekiyor.\n\nMevcut: ${totalCoins} coin\n\nGörevleri tamamlayarak ve günlük ödülleri alarak coin kazanabilirsiniz!`
+      );
+      return;
+    }
+    
     Alert.alert(
-      'Reklam İzle',
-      `"${bg.name}" arka planını açmak için ${bg.adCost || 1} reklam izlemeniz gerekiyor.`,
+      'Arka Plan Satın Al',
+      `"${bg.name}" arka planını ${bg.coinCost} coin'e satın almak istiyor musunuz?`,
       [
         { text: 'Vazgeç', style: 'cancel' },
         {
-          text: 'Reklam İzle',
+          text: 'Satın Al',
           onPress: async () => {
             setLoadingId(bg.id);
             try {
-              await new Promise(resolve => setTimeout(resolve, 2000));
-              setUnlockedBackgrounds(prev => [...prev, bg.id]);
-              setActiveBackground(bg.id);
-              Alert.alert('Tebrikler!', `"${bg.name}" arka planı açıldı!`);
+              const success = await purchaseBackground(bg.id, totalCoins, deductCoins);
+              if (success) {
+                Alert.alert('Tebrikler! 🎉', `"${bg.name}" arka planı satın alındı ve aktif edildi!`);
+              }
             } catch (error) {
-              Alert.alert('Hata', 'Reklam yüklenemedi.');
+              Alert.alert('Hata', 'Satın alma başarısız. Lütfen tekrar deneyin.');
             } finally {
               setLoadingId(null);
             }
@@ -110,11 +135,19 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({ visible, onClose }) => {
     );
   };
 
-  const renderBlockPreview = (colors: string[]) => {
+  const renderBlockPreview = (skin: BlockSkin) => {
     return (
       <View style={styles.blockPreview}>
-        {colors.slice(0, 4).map((color, index) => (
-          <View key={index} style={[styles.previewBlock, { backgroundColor: color }]}>
+        {skin.colors.slice(0, 4).map((color, index) => (
+          <View 
+            key={index} 
+            style={[
+              styles.previewBlock, 
+              { backgroundColor: color },
+              skin.glow && styles.glowBlock,
+              skin.neon && styles.neonBlock,
+            ]}
+          >
             <View style={[styles.previewHighlight, { backgroundColor: `${color}99` }]} />
           </View>
         ))}
@@ -135,6 +168,12 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({ visible, onClose }) => {
             </TouchableOpacity>
           </View>
 
+          {/* Coins Display */}
+          <View style={styles.coinsBar}>
+            <Ionicons name="logo-bitcoin" size={18} color="#F7931A" />
+            <Text style={styles.coinsText}>{totalCoins} Coin</Text>
+          </View>
+
           {/* Tabs */}
           <View style={styles.tabs}>
             <TouchableOpacity
@@ -143,7 +182,7 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({ visible, onClose }) => {
             >
               <Ionicons name="cube" size={18} color={activeTab === 'blocks' ? '#BD00FF' : '#666'} />
               <Text style={[styles.tabText, activeTab === 'blocks' && styles.activeTabText]}>
-                Bloklar
+                Bloklar ({skins.length})
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -152,7 +191,7 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({ visible, onClose }) => {
             >
               <Ionicons name="image" size={18} color={activeTab === 'backgrounds' ? '#BD00FF' : '#666'} />
               <Text style={[styles.tabText, activeTab === 'backgrounds' && styles.activeTabText]}>
-                Arka Plan
+                Arka Plan ({backgrounds.length})
               </Text>
             </TouchableOpacity>
           </View>
@@ -178,34 +217,44 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({ visible, onClose }) => {
                       disabled={isLoading}
                     >
                       {isLoading ? (
-                        <ActivityIndicator size="small" color="#BD00FF" />
+                        <View style={styles.loadingContainer}>
+                          <ActivityIndicator size="small" color="#BD00FF" />
+                          <Text style={styles.loadingText}>Reklam...</Text>
+                        </View>
                       ) : (
                         <>
-                          {renderBlockPreview(skin.colors)}
-                          <Text style={styles.skinName}>{skin.name}</Text>
+                          {renderBlockPreview(skin)}
+                          <Text style={styles.skinName} numberOfLines={1}>{skin.name}</Text>
+                          
+                          {/* Badges */}
+                          {skin.neon && (
+                            <View style={[styles.featureBadge, { backgroundColor: '#00FF00' }]}>
+                              <Text style={styles.featureBadgeText}>NEON</Text>
+                            </View>
+                          )}
+                          
+                          {skin.glow && !skin.neon && (
+                            <View style={[styles.featureBadge, { backgroundColor: '#FFD700' }]}>
+                              <Text style={styles.featureBadgeText}>GLOW</Text>
+                            </View>
+                          )}
+                          
+                          {skin.premium && (
+                            <View style={styles.premiumBadge}>
+                              <Ionicons name="diamond" size={10} color="#BD00FF" />
+                            </View>
+                          )}
                           
                           {!isUnlocked && (
                             <View style={styles.lockBadge}>
-                              <Ionicons name="play-circle" size={14} color="#FFD700" />
+                              <Ionicons name="play-circle" size={12} color="#FFD700" />
                               <Text style={styles.lockText}>{skin.adCost || 1}</Text>
                             </View>
                           )}
                           
                           {isActive && (
                             <View style={styles.activeBadge}>
-                              <Ionicons name="checkmark-circle" size={16} color="#4ECDC4" />
-                            </View>
-                          )}
-                          
-                          {skin.glow && (
-                            <View style={styles.glowBadge}>
-                              <Ionicons name="sparkles" size={12} color="#FFD700" />
-                            </View>
-                          )}
-                          
-                          {skin.premium && (
-                            <View style={styles.premiumBadge}>
-                              <Ionicons name="diamond" size={12} color="#BD00FF" />
+                              <Ionicons name="checkmark-circle" size={18} color="#4ECDC4" />
                             </View>
                           )}
                         </>
@@ -216,7 +265,7 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({ visible, onClose }) => {
               </View>
             ) : (
               <View style={styles.grid}>
-                {BACKGROUNDS.map((bg) => {
+                {backgrounds.map((bg) => {
                   const isUnlocked = unlockedBackgrounds.includes(bg.id);
                   const isActive = activeBackground === bg.id;
                   const isLoading = loadingId === bg.id;
@@ -237,7 +286,7 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({ visible, onClose }) => {
                       ) : (
                         <>
                           <LinearGradient
-                            colors={bg.colors as [string, string]}
+                            colors={bg.colors}
                             style={styles.bgPreview}
                           >
                             <View style={styles.bgMiniBoard}>
@@ -246,18 +295,24 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({ visible, onClose }) => {
                               ))}
                             </View>
                           </LinearGradient>
-                          <Text style={styles.bgName}>{bg.name}</Text>
+                          <Text style={styles.bgName} numberOfLines={1}>{bg.name}</Text>
                           
                           {!isUnlocked && (
-                            <View style={styles.lockBadge}>
-                              <Ionicons name="play-circle" size={14} color="#FFD700" />
-                              <Text style={styles.lockText}>{bg.adCost}</Text>
+                            <View style={styles.coinBadge}>
+                              <Ionicons name="logo-bitcoin" size={12} color="#F7931A" />
+                              <Text style={styles.coinBadgeText}>{bg.coinCost}</Text>
+                            </View>
+                          )}
+                          
+                          {bg.free && (
+                            <View style={[styles.freeBadge]}>
+                              <Text style={styles.freeBadgeText}>ÜCRETSİZ</Text>
                             </View>
                           )}
                           
                           {isActive && (
                             <View style={styles.activeBadge}>
-                              <Ionicons name="checkmark-circle" size={16} color="#4ECDC4" />
+                              <Ionicons name="checkmark-circle" size={18} color="#4ECDC4" />
                             </View>
                           )}
                         </>
@@ -272,7 +327,11 @@ export const SkinsModal: React.FC<SkinsModalProps> = ({ visible, onClose }) => {
           {/* Info */}
           <View style={styles.infoBar}>
             <Ionicons name="information-circle" size={16} color="#666" />
-            <Text style={styles.infoText}>Reklam izleyerek temaları açabilirsiniz</Text>
+            <Text style={styles.infoText}>
+              {activeTab === 'blocks' 
+                ? 'Blok temaları reklam izleyerek açılır' 
+                : 'Arka planlar coin ile satın alınır'}
+            </Text>
           </View>
         </View>
       </View>
@@ -292,8 +351,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#11112B',
     borderRadius: 20,
     width: '100%',
-    maxWidth: 380,
-    maxHeight: SCREEN_HEIGHT * 0.8,
+    maxWidth: 400,
+    maxHeight: SCREEN_HEIGHT * 0.85,
     paddingTop: 20,
     paddingHorizontal: 16,
     paddingBottom: 16,
@@ -301,7 +360,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
     paddingHorizontal: 4,
   },
   title: {
@@ -316,9 +375,25 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 20,
   },
+  coinsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(247, 147, 26, 0.15)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginBottom: 12,
+    gap: 6,
+  },
+  coinsText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#F7931A',
+  },
   tabs: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
     padding: 4,
@@ -336,7 +411,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(189, 0, 255, 0.2)',
   },
   tabText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
     fontWeight: '600',
   },
@@ -353,90 +428,120 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   skinCard: {
-    width: '48%',
+    width: '31%',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
+    padding: 8,
+    marginBottom: 10,
     alignItems: 'center',
     position: 'relative',
     borderWidth: 2,
     borderColor: 'transparent',
+    minHeight: 100,
   },
   activeSkinCard: {
     borderColor: '#4ECDC4',
     backgroundColor: 'rgba(78, 205, 196, 0.1)',
   },
   lockedSkinCard: {
-    opacity: 0.8,
+    opacity: 0.7,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 10,
+    color: '#BD00FF',
+    marginTop: 4,
   },
   blockPreview: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    width: 50,
-    height: 50,
-    marginBottom: 8,
+    width: 44,
+    height: 44,
+    marginBottom: 6,
   },
   previewBlock: {
-    width: 22,
-    height: 22,
+    width: 20,
+    height: 20,
     margin: 1,
     borderRadius: 4,
     position: 'relative',
     overflow: 'hidden',
   },
+  glowBlock: {
+    shadowColor: '#fff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  neonBlock: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
   previewHighlight: {
     position: 'absolute',
     top: 2,
     left: 2,
-    width: 8,
-    height: 8,
+    width: 6,
+    height: 6,
     borderRadius: 2,
   },
   skinName: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#fff',
     fontWeight: '600',
     textAlign: 'center',
   },
+  featureBadge: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  featureBadgeText: {
+    fontSize: 7,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  premiumBadge: {
+    position: 'absolute',
+    bottom: 4,
+    left: 4,
+  },
   lockBadge: {
     position: 'absolute',
-    top: 8,
-    right: 8,
+    top: 4,
+    right: 4,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingHorizontal: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 4,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: 8,
     gap: 2,
   },
   lockText: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#FFD700',
     fontWeight: 'bold',
   },
   activeBadge: {
     position: 'absolute',
-    top: 8,
-    left: 8,
-  },
-  glowBadge: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-  },
-  premiumBadge: {
-    position: 'absolute',
-    bottom: 8,
-    left: 8,
+    bottom: 4,
+    right: 4,
   },
   bgCard: {
     width: '48%',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
     padding: 8,
-    marginBottom: 12,
+    marginBottom: 10,
     alignItems: 'center',
     position: 'relative',
     borderWidth: 2,
@@ -447,13 +552,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(78, 205, 196, 0.1)',
   },
   lockedBgCard: {
-    opacity: 0.8,
+    opacity: 0.7,
   },
   bgPreview: {
     width: '100%',
     height: 60,
     borderRadius: 8,
-    marginBottom: 8,
+    marginBottom: 6,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -467,7 +572,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     margin: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     borderRadius: 2,
   },
   bgName: {
@@ -475,6 +580,37 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     textAlign: 'center',
+  },
+  coinBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    gap: 2,
+  },
+  coinBadgeText: {
+    fontSize: 10,
+    color: '#F7931A',
+    fontWeight: 'bold',
+  },
+  freeBadge: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    backgroundColor: '#4ECDC4',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  freeBadgeText: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   infoBar: {
     flexDirection: 'row',
@@ -486,7 +622,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   infoText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#666',
   },
 });

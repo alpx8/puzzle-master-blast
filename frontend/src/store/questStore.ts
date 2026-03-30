@@ -1,126 +1,188 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-
-const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 export interface Quest {
   id: string;
-  type: 'score' | 'clear_lines' | 'combo' | 'games_played' | 'level_up';
+  type: 'score' | 'clear_lines' | 'combo' | 'games_played' | 'level_up' | 'watch_ad' | 'multiplayer';
   title: string;
   description: string;
   target: number;
   progress: number;
-  xpReward: number;
+  xpReward: number; // Coin reward
   completed: boolean;
   claimed: boolean;
 }
 
 interface QuestState {
   dailyQuests: Quest[];
-  lastQuestDate: string;
-  totalQuestsCompleted: number;
-  
-  // Actions
+  lastResetDate: string | null;
   loadQuests: (userId: string) => Promise<void>;
   updateQuestProgress: (type: Quest['type'], amount: number) => void;
   claimReward: (questId: string) => Promise<number>;
-  checkAndRefreshQuests: (userId: string) => Promise<void>;
+  checkAndResetDaily: () => Promise<void>;
 }
 
-const QUEST_TEMPLATES = [
-  // Score quests
-  { type: 'score' as const, title: 'Puan Avcısı', description: '{target} puan topla', targets: [500, 1000, 2000, 5000], xpMultiplier: 0.1 },
-  { type: 'score' as const, title: 'Skor Ustası', description: 'Tek oyunda {target} puan yap', targets: [300, 500, 1000, 2000], xpMultiplier: 0.15 },
-  
-  // Line clear quests
-  { type: 'clear_lines' as const, title: 'Satır Temizleyici', description: '{target} satır/sütun temizle', targets: [5, 10, 20, 30], xpMultiplier: 5 },
-  { type: 'clear_lines' as const, title: 'Patlama Ustası', description: '{target} satır patlat', targets: [10, 25, 50], xpMultiplier: 4 },
-  
-  // Combo quests
-  { type: 'combo' as const, title: 'Kombo Kralı', description: '{target}x kombo yap', targets: [2, 3, 5, 7], xpMultiplier: 20 },
-  { type: 'combo' as const, title: 'Zincirleme', description: '{target} kez üst üste kombo yap', targets: [3, 5, 10], xpMultiplier: 15 },
-  
-  // Games played
-  { type: 'games_played' as const, title: 'Oyun Sever', description: '{target} oyun oyna', targets: [3, 5, 10], xpMultiplier: 25 },
-];
-
+// Generate daily quests
 const generateDailyQuests = (): Quest[] => {
-  const quests: Quest[] = [];
-  const usedTypes = new Set<string>();
-  
-  // Generate 3 random quests
-  while (quests.length < 3) {
-    const template = QUEST_TEMPLATES[Math.floor(Math.random() * QUEST_TEMPLATES.length)];
-    const questKey = `${template.type}-${template.title}`;
-    
-    if (usedTypes.has(questKey)) continue;
-    usedTypes.add(questKey);
-    
-    const target = template.targets[Math.floor(Math.random() * template.targets.length)];
-    const xpReward = Math.floor(target * template.xpMultiplier);
-    
-    quests.push({
-      id: `${Date.now()}-${quests.length}`,
-      type: template.type,
-      title: template.title,
-      description: template.description.replace('{target}', target.toString()),
-      target,
+  return [
+    {
+      id: 'quest_score_500',
+      type: 'score',
+      title: '500 Puan Topla',
+      description: 'Tek oyunda 500 puan yap',
+      target: 500,
       progress: 0,
-      xpReward: Math.max(xpReward, 10), // Minimum 10 XP
+      xpReward: 50,
       completed: false,
       claimed: false,
-    });
-  }
-  
-  return quests;
+    },
+    {
+      id: 'quest_score_1000',
+      type: 'score',
+      title: '1000 Puan Topla',
+      description: 'Tek oyunda 1000 puan yap',
+      target: 1000,
+      progress: 0,
+      xpReward: 100,
+      completed: false,
+      claimed: false,
+    },
+    {
+      id: 'quest_score_2500',
+      type: 'score',
+      title: '2500 Puan Topla',
+      description: 'Tek oyunda 2500 puan yap',
+      target: 2500,
+      progress: 0,
+      xpReward: 200,
+      completed: false,
+      claimed: false,
+    },
+    {
+      id: 'quest_lines_5',
+      type: 'clear_lines',
+      title: '5 Satır Temizle',
+      description: 'Toplam 5 satır veya sütun temizle',
+      target: 5,
+      progress: 0,
+      xpReward: 30,
+      completed: false,
+      claimed: false,
+    },
+    {
+      id: 'quest_lines_15',
+      type: 'clear_lines',
+      title: '15 Satır Temizle',
+      description: 'Toplam 15 satır veya sütun temizle',
+      target: 15,
+      progress: 0,
+      xpReward: 75,
+      completed: false,
+      claimed: false,
+    },
+    {
+      id: 'quest_lines_30',
+      type: 'clear_lines',
+      title: '30 Satır Temizle',
+      description: 'Toplam 30 satır veya sütun temizle',
+      target: 30,
+      progress: 0,
+      xpReward: 150,
+      completed: false,
+      claimed: false,
+    },
+    {
+      id: 'quest_combo_2',
+      type: 'combo',
+      title: '2x Combo Yap',
+      description: 'Tek hamlede 2 satır temizle',
+      target: 1,
+      progress: 0,
+      xpReward: 40,
+      completed: false,
+      claimed: false,
+    },
+    {
+      id: 'quest_combo_3',
+      type: 'combo',
+      title: '3x Combo Yap',
+      description: 'Tek hamlede 3 satır temizle',
+      target: 1,
+      progress: 0,
+      xpReward: 80,
+      completed: false,
+      claimed: false,
+    },
+    {
+      id: 'quest_games_3',
+      type: 'games_played',
+      title: '3 Oyun Oyna',
+      description: '3 oyun tamamla',
+      target: 3,
+      progress: 0,
+      xpReward: 60,
+      completed: false,
+      claimed: false,
+    },
+    {
+      id: 'quest_games_5',
+      type: 'games_played',
+      title: '5 Oyun Oyna',
+      description: '5 oyun tamamla',
+      target: 5,
+      progress: 0,
+      xpReward: 100,
+      completed: false,
+      claimed: false,
+    },
+    {
+      id: 'quest_watch_ad',
+      type: 'watch_ad',
+      title: 'Reklam İzle',
+      description: '3 reklam izle',
+      target: 3,
+      progress: 0,
+      xpReward: 50,
+      completed: false,
+      claimed: false,
+    },
+    {
+      id: 'quest_multiplayer',
+      type: 'multiplayer',
+      title: 'Online Oyna',
+      description: '1 çok oyunculu maç oyna',
+      target: 1,
+      progress: 0,
+      xpReward: 75,
+      completed: false,
+      claimed: false,
+    },
+  ];
 };
-
-const getTodayDate = () => new Date().toISOString().split('T')[0];
 
 export const useQuestStore = create<QuestState>((set, get) => ({
   dailyQuests: [],
-  lastQuestDate: '',
-  totalQuestsCompleted: 0,
+  lastResetDate: null,
   
   loadQuests: async (userId: string) => {
     try {
-      const stored = await AsyncStorage.getItem(`quests_${userId}`);
-      if (stored) {
-        const data = JSON.parse(stored);
-        set({
-          dailyQuests: data.dailyQuests || [],
-          lastQuestDate: data.lastQuestDate || '',
-          totalQuestsCompleted: data.totalQuestsCompleted || 0,
-        });
-      }
+      const savedQuests = await AsyncStorage.getItem(`quests_${userId}`);
+      const lastReset = await AsyncStorage.getItem(`quests_reset_${userId}`);
       
-      // Check if we need new quests
-      await get().checkAndRefreshQuests(userId);
+      const today = new Date().toDateString();
+      
+      // Check if we need to reset quests (new day)
+      if (lastReset !== today || !savedQuests) {
+        const newQuests = generateDailyQuests();
+        await AsyncStorage.setItem(`quests_${userId}`, JSON.stringify(newQuests));
+        await AsyncStorage.setItem(`quests_reset_${userId}`, today);
+        set({ dailyQuests: newQuests, lastResetDate: today });
+      } else {
+        set({ dailyQuests: JSON.parse(savedQuests), lastResetDate: lastReset });
+      }
     } catch (error) {
       console.error('Error loading quests:', error);
-    }
-  },
-  
-  checkAndRefreshQuests: async (userId: string) => {
-    const today = getTodayDate();
-    const { lastQuestDate } = get();
-    
-    if (lastQuestDate !== today) {
-      // Generate new daily quests
-      const newQuests = generateDailyQuests();
-      
-      set({
-        dailyQuests: newQuests,
-        lastQuestDate: today,
-      });
-      
-      // Save to storage
-      await AsyncStorage.setItem(`quests_${userId}`, JSON.stringify({
-        dailyQuests: newQuests,
-        lastQuestDate: today,
-        totalQuestsCompleted: get().totalQuestsCompleted,
-      }));
+      set({ dailyQuests: generateDailyQuests() });
     }
   },
   
@@ -131,7 +193,6 @@ export const useQuestStore = create<QuestState>((set, get) => ({
       if (quest.type === type && !quest.completed) {
         const newProgress = quest.progress + amount;
         const completed = newProgress >= quest.target;
-        
         return {
           ...quest,
           progress: Math.min(newProgress, quest.target),
@@ -142,23 +203,52 @@ export const useQuestStore = create<QuestState>((set, get) => ({
     });
     
     set({ dailyQuests: updatedQuests });
+    
+    // Save to AsyncStorage
+    AsyncStorage.getItem('userId').then(userId => {
+      if (userId) {
+        AsyncStorage.setItem(`quests_${userId}`, JSON.stringify(updatedQuests));
+      }
+    });
   },
   
-  claimReward: async (questId: string): Promise<number> => {
-    const { dailyQuests, totalQuestsCompleted } = get();
-    
+  claimReward: async (questId: string) => {
+    const { dailyQuests } = get();
     const quest = dailyQuests.find(q => q.id === questId);
-    if (!quest || !quest.completed || quest.claimed) return 0;
     
-    const updatedQuests = dailyQuests.map(q => 
+    if (!quest || !quest.completed || quest.claimed) {
+      return 0;
+    }
+    
+    const updatedQuests = dailyQuests.map(q =>
       q.id === questId ? { ...q, claimed: true } : q
     );
     
-    set({
-      dailyQuests: updatedQuests,
-      totalQuestsCompleted: totalQuestsCompleted + 1,
-    });
+    set({ dailyQuests: updatedQuests });
+    
+    // Save to AsyncStorage
+    const userId = await AsyncStorage.getItem('userId');
+    if (userId) {
+      await AsyncStorage.setItem(`quests_${userId}`, JSON.stringify(updatedQuests));
+    }
     
     return quest.xpReward;
   },
+  
+  checkAndResetDaily: async () => {
+    const { lastResetDate } = get();
+    const today = new Date().toDateString();
+    
+    if (lastResetDate !== today) {
+      const userId = await AsyncStorage.getItem('userId');
+      if (userId) {
+        const newQuests = generateDailyQuests();
+        await AsyncStorage.setItem(`quests_${userId}`, JSON.stringify(newQuests));
+        await AsyncStorage.setItem(`quests_reset_${userId}`, today);
+        set({ dailyQuests: newQuests, lastResetDate: today });
+      }
+    }
+  },
 }));
+
+export default useQuestStore;
