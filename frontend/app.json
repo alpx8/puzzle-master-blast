@@ -2,7 +2,7 @@
   "expo": {
     "name": "Puzzle Master Blast",
     "slug": "puzzle-master-blast",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "puzzlemasterblast",
@@ -23,7 +23,7 @@
     },
     "android": {
       "package": "com.puzzlemaster.blastgame",
-      "versionCode": 1,
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#0a0a1a"
@@ -49,6 +49,7 @@
     },
     "plugins": [
       "expo-router",
+      "react-native-iap",
       [
         "expo-splash-screen",
         {
@@ -64,7 +65,8 @@
           "android": {
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
-            "minSdkVersion": 24
+            "minSdkVersion": 24,
+            "kotlinVersion": "2.1.20"
           }
         }
       ],

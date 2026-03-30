@@ -1,5 +1,17 @@
 # 🚀 Google Play Güncelleme ve IAP Rehberi
 
+## ✅ TAMAMLANAN İŞLEMLER
+
+1. ✅ `react-native-iap` kütüphanesi kuruldu
+2. ✅ `app.json` güncellendi:
+   - `version`: 1.0.0 → **1.1.0**
+   - `versionCode`: 1 → **2**
+   - `react-native-iap` plugin eklendi
+   - `kotlinVersion`: 2.1.20 ayarlandı
+3. ✅ `coinShopStore.ts` gerçek IAP ile güncellendi
+
+---
+
 ## BÖLÜM 1: Yeni Sürümü Yayınlama (AAB Güncelleme)
 
 ### Adım 1: Versiyon Numarasını Artır
