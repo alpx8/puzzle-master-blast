@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,12 +12,15 @@ import {
   RefreshControl,
   Switch,
   Dimensions,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import { io, Socket } from 'socket.io-client';
 import { useGameStore } from '@/src/store/gameStore';
+import { useDailyRewardsStore } from '@/src/store/dailyRewardsStore';
 import { LinearGradient } from 'expo-linear-gradient';
 import Constants from 'expo-constants';
 
@@ -25,11 +28,8 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Get API URL from environment
 const getApiUrl = () => {
-  // Try multiple sources for API URL
   const envUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
   const configUrl = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL;
-  
-  // Return the first available URL or fallback
   return envUrl || configUrl || 'https://puzzle-game-56.preview.emergentagent.com';
 };
 
@@ -52,6 +52,8 @@ interface GameResult {
   opponent_name: string;
   my_score: number;
   opponent_score: number;
+  coins_earned?: number;
+  xp_earned?: number;
   created_at: string;
 }
 
@@ -60,6 +62,7 @@ type TabType = 'public' | 'private' | 'history';
 export default function MultiplayerScreen() {
   const router = useRouter();
   const { username, userId } = useGameStore();
+  const { totalCoins } = useDailyRewardsStore();
   
   const [activeTab, setActiveTab] = useState<TabType>('public');
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -78,6 +81,15 @@ export default function MultiplayerScreen() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [joining, setJoining] = useState<string | null>(null);
+  
+  // Quick Match states
+  const [showQuickMatch, setShowQuickMatch] = useState(false);
+  const [quickMatchStatus, setQuickMatchStatus] = useState<'idle' | 'searching' | 'found'>('idle');
+  const [quickMatchSocket, setQuickMatchSocket] = useState<Socket | null>(null);
+  const [searchTime, setSearchTime] = useState(0);
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
 
   const fetchRooms = async () => {
     try {
@@ -118,6 +130,37 @@ export default function MultiplayerScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  // Pulse animation for quick match
+  useEffect(() => {
+    if (quickMatchStatus === 'searching') {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.2,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+
+      Animated.loop(
+        Animated.timing(rotateAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        })
+      ).start();
+    } else {
+      pulseAnim.setValue(1);
+      rotateAnim.setValue(0);
+    }
+  }, [quickMatchStatus]);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchRooms();
@@ -135,7 +178,6 @@ export default function MultiplayerScreen() {
 
     setCreating(true);
     try {
-      console.log('Creating room with API_URL:', API_URL);
       const response = await axios.post(`${API_URL}/api/rooms`, {
         name: roomName,
         host_id: playerId,
@@ -149,8 +191,6 @@ export default function MultiplayerScreen() {
         }
       });
       
-      console.log('Room created:', response.data);
-      
       setShowCreateModal(false);
       setRoomName('');
       setRoomPassword('');
@@ -163,8 +203,6 @@ export default function MultiplayerScreen() {
       }
     } catch (error: any) {
       console.error('Error creating room:', error);
-      console.error('Error details:', error.response?.data || error.message);
-      
       let errorMessage = 'Oda oluşturulamadı. ';
       if (error.code === 'ECONNABORTED') {
         errorMessage += 'Bağlantı zaman aşımına uğradı.';
@@ -175,7 +213,6 @@ export default function MultiplayerScreen() {
       } else {
         errorMessage += error.response?.data?.detail || 'Lütfen tekrar deneyin.';
       }
-      
       Alert.alert('Bağlantı Hatası', errorMessage);
     } finally {
       setCreating(false);
@@ -197,7 +234,6 @@ export default function MultiplayerScreen() {
       setSelectedRoom(room);
       setShowPasswordModal(true);
     } else {
-      // Reklam göster, sonra odaya katıl
       showAdBeforeJoin(room.id, null);
     }
   };
@@ -208,7 +244,6 @@ export default function MultiplayerScreen() {
     setShowAdModal(true);
     setAdProgress(0);
     
-    // Reklam simülasyonu - 3 saniye
     const interval = setInterval(() => {
       setAdProgress(prev => {
         if (prev >= 100) {
@@ -219,7 +254,6 @@ export default function MultiplayerScreen() {
       });
     }, 150);
     
-    // 3 saniye sonra odaya katıl
     setTimeout(() => {
       clearInterval(interval);
       setShowAdModal(false);
@@ -256,8 +290,121 @@ export default function MultiplayerScreen() {
     }
   };
 
+  // ==================== Quick Match Functions ====================
+
+  const startQuickMatch = () => {
+    const playerName = username || 'Oyuncu' + Math.floor(Math.random() * 1000);
+    const playerId = userId || 'user-' + Date.now();
+
+    setShowQuickMatch(true);
+    setQuickMatchStatus('searching');
+    setSearchTime(0);
+
+    // Start search timer
+    searchTimerRef.current = setInterval(() => {
+      setSearchTime(prev => prev + 1);
+    }, 1000);
+
+    // Connect to Socket.IO
+    const socket = io(API_URL, {
+      transports: ['polling', 'websocket'],
+      path: '/socket.io/',
+      reconnection: true,
+      reconnectionAttempts: 5,
+    });
+
+    socket.on('connect', () => {
+      console.log('Quick match socket connected');
+      socket.emit('join_quick_match', {
+        player_id: playerId,
+        player_name: playerName,
+      });
+    });
+
+    socket.on('quick_match_waiting', (data) => {
+      console.log('Waiting in queue:', data);
+    });
+
+    socket.on('quick_match_found', (data) => {
+      console.log('Match found!', data);
+      setQuickMatchStatus('found');
+      
+      // Clear timer
+      if (searchTimerRef.current) {
+        clearInterval(searchTimerRef.current);
+      }
+
+      // Navigate to game room after short delay
+      setTimeout(() => {
+        setShowQuickMatch(false);
+        setQuickMatchStatus('idle');
+        socket.disconnect();
+        router.push(`/game-room?roomId=${data.room_id}&isHost=false&quickMatch=true`);
+      }, 1500);
+    });
+
+    socket.on('error', (data) => {
+      console.error('Quick match error:', data);
+      Alert.alert('Hata', data.message || 'Eşleşme hatası');
+      cancelQuickMatch();
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Quick match socket disconnected');
+    });
+
+    setQuickMatchSocket(socket);
+  };
+
+  const cancelQuickMatch = () => {
+    const playerId = userId || 'user-' + Date.now();
+
+    if (quickMatchSocket) {
+      quickMatchSocket.emit('leave_quick_match', { player_id: playerId });
+      quickMatchSocket.disconnect();
+      setQuickMatchSocket(null);
+    }
+
+    if (searchTimerRef.current) {
+      clearInterval(searchTimerRef.current);
+      searchTimerRef.current = null;
+    }
+
+    setShowQuickMatch(false);
+    setQuickMatchStatus('idle');
+    setSearchTime(0);
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (quickMatchSocket) {
+        quickMatchSocket.disconnect();
+      }
+      if (searchTimerRef.current) {
+        clearInterval(searchTimerRef.current);
+      }
+    };
+  }, [quickMatchSocket]);
+
+  const formatSearchTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const publicRooms = rooms.filter(r => !r.isPrivate && r.status === 'waiting');
   const privateRooms = rooms.filter(r => r.isPrivate && r.status === 'waiting');
+
+  const spin = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  // Calculate stats from history
+  const totalWins = gameHistory.filter(g => g.result === 'win').length;
+  const totalGames = gameHistory.length;
+  const winRate = totalGames > 0 ? Math.round((totalWins / totalGames) * 100) : 0;
 
   const renderRoomItem = ({ item }: { item: Room }) => (
     <View style={styles.roomCard}>
@@ -308,6 +455,22 @@ export default function MultiplayerScreen() {
           {item.my_score} - {item.opponent_score}
         </Text>
       </View>
+      {(item.coins_earned || item.xp_earned) && (
+        <View style={styles.historyRewards}>
+          {item.coins_earned && (
+            <View style={styles.rewardBadge}>
+              <Ionicons name="logo-bitcoin" size={12} color="#FFD700" />
+              <Text style={styles.rewardText}>+{item.coins_earned}</Text>
+            </View>
+          )}
+          {item.xp_earned && (
+            <View style={styles.rewardBadge}>
+              <Ionicons name="star" size={12} color="#4ECDC4" />
+              <Text style={styles.rewardText}>+{item.xp_earned}</Text>
+            </View>
+          )}
+        </View>
+      )}
     </View>
   );
 
@@ -324,7 +487,7 @@ export default function MultiplayerScreen() {
           : 'Bekleyen oda yok'}
       </Text>
       {activeTab !== 'history' && (
-        <Text style={styles.emptySubtext}>Yeni bir oda oluşturun!</Text>
+        <Text style={styles.emptySubtext}>Yeni bir oda oluşturun veya Hızlı Eşleşme deneyin!</Text>
       )}
     </View>
   );
@@ -342,16 +505,50 @@ export default function MultiplayerScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* User Info */}
-      <View style={styles.userInfo}>
-        <View style={styles.userAvatar}>
-          <Ionicons name="person" size={20} color="#fff" />
+      {/* User Stats Bar */}
+      <View style={styles.statsBar}>
+        <View style={styles.statItem}>
+          <Ionicons name="person" size={16} color="#4ECDC4" />
+          <Text style={styles.statLabel}>{username || 'İsimsiz'}</Text>
         </View>
-        <View>
-          <Text style={styles.userName}>{username || 'İsimsiz Oyuncu'}</Text>
-          <Text style={styles.userLevel}>Online</Text>
+        <View style={styles.statDivider} />
+        <View style={styles.statItem}>
+          <Ionicons name="trophy" size={16} color="#FFD700" />
+          <Text style={styles.statValue}>{totalWins}</Text>
+          <Text style={styles.statLabel}>Galibiyet</Text>
+        </View>
+        <View style={styles.statDivider} />
+        <View style={styles.statItem}>
+          <Ionicons name="stats-chart" size={16} color="#FF6B6B" />
+          <Text style={styles.statValue}>%{winRate}</Text>
+          <Text style={styles.statLabel}>Oran</Text>
+        </View>
+        <View style={styles.statDivider} />
+        <View style={styles.statItem}>
+          <Ionicons name="logo-bitcoin" size={16} color="#F7931A" />
+          <Text style={styles.statValue}>{totalCoins}</Text>
         </View>
       </View>
+
+      {/* Quick Match Button */}
+      <TouchableOpacity 
+        style={styles.quickMatchButton}
+        onPress={startQuickMatch}
+      >
+        <LinearGradient
+          colors={['#FF6B6B', '#FF8E53']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.quickMatchGradient}
+        >
+          <Ionicons name="flash" size={28} color="#fff" />
+          <View style={styles.quickMatchText}>
+            <Text style={styles.quickMatchTitle}>Hızlı Eşleşme</Text>
+            <Text style={styles.quickMatchSubtitle}>Anında rakip bul!</Text>
+          </View>
+          <Ionicons name="arrow-forward" size={24} color="rgba(255,255,255,0.7)" />
+        </LinearGradient>
+      </TouchableOpacity>
 
       {/* Create Room Button */}
       <TouchableOpacity 
@@ -516,7 +713,7 @@ export default function MultiplayerScreen() {
         </View>
       </Modal>
 
-      {/* Ad Modal - Shown before joining room */}
+      {/* Ad Modal */}
       <Modal visible={showAdModal} transparent animationType="fade">
         <View style={styles.adModalOverlay}>
           <View style={styles.adModalContent}>
@@ -539,6 +736,54 @@ export default function MultiplayerScreen() {
                 <Text style={styles.adTipText}>İpucu: Komboları yakalamak puanınızı katlar!</Text>
               </View>
             </LinearGradient>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Quick Match Modal */}
+      <Modal visible={showQuickMatch} transparent animationType="fade">
+        <View style={styles.quickMatchOverlay}>
+          <View style={styles.quickMatchModal}>
+            {quickMatchStatus === 'searching' ? (
+              <>
+                <Animated.View style={[
+                  styles.searchingIcon,
+                  { 
+                    transform: [
+                      { scale: pulseAnim },
+                      { rotate: spin }
+                    ]
+                  }
+                ]}>
+                  <Ionicons name="search" size={60} color="#FF6B6B" />
+                </Animated.View>
+                
+                <Text style={styles.searchingTitle}>Rakip Aranıyor...</Text>
+                <Text style={styles.searchingTime}>{formatSearchTime(searchTime)}</Text>
+                
+                <View style={styles.searchingDots}>
+                  <View style={[styles.dot, styles.dotActive]} />
+                  <View style={[styles.dot, searchTime % 2 === 0 && styles.dotActive]} />
+                  <View style={[styles.dot, searchTime % 3 === 0 && styles.dotActive]} />
+                </View>
+
+                <Text style={styles.searchingHint}>Eşleşme için bekleyin veya iptal edin</Text>
+                
+                <TouchableOpacity 
+                  style={styles.cancelSearchButton}
+                  onPress={cancelQuickMatch}
+                >
+                  <Text style={styles.cancelSearchText}>İptal</Text>
+                </TouchableOpacity>
+              </>
+            ) : quickMatchStatus === 'found' ? (
+              <>
+                <Ionicons name="checkmark-circle" size={80} color="#4ECDC4" />
+                <Text style={styles.matchFoundTitle}>Eşleşme Bulundu!</Text>
+                <Text style={styles.matchFoundSubtitle}>Oyun başlıyor...</Text>
+                <ActivityIndicator size="large" color="#4ECDC4" style={{ marginTop: 20 }} />
+              </>
+            ) : null}
           </View>
         </View>
       </Modal>
@@ -579,33 +824,59 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  userInfo: {
+  statsBar: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingVertical: 10,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(78, 205, 196, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     marginHorizontal: 16,
     borderRadius: 12,
     marginBottom: 12,
   },
-  userAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#4ECDC4',
-    justifyContent: 'center',
+  statItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 12,
+    gap: 4,
   },
-  userName: {
-    fontSize: 16,
-    fontWeight: '600',
+  statDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#888',
+  },
+  statValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
     color: '#fff',
   },
-  userLevel: {
+  quickMatchButton: {
+    marginHorizontal: 16,
+    marginBottom: 10,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  quickMatchGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  quickMatchText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  quickMatchTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  quickMatchSubtitle: {
     fontSize: 12,
-    color: '#4ECDC4',
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   createButton: {
     flexDirection: 'row',
@@ -613,13 +884,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#4ECDC4',
     marginHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderRadius: 12,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   createButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     marginLeft: 8,
   },
@@ -735,7 +1006,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   historyResult: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '900',
     letterSpacing: 1,
   },
@@ -746,15 +1017,33 @@ const styles = StyleSheet.create({
     color: '#FF6B6B',
   },
   historyOpponent: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#888',
     marginTop: 2,
   },
   historyScore: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
     marginTop: 4,
+  },
+  historyRewards: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  rewardBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  rewardText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -769,6 +1058,8 @@ const styles = StyleSheet.create({
     color: '#444',
     fontSize: 14,
     marginTop: 4,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
   modalOverlay: {
     flex: 1,
@@ -911,5 +1202,80 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.7)',
     flex: 1,
+  },
+  // Quick Match Modal Styles
+  quickMatchOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  quickMatchModal: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 24,
+    padding: 40,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 320,
+  },
+  searchingIcon: {
+    marginBottom: 20,
+  },
+  searchingTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  searchingTime: {
+    fontSize: 36,
+    fontWeight: '300',
+    color: '#FF6B6B',
+    marginBottom: 20,
+  },
+  searchingDots: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 20,
+  },
+  dot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  dotActive: {
+    backgroundColor: '#FF6B6B',
+  },
+  searchingHint: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  cancelSearchButton: {
+    backgroundColor: 'rgba(255, 107, 107, 0.2)',
+    paddingHorizontal: 40,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FF6B6B',
+  },
+  cancelSearchText: {
+    color: '#FF6B6B',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  matchFoundTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#4ECDC4',
+    marginTop: 16,
+  },
+  matchFoundSubtitle: {
+    fontSize: 16,
+    color: '#888',
+    marginTop: 8,
   },
 });

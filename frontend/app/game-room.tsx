@@ -68,6 +68,8 @@ export default function GameRoomScreen() {
   const [showResultModal, setShowResultModal] = useState(false);
   const [myFinalScore, setMyFinalScore] = useState(0);
   const [opponentFinalScore, setOpponentFinalScore] = useState(0);
+  const [earnedCoins, setEarnedCoins] = useState(0);
+  const [earnedXP, setEarnedXP] = useState(0);
 
   const [draggingBlock, setDraggingBlock] = useState<Block | null>(null);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
@@ -181,6 +183,17 @@ export default function GameRoomScreen() {
       setWinner(data.winner_id);
       setWinnerName(data.winner_name);
       setMyFinalScore(score);
+      
+      // Set rewards from server
+      if (data.rewards && data.rewards[myPlayerId]) {
+        setEarnedCoins(data.rewards[myPlayerId].coins || 0);
+        setEarnedXP(data.rewards[myPlayerId].xp || 0);
+      } else {
+        // Fallback rewards
+        const isWinner = data.winner_id === myPlayerId;
+        setEarnedCoins(isWinner ? 100 : 25);
+        setEarnedXP(isWinner ? 50 : 15);
+      }
       
       const opponent = data.players?.find((p: Player) => p.id !== myPlayerId);
       if (opponent) {
@@ -592,6 +605,23 @@ export default function GameRoomScreen() {
               </View>
             </View>
 
+            {/* Rewards Section */}
+            <View style={styles.rewardsSection}>
+              <Text style={styles.rewardsTitle}>Kazandıkların</Text>
+              <View style={styles.rewardsRow}>
+                <View style={styles.rewardItem}>
+                  <Ionicons name="logo-bitcoin" size={24} color="#FFD700" />
+                  <Text style={styles.rewardValue}>+{earnedCoins}</Text>
+                  <Text style={styles.rewardLabel}>Coin</Text>
+                </View>
+                <View style={styles.rewardItem}>
+                  <Ionicons name="star" size={24} color="#4ECDC4" />
+                  <Text style={styles.rewardValue}>+{earnedXP}</Text>
+                  <Text style={styles.rewardLabel}>XP</Text>
+                </View>
+              </View>
+            </View>
+
             <TouchableOpacity style={styles.resultButton} onPress={handlePlayAgain}>
               <Ionicons name="arrow-back" size={24} color="#fff" />
               <Text style={styles.resultButtonText}>Lobiye Dön</Text>
@@ -882,7 +912,7 @@ const styles = StyleSheet.create({
   resultScores: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: 16,
   },
   resultScoreItem: {
     alignItems: 'center',
@@ -905,6 +935,36 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#444',
     marginHorizontal: 16,
+  },
+  rewardsSection: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 12,
+    width: '100%',
+  },
+  rewardsTitle: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  rewardsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  rewardItem: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  rewardValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  rewardLabel: {
+    fontSize: 11,
+    color: '#666',
   },
   resultButton: {
     flexDirection: 'row',
