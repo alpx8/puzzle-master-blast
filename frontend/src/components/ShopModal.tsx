@@ -56,23 +56,58 @@ interface ShopModalProps {
 
 export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
   const [activeTab, setActiveTab] = useState<TabType>('coins');
-  const [isPurchasing, setIsPurchasing] = useState(false);
   const [isWatchingAd, setIsWatchingAd] = useState(false);
   const [lastReward, setLastReward] = useState<{ type: string; amount: number } | null>(null);
   const [showRewardAnimation, setShowRewardAnimation] = useState(false);
+  const [showVIPSuccess, setShowVIPSuccess] = useState(false);
   const rewardScale = useState(new Animated.Value(0))[0];
+  const vipSuccessScale = useState(new Animated.Value(0))[0];
   
   const { totalCoins, addCoins } = useDailyRewardsStore();
   const { skins, backgrounds, activeSkin, activeBackground, setSkin, setBackground } = useSkinsStore();
   const { powerUps, addPowerUp } = usePowerUpsStore();
   const { ownedThemes, ownedBackgrounds, purchaseTheme, purchaseBackground } = useInventoryStore();
-  const { isVIP, price: vipPrice, purchaseVIP, subscriptionEndDate, loadVIPStatus } = useVIPStore();
+  const { 
+    isVIP, 
+    price: vipPrice, 
+    purchaseVIP, 
+    restorePurchases,
+    subscriptionEndDate, 
+    loadVIPStatus,
+    iapStatus,
+    initializeIAP
+  } = useVIPStore();
 
   useEffect(() => {
     if (visible) {
       loadVIPStatus();
+      initializeIAP();
     }
   }, [visible]);
+
+  // VIP durumu değiştiğinde başarı animasyonu göster
+  useEffect(() => {
+    if (iapStatus === 'success' && isVIP && !showVIPSuccess) {
+      setShowVIPSuccess(true);
+      Animated.spring(vipSuccessScale, {
+        toValue: 1,
+        friction: 6,
+        tension: 50,
+        useNativeDriver: true,
+      }).start();
+      
+      // 3 saniye sonra kapat
+      setTimeout(() => {
+        Animated.timing(vipSuccessScale, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }).start(() => {
+          setShowVIPSuccess(false);
+        });
+      }, 3000);
+    }
+  }, [iapStatus, isVIP]);
 
   // Rastgele ödül seç
   const getRandomReward = () => {
@@ -122,12 +157,10 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
     setIsWatchingAd(true);
     
     if (Platform.OS === 'web') {
-      // Web simülasyonu
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       const reward = getRandomReward();
       
-      // Ödülü ver
       if (reward.type === 'coins') {
         addCoins(reward.amount);
       } else {
@@ -145,7 +178,6 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
       
       Alert.alert('Tebrikler!', `${rewardName} kazandın!`);
     } else {
-      // Native'de gerçek reklam
       try {
         const adUnitId = getAdUnitId('REWARDED');
         console.log('[Shop] Showing rewarded ad:', adUnitId);
@@ -167,23 +199,15 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
     }
   };
 
-  // VIP satın al
+  // VIP satın al - Google Play'e bağlan
   const handleBuyVIP = async () => {
-    setIsPurchasing(true);
-    
     const success = await purchaseVIP();
-    
-    setIsPurchasing(false);
-    
-    if (success) {
-      Alert.alert(
-        'Hoş Geldiniz VIP!',
-        'Artık reklamsız oynayabilirsiniz! Aboneliğiniz 30 gün geçerlidir.',
-        [{ text: 'Harika!' }]
-      );
-    } else {
-      Alert.alert('Hata', 'Satın alma tamamlanamadı.');
-    }
+    // Başarı durumu useEffect ile takip ediliyor
+  };
+
+  // Satın alımları geri yükle
+  const handleRestorePurchases = async () => {
+    await restorePurchases();
   };
 
   // Use skins as themes - with safe fallback
@@ -202,13 +226,13 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
   const handleBuyCoin = async (packageItem: typeof COIN_PACKAGES[0]) => {
     if (Platform.OS === 'web') {
       Alert.alert(
-        'Simülasyon',
-        `Bu satın alma simüle edildi.\n+${packageItem.coins + packageItem.bonus} coin eklendi!`,
+        'Bilgi',
+        'Coin satın alma sadece Android uygulamasında çalışır.',
         [{ text: 'Tamam' }]
       );
-      addCoins(packageItem.coins + packageItem.bonus);
     } else {
-      Alert.alert('Bilgi', 'Gerçek satın alma sadece cihazda çalışır.');
+      // Gerçek IAP burada çalışacak
+      Alert.alert('Bilgi', 'Google Play ödeme ekranı açılacak...');
     }
   };
 
@@ -284,18 +308,18 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
       {/* VIP Banner */}
       <View style={styles.vipBanner}>
         <View style={styles.vipCrown}>
-          <Ionicons name="crown" size={40} color="#FFD700" />
+          <Ionicons name="star" size={40} color="#FFD700" />
         </View>
         <Text style={styles.vipTitle}>VIP Üyelik</Text>
         <Text style={styles.vipSubtitle}>Reklamsız oyun deneyimi!</Text>
       </View>
       
-      {/* VIP Status */}
-      {isVIP ? (
+      {/* VIP Status - Sadece aktif VIP için göster */}
+      {isVIP && (
         <View style={styles.vipActiveCard}>
           <View style={styles.vipActiveHeader}>
-            <Ionicons name="checkmark-circle" size={28} color="#4ECDC4" />
-            <Text style={styles.vipActiveTitle}>VIP Üyesiniz!</Text>
+            <Ionicons name="star" size={24} color="#FFD700" />
+            <Text style={styles.vipActiveTitle}>VIP Üyesi</Text>
           </View>
           <Text style={styles.vipActiveDesc}>
             Tüm reklamlar kaldırıldı. Keyifli oyunlar!
@@ -306,7 +330,10 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
             </Text>
           )}
         </View>
-      ) : (
+      )}
+      
+      {/* VIP değilse satın alma seçenekleri göster */}
+      {!isVIP && (
         <>
           {/* VIP Features */}
           <View style={styles.vipFeatures}>
@@ -333,8 +360,8 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
             </View>
             
             <View style={styles.featureItem}>
-              <View style={[styles.featureIcon, { backgroundColor: 'rgba(168, 85, 247, 0.2)' }]}>
-                <Ionicons name="star" size={24} color="#A855F7" />
+              <View style={[styles.featureIcon, { backgroundColor: 'rgba(255, 215, 0, 0.2)' }]}>
+                <Ionicons name="star" size={24} color="#FFD700" />
               </View>
               <View style={styles.featureInfo}>
                 <Text style={styles.featureName}>VIP Rozeti</Text>
@@ -343,17 +370,20 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
             </View>
           </View>
           
-          {/* Purchase Button */}
+          {/* Purchase Button - Google Play'e bağlanır */}
           <TouchableOpacity 
-            style={styles.vipPurchaseBtn}
+            style={[styles.vipPurchaseBtn, iapStatus === 'purchasing' && styles.vipPurchaseBtnDisabled]}
             onPress={handleBuyVIP}
-            disabled={isPurchasing}
+            disabled={iapStatus === 'purchasing'}
           >
-            {isPurchasing ? (
-              <ActivityIndicator size="small" color="#1a1a2e" />
+            {iapStatus === 'purchasing' ? (
+              <>
+                <ActivityIndicator size="small" color="#1a1a2e" />
+                <Text style={styles.vipPurchaseText}>İşleniyor...</Text>
+              </>
             ) : (
               <>
-                <Ionicons name="crown" size={24} color="#1a1a2e" />
+                <Ionicons name="star" size={24} color="#1a1a2e" />
                 <View style={styles.vipPurchaseInfo}>
                   <Text style={styles.vipPurchaseText}>VIP Ol</Text>
                   <Text style={styles.vipPurchasePrice}>{vipPrice}</Text>
@@ -362,8 +392,22 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
             )}
           </TouchableOpacity>
           
+          {/* Restore Purchases Button */}
+          <TouchableOpacity 
+            style={styles.restoreBtn}
+            onPress={handleRestorePurchases}
+            disabled={iapStatus === 'loading'}
+          >
+            {iapStatus === 'loading' ? (
+              <ActivityIndicator size="small" color="#888" />
+            ) : (
+              <Text style={styles.restoreBtnText}>Satın Alımları Geri Yükle</Text>
+            )}
+          </TouchableOpacity>
+          
           <Text style={styles.vipNote}>
-            * Aylık abonelik. İstediğiniz zaman iptal edebilirsiniz.
+            * Aylık abonelik. Google Play üzerinden yönetilir.{'\n'}
+            İstediğiniz zaman iptal edebilirsiniz.
           </Text>
         </>
       )}
@@ -621,9 +665,9 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
             <Ionicons name="logo-bitcoin" size={24} color="#FFD700" />
             <Text style={styles.balanceText}>{totalCoins.toLocaleString()}</Text>
             <Text style={styles.balanceLabel}>Coin</Text>
-            {isVIP && (
+          {isVIP && (
               <View style={styles.vipBadge}>
-                <Ionicons name="crown" size={12} color="#FFD700" />
+                <Ionicons name="star" size={12} color="#FFD700" />
                 <Text style={styles.vipBadgeText}>VIP</Text>
               </View>
             )}
@@ -659,7 +703,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
               style={[styles.tab, activeTab === 'vip' && styles.activeTab, styles.vipTab]}
               onPress={() => setActiveTab('vip')}
             >
-              <Ionicons name="crown" size={16} color={activeTab === 'vip' ? '#FFD700' : '#888'} />
+              <Ionicons name="star" size={14} color={activeTab === 'vip' ? '#FFD700' : '#888'} />
               <Text style={[styles.tabText, activeTab === 'vip' && styles.activeTabText]}>VIP</Text>
             </TouchableOpacity>
           </View>
@@ -676,6 +720,18 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
               <View style={[styles.rewardBox, { backgroundColor: getRewardColor(lastReward.type) }]}>
                 <Ionicons name={getRewardIcon(lastReward.type) as any} size={48} color="#fff" />
                 <Text style={styles.rewardAmount}>+{lastReward.amount}</Text>
+              </View>
+            </Animated.View>
+          )}
+          
+          {/* VIP Success Animation Overlay */}
+          {showVIPSuccess && (
+            <Animated.View style={[styles.vipSuccessOverlay, { transform: [{ scale: vipSuccessScale }] }]}>
+              <View style={styles.vipSuccessBox}>
+                <Ionicons name="star" size={64} color="#FFD700" />
+                <Text style={styles.vipSuccessTitle}>Tebrikler!</Text>
+                <Text style={styles.vipSuccessSubtitle}>VIP Üye Oldunuz!</Text>
+                <Text style={styles.vipSuccessDesc}>Artık reklamsız oynayabilirsiniz!</Text>
               </View>
             </Animated.View>
           )}
@@ -748,6 +804,9 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     gap: 4,
   },
+  vipBadgeEmoji: {
+    fontSize: 12,
+  },
   vipBadgeText: {
     fontSize: 10,
     fontWeight: 'bold',
@@ -784,6 +843,9 @@ const styles = StyleSheet.create({
   activeTabText: {
     color: '#fff',
   },
+  tabCrownEmoji: {
+    fontSize: 14,
+  },
   tabContent: {
     flex: 1,
     paddingHorizontal: 20,
@@ -813,6 +875,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  crownEmoji: {
+    fontSize: 40,
+  },
   vipTitle: {
     fontSize: 26,
     fontWeight: '900',
@@ -837,6 +902,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     marginBottom: 8,
+  },
+  vipActiveCrown: {
+    fontSize: 24,
   },
   vipActiveTitle: {
     fontSize: 18,
@@ -870,6 +938,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  featureEmoji: {
+    fontSize: 24,
+  },
   featureInfo: {
     flex: 1,
     marginLeft: 12,
@@ -893,6 +964,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     gap: 12,
   },
+  vipPurchaseBtnDisabled: {
+    opacity: 0.7,
+  },
+  vipPurchaseCrown: {
+    fontSize: 24,
+  },
   vipPurchaseInfo: {
     alignItems: 'center',
   },
@@ -906,11 +983,22 @@ const styles = StyleSheet.create({
     color: '#1a1a2e',
     opacity: 0.8,
   },
+  restoreBtn: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  restoreBtnText: {
+    fontSize: 14,
+    color: '#4ECDC4',
+    textDecorationLine: 'underline',
+  },
   vipNote: {
     fontSize: 11,
     color: '#666',
     textAlign: 'center',
     marginTop: 12,
+    lineHeight: 16,
   },
   // Coin Packages
   coinPackage: {
@@ -1198,6 +1286,47 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
     marginTop: 8,
+  },
+  // VIP Success Animation
+  vipSuccessOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+  },
+  vipSuccessBox: {
+    backgroundColor: '#1a1a3e',
+    borderRadius: 24,
+    padding: 32,
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#FFD700',
+    width: SCREEN_WIDTH * 0.8,
+  },
+  vipSuccessCrown: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  vipSuccessTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#FFD700',
+    marginBottom: 8,
+  },
+  vipSuccessSubtitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  vipSuccessDesc: {
+    fontSize: 14,
+    color: '#4ECDC4',
+    textAlign: 'center',
   },
 });
 

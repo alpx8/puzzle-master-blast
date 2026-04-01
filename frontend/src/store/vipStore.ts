@@ -1,7 +1,10 @@
-// VIP Subscription Store - Abonelik yönetimi
+// VIP Subscription Store - Google Play IAP Entegrasyonu
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+import { Platform, Alert } from 'react-native';
+
+// IAP durumu
+export type IAPStatus = 'idle' | 'loading' | 'purchasing' | 'success' | 'error';
 
 export interface VIPState {
   isVIP: boolean;
@@ -10,23 +13,43 @@ export interface VIPState {
   autoRenew: boolean;
   price: string;
   productId: string;
-  hasUsedTrial: boolean; // 1 günlük deneme kullanıldı mı
+  hasUsedTrial: boolean;
   trialEndDate: string | null;
+  iapStatus: IAPStatus;
+  iapError: string | null;
   
   // Actions
   loadVIPStatus: () => Promise<void>;
   saveVIPStatus: () => Promise<void>;
+  initializeIAP: () => Promise<void>;
   purchaseVIP: () => Promise<boolean>;
+  restorePurchases: () => Promise<boolean>;
   cancelVIP: () => Promise<void>;
   checkSubscriptionExpiry: () => Promise<boolean>;
   setVIPStatus: (isVIP: boolean, endDate?: string) => void;
-  activateTrialVIP: () => Promise<boolean>; // 1 günlük deneme aktive et
-  canActivateTrial: () => boolean; // Deneme kullanılabilir mi
+  activateTrialVIP: () => Promise<boolean>;
+  canActivateTrial: () => boolean;
+  setIAPStatus: (status: IAPStatus, error?: string) => void;
 }
 
 const VIP_PRODUCT_ID = 'vip_monthly';
 const VIP_PRICE = '₺149.99/ay';
 const SUBSCRIPTION_DAYS = 30;
+
+// IAP modülünü dinamik olarak yükle (web'de hata vermemesi için)
+let RNIap: any = null;
+
+const loadIAPModule = async () => {
+  if (Platform.OS !== 'web' && !RNIap) {
+    try {
+      RNIap = await import('react-native-iap');
+      console.log('[VIP] IAP module loaded');
+    } catch (e) {
+      console.log('[VIP] IAP module not available:', e);
+    }
+  }
+  return RNIap;
+};
 
 export const useVIPStore = create<VIPState>((set, get) => ({
   isVIP: false,
@@ -37,6 +60,12 @@ export const useVIPStore = create<VIPState>((set, get) => ({
   productId: VIP_PRODUCT_ID,
   hasUsedTrial: false,
   trialEndDate: null,
+  iapStatus: 'idle',
+  iapError: null,
+  
+  setIAPStatus: (status: IAPStatus, error?: string) => {
+    set({ iapStatus: status, iapError: error || null });
+  },
   
   loadVIPStatus: async () => {
     try {
@@ -52,7 +81,6 @@ export const useVIPStore = create<VIPState>((set, get) => ({
           trialEndDate: parsed.trialEndDate || null,
         });
         
-        // Abonelik süresi dolmuş mu kontrol et
         await get().checkSubscriptionExpiry();
       }
     } catch (error) {
@@ -76,45 +104,165 @@ export const useVIPStore = create<VIPState>((set, get) => ({
     }
   },
   
-  purchaseVIP: async () => {
-    // Web'de simülasyon
+  // IAP başlatma
+  initializeIAP: async () => {
     if (Platform.OS === 'web') {
-      console.log('[VIP] Web simulation - purchasing VIP subscription');
-      
-      const startDate = new Date();
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + SUBSCRIPTION_DAYS);
-      
-      set({
-        isVIP: true,
-        subscriptionStartDate: startDate.toISOString(),
-        subscriptionEndDate: endDate.toISOString(),
-        autoRenew: true,
-      });
-      
-      await get().saveVIPStatus();
-      return true;
+      console.log('[VIP] IAP not available on web');
+      return;
     }
     
-    // Native'de gerçek IAP (Google Play Subscriptions)
+    const iap = await loadIAPModule();
+    if (!iap) return;
+    
     try {
-      // react-native-iap subscription satın alma
-      // Bu kısım gerçek cihazda çalışacak
-      const startDate = new Date();
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + SUBSCRIPTION_DAYS);
+      set({ iapStatus: 'loading' });
       
-      set({
-        isVIP: true,
-        subscriptionStartDate: startDate.toISOString(),
-        subscriptionEndDate: endDate.toISOString(),
-        autoRenew: true,
+      // IAP bağlantısını başlat
+      await iap.initConnection();
+      console.log('[VIP] IAP connection initialized');
+      
+      // Abonelik ürünlerini yükle
+      const subscriptions = await iap.getSubscriptions({ skus: [VIP_PRODUCT_ID] });
+      console.log('[VIP] Available subscriptions:', subscriptions);
+      
+      // Satın alma dinleyicisini kur
+      iap.purchaseUpdatedListener(async (purchase: any) => {
+        console.log('[VIP] Purchase updated:', purchase);
+        
+        if (purchase.transactionReceipt) {
+          // Satın alma başarılı - VIP'i aktive et
+          const startDate = new Date();
+          const endDate = new Date();
+          endDate.setDate(endDate.getDate() + SUBSCRIPTION_DAYS);
+          
+          set({
+            isVIP: true,
+            subscriptionStartDate: startDate.toISOString(),
+            subscriptionEndDate: endDate.toISOString(),
+            autoRenew: true,
+            iapStatus: 'success',
+          });
+          
+          await get().saveVIPStatus();
+          
+          // Satın almayı onayla
+          await iap.finishTransaction({ purchase, isConsumable: false });
+        }
       });
       
-      await get().saveVIPStatus();
+      iap.purchaseErrorListener((error: any) => {
+        console.error('[VIP] Purchase error:', error);
+        set({ iapStatus: 'error', iapError: error.message });
+      });
+      
+      set({ iapStatus: 'idle' });
+    } catch (error: any) {
+      console.error('[VIP] IAP init error:', error);
+      set({ iapStatus: 'error', iapError: error.message });
+    }
+  },
+  
+  purchaseVIP: async () => {
+    const { iapStatus } = get();
+    
+    // Zaten satın alma işleminde
+    if (iapStatus === 'purchasing') {
+      return false;
+    }
+    
+    // Web'de satın alma yapılamaz - bilgilendirme göster
+    if (Platform.OS === 'web') {
+      console.log('[VIP] Web platform - cannot process real purchase');
+      Alert.alert(
+        'Bilgi',
+        'VIP abonelik satın alma sadece Android uygulamasında çalışır.\n\nGoogle Play Store\'dan indirdiğiniz uygulamada bu özelliği kullanabilirsiniz.',
+        [{ text: 'Tamam' }]
+      );
+      return false;
+    }
+    
+    // Native'de gerçek IAP
+    const iap = await loadIAPModule();
+    if (!iap) {
+      Alert.alert('Hata', 'Ödeme sistemi yüklenemedi. Lütfen tekrar deneyin.');
+      return false;
+    }
+    
+    try {
+      set({ iapStatus: 'purchasing' });
+      
+      // Google Play abonelik satın alma ekranını aç
+      await iap.requestSubscription({
+        sku: VIP_PRODUCT_ID,
+        andDangerouslyFinishTransactionAutomaticallyIOS: false,
+      });
+      
+      // Satın alma başlatıldı - listener'dan sonuç gelecek
+      // purchaseUpdatedListener içinde VIP aktive edilecek
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('[VIP] Purchase error:', error);
+      
+      let errorMessage = 'Satın alma işlemi başarısız oldu.';
+      
+      if (error.code === 'E_USER_CANCELLED') {
+        errorMessage = 'Satın alma iptal edildi.';
+      } else if (error.code === 'E_ITEM_UNAVAILABLE') {
+        errorMessage = 'Bu ürün şu anda mevcut değil.';
+      } else if (error.code === 'E_NETWORK_ERROR') {
+        errorMessage = 'İnternet bağlantınızı kontrol edin.';
+      }
+      
+      set({ iapStatus: 'error', iapError: errorMessage });
+      Alert.alert('Hata', errorMessage);
+      return false;
+    }
+  },
+  
+  // Satın alımları geri yükle
+  restorePurchases: async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert('Bilgi', 'Geri yükleme sadece Android uygulamasında çalışır.');
+      return false;
+    }
+    
+    const iap = await loadIAPModule();
+    if (!iap) return false;
+    
+    try {
+      set({ iapStatus: 'loading' });
+      
+      const purchases = await iap.getAvailablePurchases();
+      console.log('[VIP] Available purchases:', purchases);
+      
+      // VIP aboneliği bul
+      const vipPurchase = purchases.find((p: any) => p.productId === VIP_PRODUCT_ID);
+      
+      if (vipPurchase) {
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + SUBSCRIPTION_DAYS);
+        
+        set({
+          isVIP: true,
+          subscriptionStartDate: startDate.toISOString(),
+          subscriptionEndDate: endDate.toISOString(),
+          autoRenew: true,
+          iapStatus: 'success',
+        });
+        
+        await get().saveVIPStatus();
+        Alert.alert('Başarılı', 'VIP üyeliğiniz geri yüklendi!');
+        return true;
+      } else {
+        set({ iapStatus: 'idle' });
+        Alert.alert('Bilgi', 'Geri yüklenecek VIP üyelik bulunamadı.');
+        return false;
+      }
+    } catch (error: any) {
+      console.error('[VIP] Restore error:', error);
+      set({ iapStatus: 'error', iapError: error.message });
+      Alert.alert('Hata', 'Geri yükleme başarısız oldu.');
       return false;
     }
   },
@@ -122,6 +270,15 @@ export const useVIPStore = create<VIPState>((set, get) => ({
   cancelVIP: async () => {
     set({ autoRenew: false });
     await get().saveVIPStatus();
+    
+    // Google Play'de abonelik iptali için kullanıcıyı yönlendir
+    if (Platform.OS !== 'web') {
+      Alert.alert(
+        'Abonelik İptali',
+        'Aboneliğinizi iptal etmek için Google Play Store > Abonelikler bölümüne gidin.',
+        [{ text: 'Tamam' }]
+      );
+    }
   },
   
   checkSubscriptionExpiry: async () => {
@@ -133,22 +290,12 @@ export const useVIPStore = create<VIPState>((set, get) => ({
     const now = new Date();
     
     if (now > endDate) {
-      // Abonelik süresi dolmuş
       if (autoRenew) {
-        // Otomatik yenileme simülasyonu (gerçekte Google Play yapar)
-        console.log('[VIP] Auto-renewing subscription');
-        
-        const newEndDate = new Date();
-        newEndDate.setDate(newEndDate.getDate() + SUBSCRIPTION_DAYS);
-        
-        set({
-          subscriptionEndDate: newEndDate.toISOString(),
-        });
-        
-        await get().saveVIPStatus();
+        // Google Play otomatik yenileme yapacak
+        // Burada sadece lokal kontrolü yapıyoruz
+        console.log('[VIP] Subscription may need renewal - Google Play will handle');
         return true;
       } else {
-        // Abonelik iptal edilmiş, VIP'i kaldır
         console.log('[VIP] Subscription expired, removing VIP status');
         
         set({
@@ -172,6 +319,7 @@ export const useVIPStore = create<VIPState>((set, get) => ({
         subscriptionStartDate: new Date().toISOString(),
         subscriptionEndDate: endDate,
         autoRenew: true,
+        iapStatus: 'success',
       });
     } else {
       set({
@@ -179,25 +327,23 @@ export const useVIPStore = create<VIPState>((set, get) => ({
         subscriptionStartDate: null,
         subscriptionEndDate: null,
         autoRenew: false,
+        iapStatus: 'idle',
       });
     }
     get().saveVIPStatus();
   },
   
-  // 7 günlük streak tamamlandığında 1 günlük VIP deneme aktive et
   activateTrialVIP: async () => {
     const { hasUsedTrial, isVIP } = get();
     
-    // Zaten VIP veya deneme kullanılmış
     if (isVIP || hasUsedTrial) {
       console.log('[VIP] Trial not available - already VIP or trial used');
       return false;
     }
     
-    // 1 günlük deneme aktive et
     const startDate = new Date();
     const endDate = new Date();
-    endDate.setDate(endDate.getDate() + 1); // 1 gün
+    endDate.setDate(endDate.getDate() + 1);
     
     set({
       isVIP: true,
@@ -205,7 +351,8 @@ export const useVIPStore = create<VIPState>((set, get) => ({
       subscriptionEndDate: endDate.toISOString(),
       trialEndDate: endDate.toISOString(),
       hasUsedTrial: true,
-      autoRenew: false, // Deneme için otomatik yenileme yok
+      autoRenew: false,
+      iapStatus: 'success',
     });
     
     await get().saveVIPStatus();
@@ -213,7 +360,6 @@ export const useVIPStore = create<VIPState>((set, get) => ({
     return true;
   },
   
-  // Deneme kullanılabilir mi kontrol et
   canActivateTrial: () => {
     const { hasUsedTrial, isVIP } = get();
     return !hasUsedTrial && !isVIP;

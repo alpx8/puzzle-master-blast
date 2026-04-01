@@ -1,230 +1,176 @@
-# 🚀 Android AAB Build Rehberi - Adım Adım
+# 🚀 PUZZLE MASTER BLAST - AAB BUILD REHBERİ
 
-Bu rehber, Puzzle Master Blast uygulamasını Google Play Store'a yüklemek için AAB (Android App Bundle) dosyası oluşturmanıza yardımcı olacaktır.
-
----
-
-## 📋 Ön Gereksinimler
-
-1. **Node.js** (v18 veya üzeri)
-2. **npm** veya **yarn**
-3. **Expo hesabı** (expo.dev'de ücretsiz oluşturabilirsiniz)
-4. **EAS CLI** yüklü olmalı
+## Adım Adım Google Play Store'a Yükleme
 
 ---
 
-## 🔧 Adım 1: Projeyi İndirme
+## 📥 ADIM 1: Projeyi İndir
 
-1. Emergent platformunda sağ üstteki **"Download Project"** butonuna tıklayın
-2. ZIP dosyasını indirin
-3. ZIP'i çıkarın: `C:\Projects\puzzle-master-blast` (OneDrive dışında bir klasöre!)
+1. Emergent platformunda sağ üstteki **"Download Project"** butonuna tıkla
+2. ZIP dosyasını bilgisayarına indir
+3. ZIP'i çıkar → `C:\Projects\puzzle-master-blast` (OneDrive klasörü OLMAMALI!)
 
 ---
 
-## 🔧 Adım 2: Terminal Açma ve Klasöre Gitme
+## 💻 ADIM 2: Node.js Kur (Eğer Yoksa)
 
-Windows PowerShell veya Command Prompt açın:
+1. https://nodejs.org adresine git
+2. **LTS** versiyonunu indir ve kur
+3. Kurulumu kontrol et:
+```powershell
+node --version
+npm --version
+```
 
-```bash
+---
+
+## 📂 ADIM 3: Doğru Klasöre Git
+
+PowerShell veya Command Prompt aç:
+
+```powershell
 cd C:\Projects\puzzle-master-blast\frontend
 ```
 
-**ÖNEMLİ:** `frontend` klasörünün içinde olduğunuzdan emin olun! `package.json` bu klasörde olmalı.
-
-Kontrol etmek için:
-```bash
+**ÖNEMLİ:** `package.json` dosyasının bu klasörde olduğundan emin ol:
+```powershell
 dir package.json
 ```
-Bu komut `package.json` dosyasını göstermelidir.
 
 ---
 
-## 🔧 Adım 3: Bağımlılıkları Yükleme
+## 📦 ADIM 4: Bağımlılıkları Yükle
 
-```bash
+```powershell
 npm install
 ```
 
-Veya yarn tercih ederseniz:
-```bash
-yarn install
-```
+Bu işlem 2-5 dakika sürebilir. Tamamlanana kadar bekle.
 
 ---
 
-## 🔧 Adım 4: EAS CLI Kurulumu
+## 🔧 ADIM 5: EAS CLI Kur
 
-```bash
+```powershell
 npm install -g eas-cli
 ```
 
 ---
 
-## 🔧 Adım 5: Expo'ya Giriş
+## 🔐 ADIM 6: Expo'ya Giriş Yap
 
-```bash
+```powershell
 npx eas login
 ```
 
-Expo hesap bilgilerinizi girin (veya yeni hesap oluşturun).
+- Expo hesabın yoksa: https://expo.dev adresinden ücretsiz oluştur
+- Email ve şifreni gir
 
 ---
 
-## 🔧 Adım 6: Proje Yapılandırması Kontrolü
+## 🚀 ADIM 7: Build Başlat
 
-`app.json` dosyasının doğru ayarlandığından emin olun:
-
-```json
-{
-  "expo": {
-    "name": "Puzzle Master Blast",
-    "slug": "puzzle-master-blast",
-    "version": "1.2.0",
-    "android": {
-      "package": "com.puzzlemaster.blastgame",
-      "versionCode": 3,
-      "permissions": [
-        "INTERNET",
-        "com.android.vending.BILLING"
-      ]
-    }
-  }
-}
-```
-
-`eas.json` dosyası:
-```json
-{
-  "cli": {
-    "version": ">= 3.0.0"
-  },
-  "build": {
-    "production": {
-      "android": {
-        "buildType": "app-bundle"
-      }
-    }
-  },
-  "submit": {
-    "production": {
-      "android": {
-        "serviceAccountKeyPath": "./play-store-key.json",
-        "track": "internal"
-      }
-    }
-  }
-}
-```
-
----
-
-## 🔧 Adım 7: EAS Projesini Başlatma (İlk kez)
-
-```bash
-npx eas init
-```
-
-veya
-
-```bash
-npx eas build:configure
-```
-
-Bu komut projenizi Expo sunucularına bağlar.
-
----
-
-## 🔧 Adım 8: AAB Build Başlatma
-
-```bash
+```powershell
 npx eas build --platform android --profile production
 ```
 
-**Build Süreci:**
-1. Expo sunucularına kodunuz yüklenir
-2. Bulutta build işlemi başlar (5-15 dakika sürebilir)
-3. Build tamamlandığında indirme linki verilir
+**İlk seferinde sorular soracak:**
+- "Would you like to automatically create an EAS project?" → **Yes**
+- "Generate a new Android Keystore?" → **Yes**
+
+Build süreci 10-20 dakika sürer (Expo sunucularında yapılır).
 
 ---
 
-## 🔧 Adım 9: AAB Dosyasını İndirme
+## 📲 ADIM 8: AAB Dosyasını İndir
 
-Build tamamlandığında terminalde bir link görünür:
-
+Build bittiğinde terminalde bir link görünecek:
 ```
 ✔ Build finished
 🔗 https://expo.dev/accounts/YOUR_ACCOUNT/projects/puzzle-master-blast/builds/XXXX
 ```
 
-1. Bu linke tıklayın
-2. Expo dashboard'da **"Download"** butonuna tıklayın
+1. Bu linke tıkla
+2. Expo sayfasında **"Download"** butonuna tıkla
 3. `.aab` dosyası indirilecek
 
 ---
 
-## 📱 Adım 10: Google Play Console'a Yükleme
+## 📱 ADIM 9: Google Play Console'a Yükle
 
-1. [Google Play Console](https://play.google.com/console) açın
-2. Uygulamanıza gidin
-3. **"Sürüm"** > **"Üretim"** (veya dahili test)
-4. **"Yeni sürüm oluştur"** tıklayın
-5. AAB dosyasını sürükleyip bırakın
-6. Sürüm notlarını yazın
-7. **"İncele ve yayınla"** tıklayın
+1. https://play.google.com/console adresine git
+2. Uygulamanı seç (veya yeni oluştur)
+3. Sol menüden: **"Sürüm"** → **"Üretim"** (veya "Dahili test")
+4. **"Yeni sürüm oluştur"** butonuna tıkla
+5. AAB dosyasını sürükle ve bırak
+6. Sürüm notlarını yaz (örn: "VIP üyelik ve yeni özellikler eklendi")
+7. **"İncele ve yayınla"** butonuna tıkla
 
 ---
 
-## ⚠️ Sık Karşılaşılan Hatalar ve Çözümleri
+## 💰 ADIM 10: IAP Ürünlerini Tanımla
 
-### Hata: "ENOENT: no such file or directory, open 'package.json'"
-**Çözüm:** Yanlış klasördesiniz. `cd frontend` komutuyla frontend klasörüne gidin.
+Google Play Console'da:
 
-### Hata: "Git not found"
-**Çözüm:** Git yükleyin veya şu komutu kullanın:
-```bash
-$env:EAS_NO_VCS=1; npx eas build --platform android
+### Uygulama İçi Ürünler (Coin Paketleri)
+**Sol menü → Para kazanma → Ürünler → Uygulama içi ürünler**
+
+| Ürün ID | İsim | Fiyat |
+|---------|------|-------|
+| coins_500 | 500 Coin | ₺19.99 |
+| coins_1200 | 1000+200 Coin | ₺39.99 |
+| coins_3000 | 2000+1000 Coin | ₺79.99 |
+| coins_8000 | 4000+4000 Coin | ₺149.99 |
+
+### Abonelikler (VIP)
+**Sol menü → Para kazanma → Abonelikler**
+
+| Abonelik ID | İsim | Fiyat |
+|-------------|------|-------|
+| vip_monthly | VIP Aylık | ₺149.99/ay |
+
+---
+
+## ⚠️ SIK KARŞILAŞILAN HATALAR
+
+### "ENOENT: package.json bulunamadı"
+**Çözüm:** Yanlış klasördesin. `cd frontend` komutuyla frontend klasörüne git.
+
+### "Git bulunamadı"
+**Çözüm:** Bu komutu kullan:
+```powershell
+$env:EAS_NO_VCS=1; npx eas build --platform android --profile production
 ```
 
-### Hata: "Error: connect ECONNREFUSED"
-**Çözüm:** İnternet bağlantınızı kontrol edin ve tekrar deneyin.
+### "Version code zaten var"
+**Çözüm:** `app.json` dosyasındaki `android.versionCode` değerini artır.
 
-### Hata: "Version code already exists"
-**Çözüm:** `app.json`'daki `android.versionCode` değerini artırın (örn: 3 → 4).
-
----
-
-## 📝 IAP Ürünlerini Google Play'de Tanımlama
-
-Build sonrası Google Play Console'da:
-
-1. **"Para kazanma"** > **"Ürünler"** > **"Uygulama içi ürünler"**
-2. Şu ürünleri oluşturun:
-   - `coins_500` - ₺19.99
-   - `coins_1200` - ₺39.99
-   - `coins_3000` - ₺79.99
-   - `coins_8000` - ₺149.99
-
-3. **"Abonelikler"** bölümünde:
-   - `vip_monthly` - ₺149.99/ay
+### "Network error"
+**Çözüm:** İnternet bağlantını kontrol et ve tekrar dene.
 
 ---
 
-## ✅ Build Öncesi Kontrol Listesi
+## ✅ KONTROL LİSTESİ
 
+Build öncesi:
 - [ ] Node.js v18+ kurulu
-- [ ] `cd frontend` ile doğru klasörde
+- [ ] `cd frontend` ile doğru klasördesin
 - [ ] `npm install` başarılı
-- [ ] `npx eas login` ile giriş yapıldı
-- [ ] `app.json` ve `eas.json` doğru yapılandırıldı
-- [ ] İnternet bağlantısı aktif
+- [ ] Expo hesabına giriş yapıldı
+
+Build sonrası:
+- [ ] AAB dosyası indirildi
+- [ ] Google Play Console'a yüklendi
+- [ ] IAP ürünleri tanımlandı
 
 ---
 
-## 📞 Yardım
+## 📞 SORUN MU VAR?
 
-Sorun yaşarsanız:
-1. Hata mesajının tamamını kopyalayın
-2. Hangi adımda olduğunuzu belirtin
-3. Terminaldeki çıktıyı paylaşın
+1. Hata mesajının tamamını kopyala
+2. Hangi adımda olduğunu belirt
+3. Terminal çıktısını paylaş
 
-İyi şanslar! 🎮
+---
+
+İyi şanslar! 🎮🚀
