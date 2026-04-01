@@ -10,6 +10,8 @@ export interface VIPState {
   autoRenew: boolean;
   price: string;
   productId: string;
+  hasUsedTrial: boolean; // 1 günlük deneme kullanıldı mı
+  trialEndDate: string | null;
   
   // Actions
   loadVIPStatus: () => Promise<void>;
@@ -18,6 +20,8 @@ export interface VIPState {
   cancelVIP: () => Promise<void>;
   checkSubscriptionExpiry: () => Promise<boolean>;
   setVIPStatus: (isVIP: boolean, endDate?: string) => void;
+  activateTrialVIP: () => Promise<boolean>; // 1 günlük deneme aktive et
+  canActivateTrial: () => boolean; // Deneme kullanılabilir mi
 }
 
 const VIP_PRODUCT_ID = 'vip_monthly';
@@ -31,6 +35,8 @@ export const useVIPStore = create<VIPState>((set, get) => ({
   autoRenew: true,
   price: VIP_PRICE,
   productId: VIP_PRODUCT_ID,
+  hasUsedTrial: false,
+  trialEndDate: null,
   
   loadVIPStatus: async () => {
     try {
@@ -42,6 +48,8 @@ export const useVIPStore = create<VIPState>((set, get) => ({
           subscriptionStartDate: parsed.subscriptionStartDate || null,
           subscriptionEndDate: parsed.subscriptionEndDate || null,
           autoRenew: parsed.autoRenew !== false,
+          hasUsedTrial: parsed.hasUsedTrial || false,
+          trialEndDate: parsed.trialEndDate || null,
         });
         
         // Abonelik süresi dolmuş mu kontrol et
@@ -54,12 +62,14 @@ export const useVIPStore = create<VIPState>((set, get) => ({
   
   saveVIPStatus: async () => {
     try {
-      const { isVIP, subscriptionStartDate, subscriptionEndDate, autoRenew } = get();
+      const { isVIP, subscriptionStartDate, subscriptionEndDate, autoRenew, hasUsedTrial, trialEndDate } = get();
       await AsyncStorage.setItem('vip_subscription', JSON.stringify({
         isVIP,
         subscriptionStartDate,
         subscriptionEndDate,
         autoRenew,
+        hasUsedTrial,
+        trialEndDate,
       }));
     } catch (error) {
       console.error('Failed to save VIP status:', error);
@@ -172,6 +182,41 @@ export const useVIPStore = create<VIPState>((set, get) => ({
       });
     }
     get().saveVIPStatus();
+  },
+  
+  // 7 günlük streak tamamlandığında 1 günlük VIP deneme aktive et
+  activateTrialVIP: async () => {
+    const { hasUsedTrial, isVIP } = get();
+    
+    // Zaten VIP veya deneme kullanılmış
+    if (isVIP || hasUsedTrial) {
+      console.log('[VIP] Trial not available - already VIP or trial used');
+      return false;
+    }
+    
+    // 1 günlük deneme aktive et
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + 1); // 1 gün
+    
+    set({
+      isVIP: true,
+      subscriptionStartDate: startDate.toISOString(),
+      subscriptionEndDate: endDate.toISOString(),
+      trialEndDate: endDate.toISOString(),
+      hasUsedTrial: true,
+      autoRenew: false, // Deneme için otomatik yenileme yok
+    });
+    
+    await get().saveVIPStatus();
+    console.log('[VIP] 1-day trial activated!');
+    return true;
+  },
+  
+  // Deneme kullanılabilir mi kontrol et
+  canActivateTrial: () => {
+    const { hasUsedTrial, isVIP } = get();
+    return !hasUsedTrial && !isVIP;
   },
 }));
 

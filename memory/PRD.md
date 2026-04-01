@@ -15,6 +15,15 @@
 
 ## Tamamlanan Özellikler
 
+### v1.2.1 (1 Nisan 2026) - VIP Deneme & Monetizasyon
+
+**7 Günlük Streak VIP Deneme (YENİ):**
+- ✅ 7 gün üst üste ödül toplayan kullanıcılara özel ekran
+- ✅ Reklam izleyerek 1 günlük VIP deneme kazanma
+- ✅ Crown animasyonu ve konfeti efekti
+- ✅ Deneme hakkı sadece 1 kez kullanılabilir
+- ✅ VIP deneme durumu AsyncStorage'da saklanıyor
+
 ### v1.2.0 (1 Nisan 2026) - Monetizasyon Güncellemesi
 
 **Günlük Ödül Sistemi (Güncellendi):**
