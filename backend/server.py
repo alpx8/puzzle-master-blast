@@ -262,43 +262,76 @@ async def handle_player_disconnect(sid, room_id):
 
 @sio.event
 async def join_room(sid, data):
-    """Player joins a game room"""
+    """Player joins a game room via Socket.IO"""
     room_id = data.get('room_id')
     player_id = data.get('player_id')
     player_name = data.get('player_name')
     
+    logging.info(f"[Socket] Player {player_name} ({player_id}) trying to join room {room_id}")
+    
     room = await db.rooms.find_one({"id": room_id})
     if not room:
+        logging.error(f"[Socket] Room {room_id} not found")
         await sio.emit('error', {'message': 'Room not found'}, to=sid)
         return
     
-    if room['status'] != 'waiting':
-        await sio.emit('error', {'message': 'Game already started'}, to=sid)
+    if room['status'] == 'finished':
+        await sio.emit('error', {'message': 'Game already finished'}, to=sid)
         return
     
     # Join Socket.IO room
     sio.enter_room(sid, room_id)
+    logging.info(f"[Socket] Player {player_id} joined Socket.IO room {room_id}")
     
     # Map sid to player_id
     sid_to_player[sid] = player_id
     
-    # Update player with socket id
-    await db.rooms.update_one(
-        {"id": room_id, "players.id": player_id},
-        {"$set": {"players.$.sid": sid}}
-    )
+    # Check if player is already in room
+    player_in_room = any(p.get('id') == player_id for p in room.get('players', []))
+    
+    if player_in_room:
+        # Update existing player's socket id
+        await db.rooms.update_one(
+            {"id": room_id, "players.id": player_id},
+            {"$set": {"players.$.sid": sid}}
+        )
+        logging.info(f"[Socket] Updated existing player {player_id} socket")
+    else:
+        # Add new player to room
+        new_player = {
+            "id": player_id,
+            "name": player_name,
+            "score": 0,
+            "is_host": False,
+            "can_move": True,
+            "ready": False,
+            "game_over": False,
+            "sid": sid
+        }
+        await db.rooms.update_one(
+            {"id": room_id},
+            {"$push": {"players": new_player}}
+        )
+        logging.info(f"[Socket] Added new player {player_id} to room")
     
     # Get updated room
     room = await db.rooms.find_one({"id": room_id})
     
-    # Notify everyone in room
+    # Notify everyone in room about the update
     await sio.emit('room_update', {
         'room_id': room_id,
         'players': room['players'],
         'status': room['status']
     }, room=room_id)
     
-    logging.info(f"Player {player_name} joined room {room_id}")
+    # Also emit player_joined for UI update
+    await sio.emit('player_joined', {
+        'player_id': player_id,
+        'player_name': player_name,
+        'players': room['players']
+    }, room=room_id)
+    
+    logging.info(f"[Socket] Room {room_id} now has {len(room['players'])} players")
 
 @sio.event
 async def leave_room(sid, data):
@@ -448,18 +481,24 @@ async def join_quick_match(sid, data):
     player_id = data.get('player_id')
     player_name = data.get('player_name')
     
-    logging.info(f"Player {player_name} ({player_id}) joining quick match queue")
+    logging.info(f"[QuickMatch] Player {player_name} ({player_id}) joining queue")
     
     # Map sid to player
     sid_to_player[sid] = player_id
+    
+    # Remove any existing entry for this player
+    if player_id in quick_match_queue:
+        del quick_match_queue[player_id]
     
     # Check if there's already a player waiting
     waiting_players = [p for p in quick_match_queue.values() if p['id'] != player_id]
     
     if waiting_players:
-        # Match found! Create room with the first waiting player
+        # Match found! Get the first waiting player
         opponent = waiting_players[0]
         opponent_id = opponent['id']
+        
+        logging.info(f"[QuickMatch] Match found! {player_name} vs {opponent['name']}")
         
         # Remove both from queue
         if opponent_id in quick_match_queue:
@@ -468,11 +507,14 @@ async def join_quick_match(sid, data):
             del quick_match_queue[player_id]
         
         # Create a new room
+        room_id = str(uuid.uuid4())
         room = Room(
+            id=room_id,
             name=f"Quick Match - {player_name} vs {opponent['name']}",
             host_id=opponent_id,
             host_name=opponent['name'],
             is_private=False,
+            status="playing",  # Start immediately
             players=[
                 {
                     "id": opponent_id,
@@ -500,46 +542,41 @@ async def join_quick_match(sid, data):
         await db.rooms.insert_one(room.dict())
         
         # Join both to Socket.IO room
-        sio.enter_room(sid, room.id)
-        sio.enter_room(opponent['sid'], room.id)
+        sio.enter_room(sid, room_id)
+        sio.enter_room(opponent['sid'], room_id)
         
         # Initialize game state
-        game_states[room.id] = {
+        game_states[room_id] = {
             'started_at': datetime.now(timezone.utc),
             'scores': {opponent_id: 0, player_id: 0},
             'can_move': {opponent_id: True, player_id: True},
             'game_over': {opponent_id: False, player_id: False}
         }
         
-        # Update room status to playing
-        await db.rooms.update_one(
-            {"id": room.id},
-            {"$set": {"status": "playing"}}
-        )
-        
-        # Notify both players
-        match_data = {
-            'room_id': room.id,
-            'players': room.players,
-            'opponent': {
-                'id': opponent_id,
-                'name': opponent['name']
-            }
-        }
-        
+        # Notify opponent first
         await sio.emit('quick_match_found', {
-            **match_data,
+            'room_id': room_id,
+            'players': room.players,
             'opponent': {'id': player_id, 'name': player_name}
         }, to=opponent['sid'])
         
+        # Notify current player
         await sio.emit('quick_match_found', {
-            **match_data,
+            'room_id': room_id,
+            'players': room.players,
             'opponent': {'id': opponent_id, 'name': opponent['name']}
         }, to=sid)
         
-        logging.info(f"Quick match created: Room {room.id}")
+        # Also emit game_started to both
+        await asyncio.sleep(0.5)  # Small delay for UI
+        await sio.emit('game_started', {
+            'room_id': room_id,
+            'players': room.players
+        }, room=room_id)
+        
+        logging.info(f"[QuickMatch] Room {room_id} created and game started")
     else:
-        # Add to queue
+        # No match found, add to queue
         quick_match_queue[player_id] = {
             'id': player_id,
             'name': player_name,
@@ -552,7 +589,7 @@ async def join_quick_match(sid, data):
             'message': 'Rakip aranıyor...'
         }, to=sid)
         
-        logging.info(f"Player {player_name} added to queue. Queue size: {len(quick_match_queue)}")
+        logging.info(f"[QuickMatch] Player {player_name} added to queue. Queue size: {len(quick_match_queue)}")
 
 @sio.event
 async def leave_quick_match(sid, data):

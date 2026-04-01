@@ -1,288 +1,165 @@
-# Puzzle Master Blast - Product Requirements Document
+# Puzzle Master Blast - Ürün Gereksinimleri Belgesi (PRD)
 
-## Tamamlanan Tüm Özellikler ✅
-
-### 🎮 Core Game
-- 8x8 grid bulmaca oyunu
-- Klasik Mod (süresiz) - **ÇEVRİMDIŞI ÇALIŞIR** ✅
-- Zamanlı Mod (3 dakika) - **ÇEVRİMDIŞI ÇALIŞIR** ✅
-- Çok Oyunculu Mod (online) - İnternet gerekli
-- Parlak, 3D efektli bloklar
-- Combo sistemi ve pixel-art text
-- Ses efektleri ve titreşim
-- Game Over ve New High Score ekranları
-- **Kaygan blok yerleştirme animasyonu** ✅
-- **SABİT BLOK SEÇME ALANI** ✅ (9 Mart 2026 düzeltildi - kayma sorunu çözüldü)
-
-### 📴 Çevrimdışı Destek (YENİ!)
-- Klasik ve Zamanlı mod internet olmadan oynanabilir
-- Tüm oyun verileri cihazda saklanır (AsyncStorage)
-- Çevrimdışı banner gösterimi
-- Online gerektiren modlar (Multiplayer, Turnuva) için uyarı
-- Otomatik network durumu izleme
-
-### 🎉 Görsel Efektler (YENİ!)
-- **Milestone Kutlamaları** - 100, 500, 1000, 2500, 5000, 10000, 25000, 50000 puanda özel animasyonlar
-- **Konfeti Efekti** - Yeni rekor kırıldığında
-- **Gelişmiş Haptic Feedback** - Yerleştirme, temizleme, combo, game over için farklı titreşimler
-- **Kaygan Blok Animasyonu** - Bloklar yukarıdan/yandan kayarak yerine oturur
-
-### 💰 Monetizasyon Sistemi
-- **Banner Ads** - Oyun ekranının altında
-- **Interstitial Ads** - Game over'da
-- **Rewarded Video Ads** - "Devam Et" sistemi (3 hak)
-- **Continue Modal** - Animasyonlu, 5sn geri sayım
-
-### 🎁 Günlük Ödül Sistemi
-- 7 günlük streak takibi
-- XP ve Coin ödülleri
-- Özel skin ödülleri (5. ve 7. günlerde)
-- Animasyonlu modal
-
-### 🎨 Blok Temaları (Skins)
-- 10 farklı tema (Klasik, Neon, Altın, Okyanus, vb.)
-- Reklam izleyerek kilit açma
-- Premium ve Glow efektli temalar
-- Liste görünümünde modal
-
-### ⚡ Power-ups Sistemi
-- **Bomba** - 3x3 alan temizle (1 adet başlangıç) ✅ ÇALIŞIYOR
-- **Karıştır** - Yeni bloklar al (1 adet başlangıç) ✅ ÇALIŞIYOR
-- **Ekstra Süre** - +30 saniye (reklam izle) ✅ ÇALIŞIYOR
-- **Satır Temizle** - Bir satırı temizle (reklam izle) ✅ ÇALIŞIYOR
-
-### 🏆 Turnuva Modu
-- Haftalık turnuvalar
-- Geri sayım timer
-- Ödül tablosu (1. = 10,000 coin)
-- Canlı sıralama listesi
-- Kendi sıran vurgulu
-
-### 📱 Sosyal Özellikler
-- **Paylaş butonu** - Game Over'da skor paylaşımı ✅ ÇALIŞIYOR
-- Multiplayer lobby
-- Public/Private odalar
-- Oyun geçmişi
-
-### 📊 Diğer
-- Liderlik tablosu (XP ve Skor sıralaması)
-- Günlük görevler (3 farklı görev)
-- Kullanıcı profili ve XP sistemi
-- Coin sistemi
+## Son Güncelleme: 1 Nisan 2026
 
 ---
 
-## 📁 Dosya Yapısı
+## Proje Özeti
 
-```
-/app
-├── frontend/
-│   ├── app/
-│   │   ├── index.tsx       # Ana ekran (4 mod + 4 buton)
-│   │   ├── game.tsx        # Oyun (power-ups + continue + milestone)
-│   │   ├── tournament.tsx  # Turnuva ekranı
-│   │   ├── leaderboard.tsx # Sıralama
-│   │   ├── multiplayer.tsx # Çok oyunculu lobi
-│   │   └── game-room.tsx   # Multiplayer oda
-│   └── src/
-│       ├── components/
-│       │   ├── DailyRewardsModal.tsx
-│       │   ├── SkinsModal.tsx
-│       │   ├── GameBoard.tsx      # Gelişmiş animasyonlar
-│       │   ├── BlockPiece.tsx
-│       │   ├── ScoreDisplay.tsx
-│       │   ├── StreakMilestone.tsx  # YENİ - Milestone kutlamaları
-│       │   ├── ConfettiCelebration.tsx # YENİ - Konfeti efekti
-│       │   ├── AnimatedBlock.tsx   # YENİ - Animasyonlu blok
-│       │   └── ScreenShake.tsx     # YENİ - Ekran sarsma efekti
-│       ├── store/
-│       │   ├── gameStore.ts
-│       │   ├── dailyRewardsStore.ts
-│       │   ├── skinsStore.ts
-│       │   ├── powerUpsStore.ts
-│       │   └── questStore.ts
-│       └── utils/
-│           └── sounds.ts           # Gelişmiş haptic feedback
-├── backend/
-│   └── server.py           # FastAPI + Socket.IO
-├── PARA_KAZANMA_REHBERI.md # Türkçe monetizasyon rehberi
-└── publishing_guide.md     # Detaylı yayınlama rehberi
-```
+**Uygulama Adı:** Puzzle Master Blast  
+**Tür:** Block Blast benzeri mobil bulmaca oyunu  
+**Platform:** Android (React Native / Expo)  
+**Dil:** Türkçe
 
 ---
 
-## 🚀 Google Play Store'a Yükleme
+## Tamamlanan Özellikler
 
-### 1. Hesaplar Oluştur
-- Expo (ücretsiz): https://expo.dev
-- Google Play Console ($25 tek seferlik): https://play.google.com/console
-- Apple Developer ($99/yıl): https://developer.apple.com (isteğe bağlı)
-- Google AdMob (ücretsiz): https://admob.google.com
+### v1.1.0 (1 Nisan 2026) - UI Sadeleştirme & Multiplayer Güncellemesi
 
-### 2. AdMob ID'lerini Al (TAMAMLANDI ✅)
-Production AdMob ID'leri app.json ve admobConfig.ts dosyalarına entegre edildi.
+**Ana Ekran Sadeleştirildi:**
+- ✅ Coin gösterimi tek yerde (sağ üst köşede şık tasarım)
+- ✅ 4 oyun modu butonu: Klasik, Zamanlı, Çok Oyunculu, Turnuva
+- ✅ Alt menü: Sıralama, Görevler, Ödül, Mağaza
+- ✅ "Oyunlarım" kaldırıldı (Multiplayer Geçmiş sekmesinde)
 
-### 3. Build & Yükle
-```bash
-cd frontend
-npx eas login
-npx eas build --platform android --profile production
-npx eas submit --platform android
-```
+**Mağaza Entegrasyonu:**
+- ✅ Coin paketleri (Popüler/En İyi etiketleri)
+- ✅ Temalar (Blok skinleri) entegre edildi
+- ✅ Jokerler (Güçlendirmeler) entegre edildi
+- ✅ Reklam izle butonu (ücretsiz joker)
 
-### 4. Store Listing İçin Gerekli Materyaller
-- Uygulama adı: Puzzle Master Blast
-- Kısa açıklama (80 karakter)
-- Tam açıklama (4000 karakter)
-- Ekran görüntüleri (en az 2 adet)
-- İkon (512x512 PNG)
-- Feature Graphic (1024x500)
+**Multiplayer Güncellemesi:**
+- ✅ Stats bar (Galibiyet, Oran, Coin)
+- ✅ Hızlı Eşleşme butonu (gradient tasarım)
+- ✅ 3 sekme: Açık odalar, Şifreli odalar, Geçmiş
+- ✅ Oyun geçmişi kartları
 
----
+**Backend (MongoDB):**
+- ✅ Kullanıcı profil sistemi
+- ✅ Oyun sonuçları kaydetme
+- ✅ Quick Match kuyruğu
+- ✅ Socket.IO room yönetimi
 
-## 💰 Tahmini Kazanç (Türkiye)
+### v1.0.0 (Önceki Sürümler)
 
-| Günlük Aktif Kullanıcı | Aylık Kazanç |
-|------------------------|--------------|
-| 1,000                  | ₺3,000-5,000 |
-| 10,000                 | ₺30,000-50,000 |
-| 100,000                | ₺300,000-500,000 |
-
----
-
-## ✅ Oyun Durumu: TAMAMLANDI VE YAYINA HAZIR!
-
-Tüm temel özellikler uygulandı ve test edildi (%100 başarı oranı).
-Oyun mağazalara yüklenmeye hazır!
-
-### Son Güncelleme: 30 Mart 2026
-
-**Bu seansta tamamlanan (30 Mart 2026 - Multiplayer & Backend Güncellemesi):**
-- ✅ **MongoDB Kullanıcı Profil Sistemi:**
-  - Kalıcı kullanıcı profilleri (coin, tema, joker, istatistikler)
-  - POST /api/profiles - Profil oluştur/getir
-  - PUT /api/profiles/{id}/sync - Tam profil senkronizasyonu
-  - POST /api/profiles/{id}/coins - Coin ekleme
-  - GET /api/game_results/{id} - Oyun geçmişi
-- ✅ **Hızlı Eşleşme (Quick Match) Sistemi:**
-  - Tek tuşla rastgele rakip bulma
-  - Socket.IO gerçek zamanlı eşleşme
-  - Animasyonlu arama ekranı
-  - Otomatik oda oluşturma
-- ✅ **Oyun Sonu Ödülleri:**
-  - Kazanan: 100 coin + 50 XP
-  - Kaybeden: 25 coin + 15 XP
-  - Ödül modalı ile görsel gösterim
-- ✅ **Multiplayer Ekranı Yenilendi:**
-  - Stats bar (kullanıcı adı, galibiyet, oran, coin)
-  - Hızlı Eşleşme gradient butonu
-  - Geçmiş sekmesi (oyun sonuçları)
-  - Oyun geçmişi kartları (galibiyet/mağlubiyet)
-- ✅ **UserSyncService oluşturuldu:**
-  - Frontend-Backend senkronizasyonu
-  - Offline-first yaklaşım
-
-**Önceki güncelleme (30 Mart 2026 - IAP & Envanter Güncellemesi):**
-- ✅ **Google Play In-App Purchase Entegrasyonu:**
-  - Coin Mağazası modalı oluşturuldu
-  - 4 coin paketi: 500 (₺19.99), 1200 (₺39.99), 3000 (₺79.99), 8000 (₺149.99)
-  - POPÜLER ve EN İYİ DEĞER etiketleri
-  - Bonus yüzdeleri: +20%, +50%, +100%
-  - Web'de simülasyon, Native'de gerçek satın alma
-- ✅ **Kalıcı Envanter Sistemi:**
-  - inventoryStore.ts oluşturuldu
-  - Satın alınan temalar/arka planlar kalıcı olarak kaydediliyor
-  - AsyncStorage ile persistence sağlandı
-- ✅ **Ana Ekran Güncellendi:**
-  - Mağaza butonu alt menüye eklendi
-  - Coin bakiyesi gösterimi iyileştirildi
-- ✅ **Önceki Joker Güncellemesi (aynı seans):**
-  - 4 joker: Bomba, Karıştır, Ekstra Süre, Satır Temizle
-  - Reklam izleyerek ÜCRETSİZ joker kazanma
-  - Coin ile joker satın alma (150-300 coin)
-- ✅ **Blok Üretimi Hatası DÜZELTİLDİ:**
-  - 3 blok yerleştirildiğinde bazen 1 blok üretilme sorunu çözüldü
-
-**Önceki güncellemeler (29 Mart 2026 - Büyük Güncelleme):**
-- ✅ Temalar sayfası tamamen yeniden yazıldı (14 farklı blok teması)
-  - Blok temaları: Klasik, Neon, Okyanus, Gün Batımı, Şeker, Orman, Ateş, Buz, Galaksi, Gökkuşağı, Altın, Elmas, Aurora, Gece Yarısı
-  - Arka plan temaları: Klasik Gece, Okyanus Derinliği, Gün Batımı, Gece Ormanı, Galaksi, Neon Şehir, Volkanik, Buzul
-  - Reklam izleyerek tema açma sistemi
-- ✅ Görevler sayfası tamamen yeniden yazıldı
-  - Günlük görevler: Puan toplama, satır temizleme, combo yapma, oyun oynama, seviye atlama
-  - Görev tamamlandığında coin ödülü
-  - Görsel ilerleme çubukları ve modern tasarım
-- ✅ "Oyunlarım" sayfası eklendi (/my-games)
-  - Maç geçmişi görüntüleme
-  - Galibiyet/mağlubiyet istatistikleri
-  - Kazanma oranı hesaplama
-  - Rakip skoru karşılaştırma
-- ✅ Ana ekran alt menüsüne "Oyunlarım" butonu eklendi
-- ✅ Multiplayer sistemi geliştirildi:
-  - Backend'e `player_game_over` event'i eklendi
-  - Oyun bittiğinde sonuçlar kaydediliyor
-  - Kazanan/kaybeden belirleme sistemi
-  - Oyun sonuçları veritabanına kaydediliyor
-- ✅ Online oyuna katılmadan önce reklam ekranı eklendi
-  - 3 saniyelik reklam simülasyonu
-  - İlerleme çubuğu ve ipucu metinleri
-  - Şık gradient tasarım
-
-**Önceki güncellemeler (29 Mart 2026 - Güncelleme 2):**
-- ✅ Oyun tahtası şık çerçeve ile yeniden tasarlandı
-- ✅ Blok yerleştirme hızlandırıldı ve snap-to-grid eklendi
-- ✅ Günlük Ödül modalına kapatma butonu eklendi
-
-**Önceki güncellemeler (29 Mart 2026 - Güncelleme 1):**
-- ✅ Ana ekran layout sorunu düzeltildi
-- ✅ İsim girişi modal sorunu düzeltildi
-- ✅ Çok oyunculu oda oluşturma hatası düzeltildi
-- ✅ Temalar ve Görevler modalları düzeltildi
-
-**Gelecek geliştirmeler (Opsiyonel):**
-- 🔮 Tournament backend mantığı (sunucu taraflı turnuva yönetimi)
-- 🔮 Kullanıcı verilerinin backend'e taşınması (cross-device sync)
-- 🔮 Günlük görevler backend entegrasyonu
-- 🔮 Push notifications
+- ✅ 8x8 blok yerleştirme oyunu
+- ✅ Klasik Mod (süresiz)
+- ✅ Zamanlı Mod (3 dakika)
+- ✅ Çok Oyunculu Mod
+- ✅ Turnuva Modu (UI)
+- ✅ Günlük ödüller
+- ✅ Günlük görevler
+- ✅ Liderlik tablosu
+- ✅ AdMob entegrasyonu
+- ✅ Tema/Skin sistemi
+- ✅ Joker/Power-up sistemi
+- ✅ Çevrimdışı destek (Klasik/Zamanlı modlar)
 
 ---
 
-### 🧪 Test Raporu (Güncel - 30 Mart 2026)
+## Teknik Mimari
 
-| Özellik | Durum |
-|---------|-------|
-| Ana Ekran | ✅ ÇALIŞIYOR |
-| Klasik Mod | ✅ ÇALIŞIYOR |
-| Zamanlı Mod | ✅ ÇALIŞIYOR |
-| Turnuva Ekranı | ✅ ÇALIŞIYOR |
-| Temalar/Skinler | ✅ ÇALIŞIYOR |
-| Günlük Ödüller | ✅ ÇALIŞIYOR |
-| Power-ups | ✅ ÇALIŞIYOR |
-| Skor/XP Gösterimi | ✅ ÇALIŞIYOR |
-| Liderlik Tablosu | ✅ ÇALIŞIYOR |
-| Günlük Görevler | ✅ ÇALIŞIYOR |
-| Paylaş Butonu | ✅ ÇALIŞIYOR |
-| **Jokerler Modalı** | ✅ ÇALIŞIYOR |
-| **Coin ile Joker Satın Al** | ✅ ÇALIŞIYOR |
-| **Reklam ile Joker Kazan** | ✅ ÇALIŞIYOR |
-| **Blok Üretimi** | ✅ DÜZELTİLDİ |
-| **MongoDB Profil Sistemi** | ✅ YENİ |
-| **Hızlı Eşleşme** | ✅ YENİ |
-| **Oyun Sonu Ödülleri** | ✅ YENİ |
-| **Multiplayer Stats Bar** | ✅ YENİ |
-| **Oyun Geçmişi** | ✅ YENİ |
+### Frontend
+- **Framework:** React Native + Expo SDK 53
+- **Routing:** Expo Router
+- **State:** Zustand
+- **UI:** Custom components + Ionicons
 
-**Not:** AdMob reklamları web önizlemesinde MOCK'lanmıştır. Native build'de (APK/IPA) gerçek reklamlar gösterilecektir.
+### Backend
+- **Framework:** FastAPI (Python)
+- **Real-time:** Socket.IO
+- **Database:** MongoDB
+
+### Entegrasyonlar
+- Google AdMob
+- react-native-iap (IAP)
+- Socket.IO (multiplayer)
 
 ---
 
-### 📋 Backlog / Gelecek Özellikler
+## API Endpoints
+
+| Endpoint | Method | Açıklama |
+|----------|--------|----------|
+| `/api/profiles` | POST | Profil oluştur/getir |
+| `/api/profiles/{id}/sync` | PUT | Profil senkronize et |
+| `/api/profiles/{id}/coins` | POST | Coin ekle |
+| `/api/rooms` | GET/POST | Oda listele/oluştur |
+| `/api/rooms/{id}/join` | POST | Odaya katıl |
+| `/api/game_results/{id}` | GET | Oyun geçmişi |
+| `/api/leaderboard` | GET | Liderlik tablosu |
+| `/api/quick_match/status` | GET | Eşleşme kuyruğu durumu |
+
+---
+
+## Socket.IO Events
+
+| Event | Yön | Açıklama |
+|-------|-----|----------|
+| `join_room` | Client→Server | Odaya katıl |
+| `player_ready` | Client→Server | Hazır ol |
+| `score_update` | Client→Server | Skor güncelle |
+| `player_game_over` | Client→Server | Oyun bitti |
+| `join_quick_match` | Client→Server | Hızlı eşleşme kuyruğuna gir |
+| `room_update` | Server→Client | Oda durumu güncellendi |
+| `game_started` | Server→Client | Oyun başladı |
+| `game_ended` | Server→Client | Oyun sona erdi |
+| `quick_match_found` | Server→Client | Eşleşme bulundu |
+
+---
+
+## Backlog / Gelecek Özellikler
 
 | Öncelik | Özellik | Açıklama |
 |---------|---------|----------|
-| P1 | Kaygan Blok Animasyonu | Bloklar yerine yerleşirken "slide" efekti |
-| P1 | Backend Turnuva Yönetimi | Sunucu taraflı turnuva mantığı |
-| P2 | Native IAP Doğrulama | Google Play Billing backend entegrasyonu |
-| P2 | Cihazlar Arası Senkronizasyon | Uygulama açılışında otomatik profil yükleme |
+| P1 | Kaygan Blok Animasyonu | Bloklar yerleşirken slide efekti |
+| P1 | Multiplayer Test | Gerçek cihazlarda 2 kişiyle test |
+| P2 | Native IAP Doğrulama | Google Play Billing backend |
+| P2 | Backend Turnuva | Sunucu taraflı turnuva mantığı |
 | P3 | Push Notifications | Günlük ödül hatırlatıcıları |
 | P3 | Sosyal Giriş | Google/Apple ile giriş |
+
+---
+
+## Yayınlama Durumu
+
+- **Version:** 1.1.0
+- **Version Code:** 2
+- **Package:** com.puzzlemaster.blastgame
+- **Google Play:** Kapalı test aşamasında
+- **IAP Ürünleri:** Tanımlanacak (coins_500, coins_1200, coins_3000, coins_8000)
+
+---
+
+## Test Durumu
+
+| Özellik | Durum |
+|---------|-------|
+| Ana Ekran | ✅ |
+| Mağaza (Coin/Tema/Joker) | ✅ |
+| Klasik Mod | ✅ |
+| Zamanlı Mod | ✅ |
+| Çok Oyunculu Ekranı | ✅ |
+| Hızlı Eşleşme UI | ✅ |
+| Oda Oluşturma | ✅ |
+| Günlük Ödüller | ✅ |
+| Görevler | ✅ |
+| Liderlik Tablosu | ✅ |
+
+---
+
+## Bilinen Sorunlar
+
+1. **Multiplayer gerçek cihaz testi gerekiyor** - Web preview'da Socket.IO bağlantısı test edilemedi
+2. **IAP simülasyon modunda** - Gerçek satın alma sadece cihazda çalışır
+3. **AdMob simülasyon modunda** - Expo Go'da reklam gösterilmiyor
+
+---
+
+## Notlar
+
+- Uygulama Türkçe kullanıcı arayüzüne sahip
+- Çevrimdışı mod destekleniyor (Klasik/Zamanlı)
+- Google Play Console'da IAP ürünleri oluşturulmalı
+- BILLING izni app.json'a eklenmiş durumda

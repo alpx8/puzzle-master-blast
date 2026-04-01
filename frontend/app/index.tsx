@@ -10,7 +10,6 @@ import {
   Platform,
   Easing,
   Modal,
-  ScrollView,
   Alert,
   Keyboard,
 } from 'react-native';
@@ -24,10 +23,8 @@ import { useSkinsStore } from '@/src/store/skinsStore';
 import { usePowerUpsStore } from '@/src/store/powerUpsStore';
 import { initSounds } from '@/src/utils/sounds';
 import { DailyRewardsModal } from '@/src/components/DailyRewardsModal';
-import { SkinsModal } from '@/src/components/SkinsModal';
 import { QuestsModal } from '@/src/components/QuestsModal';
-import { PowerUpsModal } from '@/src/components/PowerUpsModal';
-import { CoinShopModal } from '@/src/components/CoinShopModal';
+import { ShopModal } from '@/src/components/ShopModal';
 import { useInventoryStore } from '@/src/store/inventoryStore';
 import { useNetworkStatus, requiresOnline } from '@/src/utils/offlineSupport';
 
@@ -196,9 +193,7 @@ export default function HomeScreen() {
   const [showNameInput, setShowNameInput] = useState(false);
   const [showQuestsModal, setShowQuestsModal] = useState(false);
   const [showDailyReward, setShowDailyReward] = useState(false);
-  const [showSkinsModal, setShowSkinsModal] = useState(false);
-  const [showPowerUpsModal, setShowPowerUpsModal] = useState(false);
-  const [showCoinShop, setShowCoinShop] = useState(false);
+  const [showShopModal, setShowShopModal] = useState(false);
   const [tempName, setTempName] = useState('');
   
   // Inventory store
@@ -244,13 +239,6 @@ export default function HomeScreen() {
     setTempName(username);
   };
 
-  const handleClaimQuest = async (questId: string) => {
-    const xp = await claimReward(questId);
-    if (xp > 0) {
-      useGameStore.getState().addXP(xp);
-    }
-  };
-
   const completedQuests = dailyQuests.filter(q => q.completed && !q.claimed).length;
 
   const GameModeButton = ({ 
@@ -275,15 +263,15 @@ export default function HomeScreen() {
       disabled={disabled}
     >
       <View style={[styles.modeGradient, { backgroundColor: colors[0] }]}>
-        <Ionicons name={icon} size={28} color={disabled ? "rgba(255,255,255,0.5)" : "#fff"} />
+        <Ionicons name={icon} size={32} color={disabled ? "rgba(255,255,255,0.5)" : "#fff"} />
         <View style={styles.modeTextContainer}>
           <Text style={[styles.modeTitle, disabled && styles.modeTitleDisabled]}>{title}</Text>
           <Text style={[styles.modeSubtitle, disabled && styles.modeSubtitleDisabled]}>{subtitle}</Text>
         </View>
         {disabled ? (
-          <Ionicons name="cloud-offline" size={22} color="rgba(255,255,255,0.4)" />
+          <Ionicons name="cloud-offline" size={24} color="rgba(255,255,255,0.4)" />
         ) : (
-          <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.7)" />
+          <Ionicons name="chevron-forward" size={24} color="rgba(255,255,255,0.7)" />
         )}
       </View>
     </TouchableOpacity>
@@ -316,51 +304,49 @@ export default function HomeScreen() {
       )}
       
       <View style={styles.mainContent}>
-        {/* Logo Section - Fixed at top */}
+        {/* Header - User & Coins */}
+        <View style={styles.headerRow}>
+          <TouchableOpacity 
+            style={styles.userChip}
+            onPress={() => {
+              setTempName(username);
+              setShowNameInput(true);
+            }}
+          >
+            <View style={styles.avatarSmall}>
+              <Ionicons name="person" size={14} color="#fff" />
+            </View>
+            <View style={styles.userChipInfo}>
+              <Text style={styles.userChipName} numberOfLines={1}>{username || 'İsim Gir'}</Text>
+              <Text style={styles.userChipLevel}>Lv.{level}</Text>
+            </View>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.coinChip}
+            onPress={() => setShowShopModal(true)}
+          >
+            <Ionicons name="logo-bitcoin" size={18} color="#FFD700" />
+            <Text style={styles.coinChipText}>{totalCoins.toLocaleString()}</Text>
+            <View style={styles.coinAddBtn}>
+              <Ionicons name="add" size={14} color="#1a1a2e" />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Logo Section */}
         <View style={styles.logoSection}>
           <AnimatedLogo />
           <Text style={styles.title}>PUZZLE MASTER</Text>
           <Text style={styles.titleBlast}>BLAST</Text>
+          <Text style={styles.highScoreText}>En Yüksek Skor: {highScore}</Text>
         </View>
 
-        {/* User Stats - Fixed */}
-        <TouchableOpacity 
-          style={styles.userSection}
-          onPress={() => {
-            setTempName(username);
-            setShowNameInput(true);
-          }}
-        >
-          <View style={styles.avatarContainer}>
-            <Ionicons name="person" size={18} color="#fff" />
-          </View>
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>{username || 'İsim Gir'}</Text>
-            <Text style={styles.userStats}>Lv.{level} • Rekor: {highScore}</Text>
-          </View>
-          <Ionicons name="pencil" size={14} color="#888" />
-        </TouchableOpacity>
-
-        {/* Coin Balance Bar with Shop Button */}
-        <TouchableOpacity 
-          style={styles.coinBalanceBar}
-          onPress={() => setShowCoinShop(true)}
-          testID="coin-shop-button"
-        >
-          <View style={styles.coinBalanceLeft}>
-            <Ionicons name="logo-bitcoin" size={22} color="#FFD700" />
-            <Text style={styles.coinBalanceText}>{totalCoins.toLocaleString()}</Text>
-          </View>
-          <View style={styles.coinShopButton}>
-            <Ionicons name="add" size={18} color="#1a1a2e" />
-          </View>
-        </TouchableOpacity>
-
-        {/* Game Mode Buttons - Fixed height */}
+        {/* Game Mode Buttons */}
         <View style={styles.modesSection}>
           <GameModeButton
             title="Klasik Mod"
-            subtitle={isOffline ? "Çevrimdışı" : "Süresiz oyna!"}
+            subtitle={isOffline ? "Çevrimdışı oynanabilir" : "Süresiz strateji!"}
             icon="infinite"
             colors={['#4ECDC4', '#44A08D']}
             onPress={() => router.push('/game?mode=classic')}
@@ -368,7 +354,7 @@ export default function HomeScreen() {
           
           <GameModeButton
             title="Zamanlı Mod"
-            subtitle={isOffline ? "Çevrimdışı" : "3 dakika!"}
+            subtitle={isOffline ? "Çevrimdışı oynanabilir" : "3 dakikada rekor kır!"}
             icon="timer"
             colors={['#FF6B6B', '#FF8E53']}
             onPress={() => router.push('/game?mode=timed')}
@@ -376,7 +362,7 @@ export default function HomeScreen() {
           
           <GameModeButton
             title="Çok Oyunculu"
-            subtitle={isOffline ? "İnternet gerekli" : "Online yarış!"}
+            subtitle={isOffline ? "İnternet bağlantısı gerekli" : "Online rakiplerle yarış!"}
             icon="people"
             colors={isOffline ? ['#555', '#444'] : ['#667eea', '#764ba2']}
             onPress={() => handleModePress('multiplayer', '/multiplayer')}
@@ -385,7 +371,7 @@ export default function HomeScreen() {
           
           <GameModeButton
             title="Turnuva"
-            subtitle={isOffline ? "İnternet gerekli" : "Haftalık ödüller!"}
+            subtitle={isOffline ? "İnternet bağlantısı gerekli" : "Haftalık ödüller kazan!"}
             icon="trophy"
             colors={isOffline ? ['#555', '#444'] : ['#FFD700', '#FF8C00']}
             onPress={() => handleModePress('tournament', '/tournament')}
@@ -393,89 +379,53 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* Bottom Row - Fixed at bottom */}
-        <View style={styles.bottomSection}>
-          <View style={styles.bottomGridRow}>
-            <TouchableOpacity 
-              style={styles.bottomButton}
-              onPress={() => router.push('/leaderboard')}
-            >
-              <Ionicons name="trophy" size={18} color="#FFD700" />
-              <Text style={styles.bottomButtonText}>Sıralama</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.bottomButton}
-              onPress={() => router.push('/my-games')}
-            >
-              <Ionicons name="game-controller" size={18} color="#667eea" />
-              <Text style={styles.bottomButtonText}>Oyunlarım</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.bottomButton}
-              onPress={() => setShowDailyReward(true)}
-            >
-              <Ionicons name="gift" size={18} color="#FF6B6B" />
-              <Text style={styles.bottomButtonText}>Ödül</Text>
-              {currentStreak > 0 && (
-                <View style={[styles.questBadge, { backgroundColor: '#FF6B6B' }]}>
-                  <Text style={styles.questBadgeText}>{currentStreak}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
+        {/* Bottom Actions */}
+        <View style={styles.bottomActions}>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => router.push('/leaderboard')}
+          >
+            <Ionicons name="trophy" size={22} color="#FFD700" />
+            <Text style={styles.actionButtonText}>Sıralama</Text>
+          </TouchableOpacity>
           
-          <View style={[styles.bottomGridRow, { marginTop: 8 }]}>
-            <TouchableOpacity 
-              style={styles.bottomButton}
-              onPress={() => setShowSkinsModal(true)}
-            >
-              <Ionicons name="color-palette" size={18} color="#BD00FF" />
-              <Text style={styles.bottomButtonText}>Temalar</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.bottomButton}
-              onPress={() => setShowPowerUpsModal(true)}
-            >
-              <Ionicons name="flash" size={18} color="#FFD700" />
-              <Text style={styles.bottomButtonText}>Jokerler</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.bottomButton}
-              onPress={() => setShowCoinShop(true)}
-            >
-              <Ionicons name="storefront" size={18} color="#F7931A" />
-              <Text style={styles.bottomButtonText}>Mağaza</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => setShowQuestsModal(true)}
+          >
+            <Ionicons name="flag" size={22} color="#4ECDC4" />
+            <Text style={styles.actionButtonText}>Görevler</Text>
+            {completedQuests > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{completedQuests}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
           
-          <View style={[styles.bottomGridRow, { marginTop: 8 }]}>
-            <TouchableOpacity 
-              style={styles.bottomButton}
-              onPress={() => setShowQuestsModal(true)}
-            >
-              <Ionicons name="flag" size={18} color="#4ECDC4" />
-              <Text style={styles.bottomButtonText}>Görevler</Text>
-              {completedQuests > 0 && (
-                <View style={styles.questBadge}>
-                  <Text style={styles.questBadgeText}>{completedQuests}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            
-            {/* Coin Balance Display */}
-            <View style={styles.coinDisplayButton}>
-              <Ionicons name="logo-bitcoin" size={18} color="#F7931A" />
-              <Text style={styles.coinDisplayText}>{totalCoins}</Text>
-            </View>
-          </View>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => setShowDailyReward(true)}
+          >
+            <Ionicons name="gift" size={22} color="#FF6B6B" />
+            <Text style={styles.actionButtonText}>Ödül</Text>
+            {currentStreak > 0 && (
+              <View style={[styles.badge, { backgroundColor: '#FF6B6B' }]}>
+                <Text style={styles.badgeText}>{currentStreak}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => setShowShopModal(true)}
+          >
+            <Ionicons name="storefront" size={22} color="#A855F7" />
+            <Text style={styles.actionButtonText}>Mağaza</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* Name Input Modal - Proper Modal */}
+      {/* Name Input Modal */}
       <Modal visible={showNameInput} transparent animationType="fade">
         <View style={styles.nameModalOverlay}>
           <View style={styles.nameModalContent}>
@@ -519,22 +469,10 @@ export default function HomeScreen() {
         onClose={() => setShowDailyReward(false)} 
       />
       
-      {/* Skins Modal */}
-      <SkinsModal 
-        visible={showSkinsModal} 
-        onClose={() => setShowSkinsModal(false)} 
-      />
-      
-      {/* PowerUps Modal */}
-      <PowerUpsModal 
-        visible={showPowerUpsModal} 
-        onClose={() => setShowPowerUpsModal(false)} 
-      />
-      
-      {/* Coin Shop Modal */}
-      <CoinShopModal 
-        visible={showCoinShop} 
-        onClose={() => setShowCoinShop(false)} 
+      {/* Shop Modal (includes Coins, Themes, Power-ups) */}
+      <ShopModal 
+        visible={showShopModal} 
+        onClose={() => setShowShopModal(false)} 
       />
     </SafeAreaView>
   );
@@ -549,36 +487,111 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
   },
-  logoSection: {
+  offlineBanner: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 8,
-    paddingBottom: 4,
+    justifyContent: 'center',
+    backgroundColor: '#FF6B6B',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    gap: 6,
   },
-  logoOuterContainer: {
-    width: 80,
-    height: 80,
+  offlineBannerText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  // Header
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  userChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    gap: 8,
+  },
+  avatarSmall: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#4ECDC4',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4,
+  },
+  userChipInfo: {
+    maxWidth: 100,
+  },
+  userChipName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  userChipLevel: {
+    fontSize: 10,
+    color: '#888',
+  },
+  coinChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    paddingVertical: 8,
+    paddingLeft: 12,
+    paddingRight: 6,
+    borderRadius: 20,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+  },
+  coinChipText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#FFD700',
+  },
+  coinAddBtn: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#FFD700',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Logo Section
+  logoSection: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  logoOuterContainer: {
+    width: 100,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   logoGrid: {
-    width: 75,
-    height: 75,
+    width: 90,
+    height: 90,
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoBlockWrapper: {
-    width: 22,
-    height: 22,
-    margin: 1,
+    width: 26,
+    height: 26,
+    margin: 2,
     perspective: 1000,
   },
   logoBlock: {
     width: '100%',
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 5,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -598,133 +611,62 @@ const styles = StyleSheet.create({
     right: 0,
     height: '25%',
     opacity: 0.5,
-    borderBottomLeftRadius: 4,
-    borderBottomRightRadius: 4,
-  },
-  offlineBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FF6B6B',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    gap: 6,
-  },
-  offlineBannerText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '600',
+    borderBottomLeftRadius: 5,
+    borderBottomRightRadius: 5,
   },
   title: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: '900',
     color: '#fff',
-    letterSpacing: 1,
+    letterSpacing: 2,
     textShadowColor: 'rgba(0, 217, 255, 0.5)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,
   },
   titleBlast: {
-    fontSize: 28,
+    fontSize: 34,
     fontWeight: '900',
     color: '#FFD93D',
-    letterSpacing: 3,
+    letterSpacing: 4,
     textShadowColor: 'rgba(255, 217, 61, 0.5)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,
-    marginTop: -2,
+    marginTop: -4,
   },
-  userSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    padding: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    marginVertical: 8,
-  },
-  avatarContainer: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#4ECDC4',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  userInfo: {
-    flex: 1,
-    marginLeft: 10,
-  },
-  userName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  userStats: {
-    fontSize: 11,
+  highScoreText: {
+    fontSize: 12,
     color: '#888',
-    marginTop: 1,
+    marginTop: 8,
   },
-  coinBalanceBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
-    borderRadius: 12,
-    padding: 10,
-    marginHorizontal: 0,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
-    zIndex: 10,
-  },
-  coinBalanceLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  coinBalanceText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFD700',
-  },
-  coinShopButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#FFD700',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  // Game Modes
   modesSection: {
     flex: 1,
     justifyContent: 'center',
-    paddingVertical: 4,
+    gap: 10,
   },
   modeButton: {
-    marginBottom: 8,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   modeGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
+    padding: 16,
+    borderRadius: 16,
   },
   modeTextContainer: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 14,
   },
   modeTitle: {
-    fontSize: 14,
+    fontSize: 17,
     fontWeight: 'bold',
     color: '#fff',
   },
   modeSubtitle: {
-    fontSize: 11,
+    fontSize: 12,
     color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 2,
   },
   modeButtonDisabled: {
     opacity: 0.6,
@@ -735,36 +677,32 @@ const styles = StyleSheet.create({
   modeSubtitleDisabled: {
     color: 'rgba(255, 255, 255, 0.4)',
   },
-  bottomSection: {
-    paddingBottom: 8,
-  },
-  bottomGridRow: {
+  // Bottom Actions
+  bottomActions: {
     flexDirection: 'row',
-    gap: 8,
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    gap: 10,
   },
-  bottomButton: {
+  actionButton: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    gap: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    paddingVertical: 14,
+    borderRadius: 14,
     position: 'relative',
   },
-  bottomButtonText: {
+  actionButtonText: {
     fontSize: 11,
     color: '#fff',
     fontWeight: '600',
+    marginTop: 4,
   },
-  questBadge: {
+  badge: {
     position: 'absolute',
-    top: -4,
-    right: -4,
+    top: 4,
+    right: 8,
     backgroundColor: '#4ECDC4',
     minWidth: 18,
     height: 18,
@@ -773,71 +711,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 4,
   },
-  questBadgeText: {
+  badgeText: {
     color: '#fff',
     fontSize: 10,
     fontWeight: 'bold',
-  },
-  coinsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 6,
-  },
-  coinsText: {
-    color: '#F7931A',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  shopButtonRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 215, 0, 0.15)',
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 8,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
-  },
-  shopButtonText: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#FFD700',
-  },
-  shopCoinBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(247, 147, 26, 0.2)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-    marginLeft: 8,
-  },
-  shopCoinText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#F7931A',
-  },
-  coinDisplayButton: {
-    flex: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(247, 147, 26, 0.15)',
-    borderRadius: 10,
-    padding: 8,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(247, 147, 26, 0.3)',
-  },
-  coinDisplayText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#F7931A',
   },
   // Name Input Modal
   nameModalOverlay: {
@@ -897,108 +774,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
-  },
-  // Quests Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  modalContent: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 20,
-    padding: 20,
-    width: '100%',
-    maxWidth: 360,
-    maxHeight: SCREEN_HEIGHT * 0.7,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  questList: {
-    flex: 1,
-  },
-  questItem: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-  },
-  questInfo: {
-    flex: 1,
-  },
-  questTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 2,
-  },
-  questDescription: {
-    fontSize: 11,
-    color: '#888',
-    marginBottom: 6,
-  },
-  questProgressBar: {
-    height: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  questProgressFill: {
-    height: '100%',
-    backgroundColor: '#4ECDC4',
-    borderRadius: 3,
-  },
-  questProgressText: {
-    fontSize: 10,
-    color: '#666',
-    marginTop: 3,
-  },
-  questReward: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 12,
-    minWidth: 50,
-  },
-  questXP: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFD700',
-  },
-  questXPLabel: {
-    fontSize: 9,
-    color: '#FFD700',
-    marginBottom: 4,
-  },
-  claimButton: {
-    backgroundColor: '#4ECDC4',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  claimButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
-  noQuests: {
-    alignItems: 'center',
-    paddingVertical: 30,
-  },
-  noQuestsText: {
-    color: '#666',
-    marginTop: 10,
-    fontSize: 13,
   },
 });
