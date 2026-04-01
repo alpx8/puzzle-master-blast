@@ -21,7 +21,7 @@ export interface VIPState {
 }
 
 const VIP_PRODUCT_ID = 'vip_monthly';
-const VIP_PRICE = '₺29.99/ay';
+const VIP_PRICE = '₺149.99/ay';
 const SUBSCRIPTION_DAYS = 30;
 
 export const useVIPStore = create<VIPState>((set, get) => ({

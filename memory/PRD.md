@@ -15,7 +15,31 @@
 
 ## Tamamlanan Özellikler
 
-### v1.1.0 (1 Nisan 2026) - UI Sadeleştirme & Multiplayer Güncellemesi
+### v1.2.0 (1 Nisan 2026) - Monetizasyon Güncellemesi
+
+**Günlük Ödül Sistemi (Güncellendi):**
+- ✅ 1-7 coin ölçeklendirme (haftalık döngü)
+- ✅ Ödül alındıktan hemen sonra reklam gösterimi
+- ✅ VIP kullanıcılara reklam gösterilmiyor
+
+**VIP Abonelik Sistemi (YENİ):**
+- ✅ Mağazada VIP sekmesi eklendi
+- ✅ ₺149.99/ay aylık abonelik
+- ✅ VIP avantajları: Reklamsız oyun, Hızlı yükleme, VIP rozeti
+- ✅ Abonelik durumu ve bitiş tarihi gösterimi
+- ✅ Web simülasyonu + Native IAP entegrasyonu hazır
+
+**Video İzle & Rastgele Ödül (YENİ):**
+- ✅ Joker sekmesine "Video İzle" bölümü eklendi
+- ✅ Rastgele ödül sistemi: 5-25 Coin, Bomba, Karıştır, Geri Al, Ekstra Can
+- ✅ Ödül animasyonu
+- ✅ Web simülasyonu + Native rewarded ad hazır
+
+**Ekstra Can Powerup (YENİ):**
+- ✅ Yeni joker türü: Ekstra Can (150 coin)
+- ✅ Oyun bitince devam etme imkanı
+
+### v1.1.0 (Önceki Sürüm) - UI Sadeleştirme & Multiplayer
 
 **Ana Ekran Sadeleştirildi:**
 - ✅ Coin gösterimi tek yerde (sağ üst köşede şık tasarım)
@@ -27,7 +51,7 @@
 - ✅ Coin paketleri (Popüler/En İyi etiketleri)
 - ✅ Temalar (Blok skinleri) entegre edildi
 - ✅ Jokerler (Güçlendirmeler) entegre edildi
-- ✅ Reklam izle butonu (ücretsiz joker)
+- ✅ 4 sekmeli mağaza: Coin, Tema, Joker, VIP
 
 **Multiplayer Güncellemesi:**
 - ✅ Stats bar (Galibiyet, Oran, Coin)
@@ -72,9 +96,20 @@
 - **Database:** MongoDB
 
 ### Entegrasyonlar
-- Google AdMob
+- Google AdMob (react-native-google-mobile-ads)
 - react-native-iap (IAP)
 - Socket.IO (multiplayer)
+
+---
+
+## Monetizasyon
+
+| Özellik | Durum | Notlar |
+|---------|-------|--------|
+| Interstitial Ads | ✅ Aktif | Günlük ödül sonrası |
+| Rewarded Ads | ✅ Aktif | Video izle rastgele ödül |
+| VIP Abonelik | ✅ Aktif | ₺149.99/ay |
+| IAP Coin Paketleri | ✅ Simülasyon | Google Play Console'da tanımlanacak |
 
 ---
 
@@ -114,8 +149,8 @@
 | Öncelik | Özellik | Açıklama |
 |---------|---------|----------|
 | P1 | Kaygan Blok Animasyonu | Bloklar yerleşirken slide efekti |
-| P1 | Multiplayer Test | Gerçek cihazlarda 2 kişiyle test |
-| P2 | Native IAP Doğrulama | Google Play Billing backend |
+| P1 | Multiplayer Gerçek Cihaz Testi | 2 cihazla Socket.IO testi |
+| P2 | Google Play Console IAP Ürünleri | Gerçek ürünleri tanımla |
 | P2 | Backend Turnuva | Sunucu taraflı turnuva mantığı |
 | P3 | Push Notifications | Günlük ödül hatırlatıcıları |
 | P3 | Sosyal Giriş | Google/Apple ile giriş |
@@ -124,11 +159,13 @@
 
 ## Yayınlama Durumu
 
-- **Version:** 1.1.0
-- **Version Code:** 2
+- **Version:** 1.2.0
+- **Version Code:** 3
 - **Package:** com.puzzlemaster.blastgame
 - **Google Play:** Kapalı test aşamasında
-- **IAP Ürünleri:** Tanımlanacak (coins_500, coins_1200, coins_3000, coins_8000)
+- **IAP Ürünleri:** 
+  - coins_500, coins_1200, coins_3000, coins_8000
+  - vip_monthly (₺149.99/ay)
 
 ---
 
@@ -137,13 +174,15 @@
 | Özellik | Durum |
 |---------|-------|
 | Ana Ekran | ✅ |
-| Mağaza (Coin/Tema/Joker) | ✅ |
+| Mağaza (4 sekme) | ✅ |
+| VIP Abonelik | ✅ (Simülasyon) |
+| Video İzle Rastgele Ödül | ✅ (Simülasyon) |
+| Günlük Ödül + Reklam | ✅ (Simülasyon) |
 | Klasik Mod | ✅ |
 | Zamanlı Mod | ✅ |
 | Çok Oyunculu Ekranı | ✅ |
 | Hızlı Eşleşme UI | ✅ |
 | Oda Oluşturma | ✅ |
-| Günlük Ödüller | ✅ |
 | Görevler | ✅ |
 | Liderlik Tablosu | ✅ |
 

@@ -10,12 +10,15 @@ import {
   ActivityIndicator,
   Platform,
   Alert,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDailyRewardsStore } from '@/src/store/dailyRewardsStore';
 import { useSkinsStore } from '@/src/store/skinsStore';
 import { usePowerUpsStore } from '@/src/store/powerUpsStore';
 import { useInventoryStore } from '@/src/store/inventoryStore';
+import { useVIPStore } from '@/src/store/vipStore';
+import { getAdUnitId } from '@/src/utils/adManager';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -32,9 +35,19 @@ const POWERUPS = [
   { id: 'bomb', name: 'Bomba', icon: 'flame', color: '#FF6B6B', price: 100, description: 'Seçili alanı temizle' },
   { id: 'shuffle', name: 'Karıştır', icon: 'shuffle', color: '#4ECDC4', price: 75, description: 'Blokları yenile' },
   { id: 'undo', name: 'Geri Al', icon: 'arrow-undo', color: '#667eea', price: 50, description: 'Son hamleyi geri al' },
+  { id: 'extra_life', name: 'Ekstra Can', icon: 'heart', color: '#FF69B4', price: 150, description: 'Oyun bitince devam et' },
 ];
 
-type TabType = 'coins' | 'themes' | 'powerups';
+// Video İzle Ödülleri
+const VIDEO_REWARDS = [
+  { type: 'coins', min: 5, max: 25, weight: 50 },
+  { type: 'bomb', amount: 1, weight: 20 },
+  { type: 'shuffle', amount: 1, weight: 15 },
+  { type: 'undo', amount: 1, weight: 10 },
+  { type: 'extra_life', amount: 1, weight: 5 },
+];
+
+type TabType = 'coins' | 'themes' | 'powerups' | 'vip';
 
 interface ShopModalProps {
   visible: boolean;
@@ -44,11 +57,134 @@ interface ShopModalProps {
 export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
   const [activeTab, setActiveTab] = useState<TabType>('coins');
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [isWatchingAd, setIsWatchingAd] = useState(false);
+  const [lastReward, setLastReward] = useState<{ type: string; amount: number } | null>(null);
+  const [showRewardAnimation, setShowRewardAnimation] = useState(false);
+  const rewardScale = useState(new Animated.Value(0))[0];
   
   const { totalCoins, addCoins } = useDailyRewardsStore();
   const { skins, backgrounds, activeSkin, activeBackground, setSkin, setBackground } = useSkinsStore();
   const { powerUps, addPowerUp } = usePowerUpsStore();
   const { ownedThemes, ownedBackgrounds, purchaseTheme, purchaseBackground } = useInventoryStore();
+  const { isVIP, price: vipPrice, purchaseVIP, subscriptionEndDate, loadVIPStatus } = useVIPStore();
+
+  useEffect(() => {
+    if (visible) {
+      loadVIPStatus();
+    }
+  }, [visible]);
+
+  // Rastgele ödül seç
+  const getRandomReward = () => {
+    const totalWeight = VIDEO_REWARDS.reduce((sum, r) => sum + r.weight, 0);
+    let random = Math.random() * totalWeight;
+    
+    for (const reward of VIDEO_REWARDS) {
+      random -= reward.weight;
+      if (random <= 0) {
+        if (reward.type === 'coins') {
+          const amount = Math.floor(Math.random() * (reward.max! - reward.min! + 1)) + reward.min!;
+          return { type: 'coins', amount };
+        }
+        return { type: reward.type, amount: reward.amount! };
+      }
+    }
+    
+    return { type: 'coins', amount: 10 };
+  };
+
+  // Ödül animasyonu göster
+  const showReward = (reward: { type: string; amount: number }) => {
+    setLastReward(reward);
+    setShowRewardAnimation(true);
+    
+    Animated.sequence([
+      Animated.spring(rewardScale, {
+        toValue: 1,
+        friction: 4,
+        tension: 50,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1500),
+      Animated.timing(rewardScale, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setShowRewardAnimation(false);
+      rewardScale.setValue(0);
+    });
+  };
+
+  // Video izle ve ödül al
+  const handleWatchVideo = async () => {
+    setIsWatchingAd(true);
+    
+    if (Platform.OS === 'web') {
+      // Web simülasyonu
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const reward = getRandomReward();
+      
+      // Ödülü ver
+      if (reward.type === 'coins') {
+        addCoins(reward.amount);
+      } else {
+        addPowerUp(reward.type, reward.amount);
+      }
+      
+      setIsWatchingAd(false);
+      showReward(reward);
+      
+      const rewardName = reward.type === 'coins' ? `${reward.amount} Coin` :
+        reward.type === 'bomb' ? 'Bomba' :
+        reward.type === 'shuffle' ? 'Karıştır' :
+        reward.type === 'undo' ? 'Geri Al' :
+        'Ekstra Can';
+      
+      Alert.alert('Tebrikler!', `${rewardName} kazandın!`);
+    } else {
+      // Native'de gerçek reklam
+      try {
+        const adUnitId = getAdUnitId('REWARDED');
+        console.log('[Shop] Showing rewarded ad:', adUnitId);
+        
+        const reward = getRandomReward();
+        
+        if (reward.type === 'coins') {
+          addCoins(reward.amount);
+        } else {
+          addPowerUp(reward.type, reward.amount);
+        }
+        
+        showReward(reward);
+      } catch (error) {
+        console.error('[Shop] Ad error:', error);
+        Alert.alert('Hata', 'Reklam yüklenemedi, lütfen tekrar deneyin.');
+      }
+      setIsWatchingAd(false);
+    }
+  };
+
+  // VIP satın al
+  const handleBuyVIP = async () => {
+    setIsPurchasing(true);
+    
+    const success = await purchaseVIP();
+    
+    setIsPurchasing(false);
+    
+    if (success) {
+      Alert.alert(
+        'Hoş Geldiniz VIP!',
+        'Artık reklamsız oynayabilirsiniz! Aboneliğiniz 30 gün geçerlidir.',
+        [{ text: 'Harika!' }]
+      );
+    } else {
+      Alert.alert('Hata', 'Satın alma tamamlanamadı.');
+    }
+  };
 
   // Use skins as themes - with safe fallback
   const themes = (skins || []).map(skin => ({
@@ -61,11 +197,10 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
   const safeBackgrounds = backgrounds || [];
   const activeTheme = activeSkin || 'default';
   const setActiveTheme = setSkin;
-  const setActiveBackground = setBackground;
+  const setActiveBackgroundFunc = setBackground;
 
   const handleBuyCoin = async (packageItem: typeof COIN_PACKAGES[0]) => {
     if (Platform.OS === 'web') {
-      // Simülasyon modu
       Alert.alert(
         'Simülasyon',
         `Bu satın alma simüle edildi.\n+${packageItem.coins + packageItem.bonus} coin eklendi!`,
@@ -73,7 +208,6 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
       );
       addCoins(packageItem.coins + packageItem.bonus);
     } else {
-      // Gerçek IAP (react-native-iap)
       Alert.alert('Bilgi', 'Gerçek satın alma sadece cihazda çalışır.');
     }
   };
@@ -108,19 +242,135 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
     const bgPrice = price || 0;
     
     if (ownedBackgrounds.includes(bgId)) {
-      setActiveBackground(bgId);
+      setActiveBackgroundFunc(bgId);
       return;
     }
     
     if (bgPrice === 0 || totalCoins >= bgPrice) {
       purchaseBackground(bgId);
       if (bgPrice > 0) addCoins(-bgPrice);
-      setActiveBackground(bgId);
+      setActiveBackgroundFunc(bgId);
       Alert.alert('Başarılı!', 'Arkaplan satın alındı ve uygulandı!');
     } else {
       Alert.alert('Yetersiz Coin', 'Bu arkaplanı almak için yeterli coin yok.');
     }
   };
+
+  const getRewardIcon = (type: string) => {
+    switch (type) {
+      case 'coins': return 'logo-bitcoin';
+      case 'bomb': return 'flame';
+      case 'shuffle': return 'shuffle';
+      case 'undo': return 'arrow-undo';
+      case 'extra_life': return 'heart';
+      default: return 'gift';
+    }
+  };
+
+  const getRewardColor = (type: string) => {
+    switch (type) {
+      case 'coins': return '#FFD700';
+      case 'bomb': return '#FF6B6B';
+      case 'shuffle': return '#4ECDC4';
+      case 'undo': return '#667eea';
+      case 'extra_life': return '#FF69B4';
+      default: return '#fff';
+    }
+  };
+
+  // VIP Tab
+  const renderVIPTab = () => (
+    <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
+      {/* VIP Banner */}
+      <View style={styles.vipBanner}>
+        <View style={styles.vipCrown}>
+          <Ionicons name="crown" size={40} color="#FFD700" />
+        </View>
+        <Text style={styles.vipTitle}>VIP Üyelik</Text>
+        <Text style={styles.vipSubtitle}>Reklamsız oyun deneyimi!</Text>
+      </View>
+      
+      {/* VIP Status */}
+      {isVIP ? (
+        <View style={styles.vipActiveCard}>
+          <View style={styles.vipActiveHeader}>
+            <Ionicons name="checkmark-circle" size={28} color="#4ECDC4" />
+            <Text style={styles.vipActiveTitle}>VIP Üyesiniz!</Text>
+          </View>
+          <Text style={styles.vipActiveDesc}>
+            Tüm reklamlar kaldırıldı. Keyifli oyunlar!
+          </Text>
+          {subscriptionEndDate && (
+            <Text style={styles.vipExpiry}>
+              Bitiş: {new Date(subscriptionEndDate).toLocaleDateString('tr-TR')}
+            </Text>
+          )}
+        </View>
+      ) : (
+        <>
+          {/* VIP Features */}
+          <View style={styles.vipFeatures}>
+            <Text style={styles.sectionTitle}>VIP Avantajları</Text>
+            
+            <View style={styles.featureItem}>
+              <View style={[styles.featureIcon, { backgroundColor: 'rgba(255, 107, 107, 0.2)' }]}>
+                <Ionicons name="close-circle" size={24} color="#FF6B6B" />
+              </View>
+              <View style={styles.featureInfo}>
+                <Text style={styles.featureName}>Reklamsız Oyun</Text>
+                <Text style={styles.featureDesc}>Hiçbir reklam görmeden oyna!</Text>
+              </View>
+            </View>
+            
+            <View style={styles.featureItem}>
+              <View style={[styles.featureIcon, { backgroundColor: 'rgba(78, 205, 196, 0.2)' }]}>
+                <Ionicons name="flash" size={24} color="#4ECDC4" />
+              </View>
+              <View style={styles.featureInfo}>
+                <Text style={styles.featureName}>Hızlı Yükleme</Text>
+                <Text style={styles.featureDesc}>Reklam beklemeden direkt oyna</Text>
+              </View>
+            </View>
+            
+            <View style={styles.featureItem}>
+              <View style={[styles.featureIcon, { backgroundColor: 'rgba(168, 85, 247, 0.2)' }]}>
+                <Ionicons name="star" size={24} color="#A855F7" />
+              </View>
+              <View style={styles.featureInfo}>
+                <Text style={styles.featureName}>VIP Rozeti</Text>
+                <Text style={styles.featureDesc}>Özel VIP profil rozeti</Text>
+              </View>
+            </View>
+          </View>
+          
+          {/* Purchase Button */}
+          <TouchableOpacity 
+            style={styles.vipPurchaseBtn}
+            onPress={handleBuyVIP}
+            disabled={isPurchasing}
+          >
+            {isPurchasing ? (
+              <ActivityIndicator size="small" color="#1a1a2e" />
+            ) : (
+              <>
+                <Ionicons name="crown" size={24} color="#1a1a2e" />
+                <View style={styles.vipPurchaseInfo}>
+                  <Text style={styles.vipPurchaseText}>VIP Ol</Text>
+                  <Text style={styles.vipPurchasePrice}>{vipPrice}</Text>
+                </View>
+              </>
+            )}
+          </TouchableOpacity>
+          
+          <Text style={styles.vipNote}>
+            * Aylık abonelik. İstediğiniz zaman iptal edebilirsiniz.
+          </Text>
+        </>
+      )}
+      
+      <View style={{ height: 20 }} />
+    </ScrollView>
+  );
 
   const renderCoinsTab = () => (
     <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
@@ -168,7 +418,6 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
   );
 
   const renderThemesTab = () => {
-    // Safe themes array
     const safeThemes = themes.length > 0 ? themes : [
       { id: 'classic', name: 'Klasik', colors: ['#FF5252', '#00E5FF', '#69F0AE'], price: 0 },
     ];
@@ -298,22 +547,56 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
         );
       })}
       
-      {/* Watch Ad Section */}
-      <View style={styles.watchAdSection}>
-        <Ionicons name="videocam" size={24} color="#4ECDC4" />
-        <View style={styles.watchAdInfo}>
-          <Text style={styles.watchAdTitle}>Reklam İzle</Text>
-          <Text style={styles.watchAdDesc}>Ücretsiz güçlendirme kazan!</Text>
+      {/* Video İzle Bölümü - Rastgele Ödül */}
+      <View style={styles.watchVideoSection}>
+        <View style={styles.watchVideoHeader}>
+          <Ionicons name="videocam" size={28} color="#A855F7" />
+          <View style={styles.watchVideoInfo}>
+            <Text style={styles.watchVideoTitle}>Video İzle</Text>
+            <Text style={styles.watchVideoSubtitle}>Rastgele ödül kazan!</Text>
+          </View>
         </View>
+        
+        {/* Ödül Olasılıkları */}
+        <View style={styles.rewardChances}>
+          <View style={styles.rewardChanceItem}>
+            <Ionicons name="logo-bitcoin" size={16} color="#FFD700" />
+            <Text style={styles.rewardChanceText}>5-25 Coin</Text>
+          </View>
+          <View style={styles.rewardChanceItem}>
+            <Ionicons name="flame" size={16} color="#FF6B6B" />
+            <Text style={styles.rewardChanceText}>Bomba</Text>
+          </View>
+          <View style={styles.rewardChanceItem}>
+            <Ionicons name="shuffle" size={16} color="#4ECDC4" />
+            <Text style={styles.rewardChanceText}>Karıştır</Text>
+          </View>
+          <View style={styles.rewardChanceItem}>
+            <Ionicons name="arrow-undo" size={16} color="#667eea" />
+            <Text style={styles.rewardChanceText}>Geri Al</Text>
+          </View>
+          <View style={styles.rewardChanceItem}>
+            <Ionicons name="heart" size={16} color="#FF69B4" />
+            <Text style={styles.rewardChanceText}>Ekstra Can</Text>
+          </View>
+        </View>
+        
         <TouchableOpacity 
-          style={styles.watchAdBtn}
-          onPress={() => {
-            addPowerUp('bomb', 1);
-            Alert.alert('Tebrikler!', 'Ücretsiz Bomba kazandın!');
-          }}
+          style={[styles.watchVideoBtn, isWatchingAd && styles.watchVideoBtnDisabled]}
+          onPress={handleWatchVideo}
+          disabled={isWatchingAd}
         >
-          <Ionicons name="play-circle" size={20} color="#fff" />
-          <Text style={styles.watchAdBtnText}>İzle</Text>
+          {isWatchingAd ? (
+            <>
+              <ActivityIndicator size="small" color="#fff" />
+              <Text style={styles.watchVideoBtnText}>Reklam Yükleniyor...</Text>
+            </>
+          ) : (
+            <>
+              <Ionicons name="play-circle" size={24} color="#fff" />
+              <Text style={styles.watchVideoBtnText}>Reklam İzle & Ödül Kazan</Text>
+            </>
+          )}
         </TouchableOpacity>
       </View>
       
@@ -338,6 +621,12 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
             <Ionicons name="logo-bitcoin" size={24} color="#FFD700" />
             <Text style={styles.balanceText}>{totalCoins.toLocaleString()}</Text>
             <Text style={styles.balanceLabel}>Coin</Text>
+            {isVIP && (
+              <View style={styles.vipBadge}>
+                <Ionicons name="crown" size={12} color="#FFD700" />
+                <Text style={styles.vipBadgeText}>VIP</Text>
+              </View>
+            )}
           </View>
           
           {/* Tabs */}
@@ -346,7 +635,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
               style={[styles.tab, activeTab === 'coins' && styles.activeTab]}
               onPress={() => setActiveTab('coins')}
             >
-              <Ionicons name="logo-bitcoin" size={18} color={activeTab === 'coins' ? '#FFD700' : '#888'} />
+              <Ionicons name="logo-bitcoin" size={16} color={activeTab === 'coins' ? '#FFD700' : '#888'} />
               <Text style={[styles.tabText, activeTab === 'coins' && styles.activeTabText]}>Coin</Text>
             </TouchableOpacity>
             
@@ -354,16 +643,24 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
               style={[styles.tab, activeTab === 'themes' && styles.activeTab]}
               onPress={() => setActiveTab('themes')}
             >
-              <Ionicons name="color-palette" size={18} color={activeTab === 'themes' ? '#A855F7' : '#888'} />
-              <Text style={[styles.tabText, activeTab === 'themes' && styles.activeTabText]}>Temalar</Text>
+              <Ionicons name="color-palette" size={16} color={activeTab === 'themes' ? '#A855F7' : '#888'} />
+              <Text style={[styles.tabText, activeTab === 'themes' && styles.activeTabText]}>Tema</Text>
             </TouchableOpacity>
             
             <TouchableOpacity
               style={[styles.tab, activeTab === 'powerups' && styles.activeTab]}
               onPress={() => setActiveTab('powerups')}
             >
-              <Ionicons name="flash" size={18} color={activeTab === 'powerups' ? '#FF6B6B' : '#888'} />
-              <Text style={[styles.tabText, activeTab === 'powerups' && styles.activeTabText]}>Jokerler</Text>
+              <Ionicons name="flash" size={16} color={activeTab === 'powerups' ? '#FF6B6B' : '#888'} />
+              <Text style={[styles.tabText, activeTab === 'powerups' && styles.activeTabText]}>Joker</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'vip' && styles.activeTab, styles.vipTab]}
+              onPress={() => setActiveTab('vip')}
+            >
+              <Ionicons name="crown" size={16} color={activeTab === 'vip' ? '#FFD700' : '#888'} />
+              <Text style={[styles.tabText, activeTab === 'vip' && styles.activeTabText]}>VIP</Text>
             </TouchableOpacity>
           </View>
           
@@ -371,6 +668,17 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
           {activeTab === 'coins' && renderCoinsTab()}
           {activeTab === 'themes' && renderThemesTab()}
           {activeTab === 'powerups' && renderPowerUpsTab()}
+          {activeTab === 'vip' && renderVIPTab()}
+          
+          {/* Reward Animation Overlay */}
+          {showRewardAnimation && lastReward && (
+            <Animated.View style={[styles.rewardOverlay, { transform: [{ scale: rewardScale }] }]}>
+              <View style={[styles.rewardBox, { backgroundColor: getRewardColor(lastReward.type) }]}>
+                <Ionicons name={getRewardIcon(lastReward.type) as any} size={48} color="#fff" />
+                <Text style={styles.rewardAmount}>+{lastReward.amount}</Text>
+              </View>
+            </Animated.View>
+          )}
         </View>
       </View>
     </Modal>
@@ -430,11 +738,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888',
   },
+  vipBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    marginLeft: 8,
+    gap: 4,
+  },
+  vipBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#FFD700',
+  },
   tabs: {
     flexDirection: 'row',
     paddingHorizontal: 20,
     marginBottom: 12,
-    gap: 8,
+    gap: 6,
   },
   tab: {
     flex: 1,
@@ -444,13 +767,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    gap: 6,
+    gap: 4,
   },
   activeTab: {
     backgroundColor: 'rgba(255, 255, 255, 0.12)',
   },
+  vipTab: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+  },
   tabText: {
-    fontSize: 13,
+    fontSize: 11,
     color: '#888',
     fontWeight: '600',
   },
@@ -466,6 +793,124 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 12,
+  },
+  // VIP Styles
+  vipBanner: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+  },
+  vipCrown: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  vipTitle: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#FFD700',
+    marginBottom: 4,
+  },
+  vipSubtitle: {
+    fontSize: 14,
+    color: '#fff',
+    opacity: 0.8,
+  },
+  vipActiveCard: {
+    backgroundColor: 'rgba(78, 205, 196, 0.1)',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#4ECDC4',
+    marginBottom: 16,
+  },
+  vipActiveHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  vipActiveTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4ECDC4',
+  },
+  vipActiveDesc: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 8,
+  },
+  vipExpiry: {
+    fontSize: 12,
+    color: '#666',
+  },
+  vipFeatures: {
+    marginBottom: 20,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  featureIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  featureInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  featureName: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  featureDesc: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 2,
+  },
+  vipPurchaseBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFD700',
+    padding: 18,
+    borderRadius: 16,
+    gap: 12,
+  },
+  vipPurchaseInfo: {
+    alignItems: 'center',
+  },
+  vipPurchaseText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1a1a2e',
+  },
+  vipPurchasePrice: {
+    fontSize: 14,
+    color: '#1a1a2e',
+    opacity: 0.8,
+  },
+  vipNote: {
+    fontSize: 11,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 12,
   },
   // Coin Packages
   coinPackage: {
@@ -668,42 +1113,91 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFD700',
   },
-  watchAdSection: {
+  // Watch Video Section
+  watchVideoSection: {
+    backgroundColor: 'rgba(168, 85, 247, 0.1)',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(168, 85, 247, 0.3)',
+  },
+  watchVideoHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(78, 205, 196, 0.1)',
-    padding: 16,
-    borderRadius: 14,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(78, 205, 196, 0.3)',
+    marginBottom: 12,
   },
-  watchAdInfo: {
-    flex: 1,
+  watchVideoInfo: {
     marginLeft: 12,
   },
-  watchAdTitle: {
+  watchVideoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  watchVideoSubtitle: {
+    fontSize: 12,
+    color: '#A855F7',
+  },
+  rewardChances: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
+  },
+  rewardChanceItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 4,
+  },
+  rewardChanceText: {
+    fontSize: 11,
+    color: '#fff',
+  },
+  watchVideoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#A855F7',
+    padding: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  watchVideoBtnDisabled: {
+    opacity: 0.6,
+  },
+  watchVideoBtnText: {
     fontSize: 15,
     fontWeight: 'bold',
     color: '#fff',
   },
-  watchAdDesc: {
-    fontSize: 12,
-    color: '#4ECDC4',
-  },
-  watchAdBtn: {
-    flexDirection: 'row',
+  // Reward Animation
+  rewardOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#4ECDC4',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
-    gap: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  watchAdBtnText: {
-    fontSize: 14,
+  rewardBox: {
+    width: 120,
+    height: 120,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rewardAmount: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
+    marginTop: 8,
   },
 });
 

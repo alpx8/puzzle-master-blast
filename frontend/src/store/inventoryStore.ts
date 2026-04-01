@@ -27,6 +27,8 @@ interface InventoryState {
   // Actions
   addTheme: (themeId: string, acquiredBy: InventoryItem['acquiredBy']) => void;
   addBackground: (backgroundId: string, acquiredBy: InventoryItem['acquiredBy']) => void;
+  purchaseTheme: (themeId: string) => void;
+  purchaseBackground: (backgroundId: string) => void;
   setActiveTheme: (themeId: string) => void;
   setActiveBackground: (backgroundId: string) => void;
   hasTheme: (themeId: string) => boolean;
@@ -84,6 +86,14 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
       itemsAcquired: [...itemsAcquired, newItem],
     });
     get().saveInventory();
+  },
+  
+  purchaseTheme: (themeId) => {
+    get().addTheme(themeId, 'purchase');
+  },
+  
+  purchaseBackground: (backgroundId) => {
+    get().addBackground(backgroundId, 'purchase');
   },
   
   setActiveTheme: (themeId) => {

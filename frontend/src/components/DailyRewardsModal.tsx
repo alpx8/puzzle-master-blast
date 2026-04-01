@@ -1,5 +1,5 @@
 // Daily Rewards Modal - Günlük ödül modalı
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,14 @@ import {
   Modal,
   Animated,
   Dimensions,
+  Platform,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDailyRewardsStore } from '@/src/store/dailyRewardsStore';
+import { useVIPStore } from '@/src/store/vipStore';
+import { getAdUnitId } from '@/src/utils/adManager';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -22,7 +27,10 @@ interface DailyRewardsModalProps {
 const DAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
 export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({ visible, onClose }) => {
-  const { currentStreak, rewards, claimReward, totalCoins } = useDailyRewardsStore();
+  const { currentStreak, rewards, claimReward, totalCoins, setShouldShowAd } = useDailyRewardsStore();
+  const { isVIP } = useVIPStore();
+  const [isLoadingAd, setIsLoadingAd] = useState(false);
+  const [adLoaded, setAdLoaded] = useState(false);
   
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
@@ -48,10 +56,58 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({ visible, o
     }
   }, [visible]);
 
+  // Reklam gösterme fonksiyonu
+  const showInterstitialAd = async () => {
+    // VIP kullanıcılara reklam gösterme
+    if (isVIP) {
+      console.log('[DailyReward] VIP user - skipping ad');
+      return;
+    }
+    
+    // Web'de reklam simülasyonu
+    if (Platform.OS === 'web') {
+      setIsLoadingAd(true);
+      // 2 saniye bekleme simülasyonu
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setIsLoadingAd(false);
+      Alert.alert(
+        'Reklam (Simülasyon)',
+        'Gerçek cihazda burada bir reklam gösterilecek.',
+        [{ text: 'Tamam' }]
+      );
+      return;
+    }
+    
+    // Native'de gerçek reklam göster
+    try {
+      setIsLoadingAd(true);
+      // react-native-google-mobile-ads ile reklam göster
+      // Bu kısım gerçek cihazda çalışacak
+      const adUnitId = getAdUnitId('INTERSTITIAL');
+      console.log('[DailyReward] Showing interstitial ad:', adUnitId);
+      
+      // AdMob interstitial reklamı yükle ve göster
+      // Not: Gerçek implementasyon cihazda test edilmeli
+      setIsLoadingAd(false);
+    } catch (error) {
+      console.error('[DailyReward] Ad error:', error);
+      setIsLoadingAd(false);
+    }
+  };
+
   const handleClaim = async () => {
-    await claimReward();
-    // Animasyon sonrası kapat
-    setTimeout(onClose, 500);
+    // Ödülü al
+    const reward = await claimReward();
+    console.log('[DailyReward] Claimed:', reward);
+    
+    // Reklam göster (VIP değilse)
+    await showInterstitialAd();
+    
+    // Flag'i sıfırla
+    setShouldShowAd(false);
+    
+    // Kapat
+    setTimeout(onClose, 300);
   };
 
   const todayReward = rewards[currentStreak % 7];
@@ -146,9 +202,22 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({ visible, o
           </View>
           
           {/* Claim Button */}
-          <TouchableOpacity style={styles.claimButton} onPress={handleClaim}>
-            <Ionicons name="gift-outline" size={24} color="#0A0A1A" />
-            <Text style={styles.claimText}>Ödülü Al!</Text>
+          <TouchableOpacity 
+            style={[styles.claimButton, isLoadingAd && styles.claimButtonDisabled]} 
+            onPress={handleClaim}
+            disabled={isLoadingAd}
+          >
+            {isLoadingAd ? (
+              <>
+                <ActivityIndicator size="small" color="#0A0A1A" />
+                <Text style={styles.claimText}>Reklam Yükleniyor...</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="gift-outline" size={24} color="#0A0A1A" />
+                <Text style={styles.claimText}>Ödülü Al!</Text>
+              </>
+            )}
           </TouchableOpacity>
           
           {/* Coins Display */}
@@ -294,6 +363,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#0A0A1A',
+  },
+  claimButtonDisabled: {
+    opacity: 0.7,
+    backgroundColor: '#CCA500',
   },
   coinsDisplay: {
     flexDirection: 'row',
