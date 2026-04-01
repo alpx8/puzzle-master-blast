@@ -1,5 +1,6 @@
-// AdMob Reklam Yöneticisi
+// AdMob Reklam Yöneticisi - VIP Entegrasyonu
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Production Ad Unit IDs
 export const AD_UNITS = {
@@ -23,6 +24,47 @@ export const TEST_AD_UNITS = {
 
 // Use production IDs
 const isProduction = true;
+
+// VIP durumunu kontrol et
+export const checkVIPStatus = async (): Promise<boolean> => {
+  try {
+    const data = await AsyncStorage.getItem('vip_subscription');
+    if (!data) return false;
+    
+    const parsed = JSON.parse(data);
+    
+    // VIP aktif mi?
+    if (!parsed.isVIP) return false;
+    
+    // Abonelik süresi dolmuş mu?
+    if (parsed.subscriptionEndDate) {
+      const endDate = new Date(parsed.subscriptionEndDate);
+      const now = new Date();
+      
+      if (now > endDate) {
+        // Süre dolmuş - VIP'i kaldır
+        await AsyncStorage.setItem('vip_subscription', JSON.stringify({
+          ...parsed,
+          isVIP: false,
+        }));
+        console.log('[AdManager] VIP süresi doldu, reklamlar aktif');
+        return false;
+      }
+    }
+    
+    console.log('[AdManager] VIP aktif, reklamlar kapalı');
+    return true;
+  } catch (error) {
+    console.error('[AdManager] VIP kontrol hatası:', error);
+    return false;
+  }
+};
+
+// Reklam gösterilmeli mi? (VIP değilse true)
+export const shouldShowAds = async (): Promise<boolean> => {
+  const isVIP = await checkVIPStatus();
+  return !isVIP; // VIP değilse reklam göster
+};
 
 export const getAdUnitId = (type: keyof typeof AD_UNITS): string => {
   if (Platform.OS === 'web') {
@@ -54,7 +96,14 @@ export const getAdUnitId = (type: keyof typeof AD_UNITS): string => {
 let lastInterstitialTime = 0;
 const INTERSTITIAL_COOLDOWN = 60000; // 1 minute between interstitials
 
-export const canShowInterstitial = (): boolean => {
+export const canShowInterstitial = async (): Promise<boolean> => {
+  // Önce VIP kontrolü
+  const isVIP = await checkVIPStatus();
+  if (isVIP) {
+    console.log('[AdManager] VIP kullanıcı - reklam gösterilmiyor');
+    return false;
+  }
+  
   const now = Date.now();
   if (now - lastInterstitialTime >= INTERSTITIAL_COOLDOWN) {
     lastInterstitialTime = now;
@@ -71,11 +120,29 @@ export const incrementGameCount = (): number => {
   return gameCount;
 };
 
-export const shouldShowInterstitialAfterGame = (): boolean => {
+export const shouldShowInterstitialAfterGame = async (): Promise<boolean> => {
+  // Önce VIP kontrolü
+  const isVIP = await checkVIPStatus();
+  if (isVIP) {
+    console.log('[AdManager] VIP kullanıcı - oyun sonu reklam yok');
+    return false;
+  }
+  
   // Show interstitial every 3 games
-  return gameCount % 3 === 0 && canShowInterstitial();
+  return gameCount % 3 === 0 && await canShowInterstitial();
 };
 
 export const resetGameCount = (): void => {
   gameCount = 0;
+};
+
+// Banner reklam gösterilmeli mi?
+export const shouldShowBanner = async (): Promise<boolean> => {
+  return await shouldShowAds();
+};
+
+// Rewarded reklam (Video izle) - VIP'ler de izleyebilir çünkü ödül kazanıyorlar
+export const canShowRewarded = (): boolean => {
+  // Rewarded reklamlar VIP'ler için de açık (ödül alıyorlar)
+  return Platform.OS !== 'web';
 };

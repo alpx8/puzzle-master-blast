@@ -13,142 +13,114 @@
 
 ---
 
+## VIP Abonelik Sistemi (Güncel)
+
+### VIP Mantığı
+- VIP kullanıcılar **hiç reklam görmez** (günlük ödül sonrası, oyun arası, banner)
+- VIP olmayanlar reklamlara maruz kalır
+- VIP abonelik sadece **Google Play üzerinden** satın alınabilir (web'de satın alma yapılamaz)
+- Satın alma onayı Google Play'den geldikten sonra VIP aktif olur
+- "Tebrikler! VIP Üye Oldunuz!" animasyonu ödeme onayı sonrası gösterilir
+- Abonelik süresi dolunca VIP otomatik kaldırılır ve reklamlar geri gelir
+
+### VIP Fiyatlandırma
+- **Aylık Abonelik:** ₺149.99/ay
+- **1 Günlük Deneme:** 7 gün üst üste giriş yapan kullanıcılar reklam izleyerek kazanabilir (tek seferlik)
+
+### Reklam Türleri
+| Reklam Türü | VIP Göster | VIP Olmayan |
+|-------------|------------|-------------|
+| Interstitial (oyun arası) | ❌ Hayır | ✅ Her 3 oyunda bir |
+| Günlük ödül sonrası | ❌ Hayır | ✅ Evet |
+| Rewarded (video izle ödül) | ✅ Evet* | ✅ Evet |
+
+*VIP kullanıcılar isterse ödül için video izleyebilir
+
+---
+
 ## Tamamlanan Özellikler
 
-### v1.3.0 (1 Nisan 2026) - VIP & IAP Güncellemesi
+### v1.3.0 (1 Nisan 2026) - VIP & IAP Tam Entegrasyonu
 
-**VIP Abonelik Sistemi (Güncellendi):**
-- ✅ Google Play IAP entegrasyonu (`react-native-iap`)
-- ✅ VIP Ol butonuna tıklandığında Google Play abonelik ekranı açılıyor
+**VIP Abonelik (Google Play IAP):**
+- ✅ VIP Ol butonu Google Play abonelik ekranını açıyor
 - ✅ Simülasyon kaldırıldı - sadece gerçek ödeme sonrası VIP aktif
-- ✅ "Tebrikler! VIP Üye Oldunuz!" başarı animasyonu (ödeme onayı sonrası)
-- ✅ "Satın Alımları Geri Yükle" butonu eklendi
-- ✅ Fiyat: ₺149.99/ay
+- ✅ "Tebrikler! VIP Üye Oldunuz!" başarı animasyonu
+- ✅ "Satın Alımları Geri Yükle" butonu
+- ✅ VIP süresi dolunca otomatik kaldırma
+- ✅ Kral tacı (👑) emoji VIP ikonu olarak kullanıldı
+
+**Reklam Yönetimi:**
+- ✅ VIP kontrolü tüm reklam noktalarına entegre edildi
+- ✅ adManager.ts güncellenmiş - shouldShowAds(), checkVIPStatus()
+- ✅ Oyun sonrası interstitial reklam (VIP değilse)
+- ✅ Günlük ödül sonrası interstitial reklam (VIP değilse)
 
 **7 Günlük Streak VIP Deneme:**
-- ✅ 7 gün üst üste ödül toplayan kullanıcılara özel ekran
-- ✅ Reklam izleyerek 1 günlük VIP deneme kazanma
-- ✅ Konfeti efekti ve animasyon
-- ✅ Deneme hakkı sadece 1 kez kullanılabilir
+- ✅ 7 gün üst üste giriş yapanlara özel teklif
+- ✅ Reklam izleyerek 1 günlük VIP kazanma
+- ✅ Tek seferlik hak (hasUsedTrial flag)
 
-### v1.2.0 - Monetizasyon Güncellemesi
+### v1.2.0 - Monetizasyon
 
-**Günlük Ödül Sistemi:**
-- ✅ 1-7 coin ölçeklendirme (haftalık döngü)
-- ✅ Ödül alındıktan hemen sonra reklam gösterimi
-- ✅ VIP kullanıcılar reklam görmüyor
+- ✅ Günlük ödül 1-7 coin ölçeklendirme
+- ✅ Video izle rastgele ödül (5-25 coin, jokerler, ekstra can)
+- ✅ 4 sekmeli mağaza (Coin, Tema, Joker, VIP)
 
-**Video İzle - Rastgele Ödül:**
-- ✅ Joker sekmesinde "Video İzle" bölümü
-- ✅ Kazanılabilecek ödüller: 5-25 Coin, Bomba, Karıştır, Geri Al, Ekstra Can
-- ✅ Rewarded ad + ödül animasyonu
-
-### v1.1.0 - UI Sadeleştirme & Multiplayer
-
-**Mağaza Entegrasyonu:**
-- ✅ 4 sekmeli mağaza: Coin, Tema, Joker, VIP
-- ✅ Coin paketleri (Popüler/En İyi etiketleri)
-- ✅ Temalar (Blok skinleri)
-- ✅ Jokerler (Güçlendirmeler)
-
-**Backend (MongoDB):**
-- ✅ Kullanıcı profil sistemi
-- ✅ Oyun sonuçları kaydetme
-- ✅ Socket.IO room yönetimi
-
-### v1.0.0 - Temel Özellikler
+### v1.0-1.1.0 - Temel Özellikler
 
 - ✅ 8x8 blok yerleştirme oyunu
-- ✅ Klasik Mod (süresiz)
-- ✅ Zamanlı Mod (3 dakika)
-- ✅ Çok Oyunculu Mod
-- ✅ Turnuva Modu (UI)
-- ✅ Günlük ödüller ve görevler
-- ✅ Liderlik tablosu
-- ✅ AdMob entegrasyonu
+- ✅ 4 oyun modu (Klasik, Zamanlı, Multiplayer, Turnuva)
+- ✅ Liderlik tablosu, görevler
+- ✅ Backend (FastAPI, MongoDB, Socket.IO)
 - ✅ Çevrimdışı destek
 
 ---
 
-## Teknik Mimari
+## Teknik Detaylar
 
-### Frontend
-- **Framework:** React Native + Expo SDK 53
-- **Routing:** Expo Router
-- **State:** Zustand
-- **UI:** Custom components + Ionicons
-
-### Backend
-- **Framework:** FastAPI (Python)
-- **Real-time:** Socket.IO
-- **Database:** MongoDB
-
-### Entegrasyonlar
-- Google AdMob (`react-native-google-mobile-ads`)
-- Google Play Billing (`react-native-iap`)
-- Socket.IO (multiplayer)
-
----
-
-## Monetizasyon
-
-| Özellik | Durum | Fiyat |
-|---------|-------|-------|
-| VIP Abonelik | ✅ Aktif | ₺149.99/ay |
-| Coin 500 | ✅ IAP | ₺19.99 |
-| Coin 1200 | ✅ IAP | ₺39.99 |
-| Coin 3000 | ✅ IAP | ₺79.99 |
-| Coin 8000 | ✅ IAP | ₺149.99 |
-| Interstitial Ads | ✅ | Günlük ödül sonrası |
-| Rewarded Ads | ✅ | Video izle ödül |
-
----
-
-## API Endpoints
-
-| Endpoint | Method | Açıklama |
-|----------|--------|----------|
-| `/api/profiles` | POST | Profil oluştur/getir |
-| `/api/profiles/{id}/sync` | PUT | Profil senkronize et |
-| `/api/rooms` | GET/POST | Oda listele/oluştur |
-| `/api/rooms/{id}/join` | POST | Odaya katıl |
-| `/api/leaderboard` | GET | Liderlik tablosu |
-
----
-
-## Backlog / Gelecek Özellikler
-
-| Öncelik | Özellik | Açıklama |
-|---------|---------|----------|
-| P1 | Kaygan Blok Animasyonu | Bloklar yerleşirken slide efekti |
-| P1 | Multiplayer Gerçek Cihaz Testi | 2 cihazla Socket.IO testi |
-| P2 | Backend Turnuva | Sunucu taraflı turnuva mantığı |
-| P3 | Push Notifications | Günlük ödül hatırlatıcıları |
-
----
-
-## Yayınlama Durumu
-
-- **Version:** 1.3.0
-- **Version Code:** 4
-- **Package:** com.puzzlemaster.blastgame
-- **Google Play:** Kapalı test aşamasında
-
----
-
-## Önemli Dosyalar
-
+### Dosyalar
 | Dosya | Açıklama |
 |-------|----------|
-| `/app/frontend/src/store/vipStore.ts` | VIP abonelik ve IAP mantığı |
-| `/app/frontend/src/components/ShopModal.tsx` | Mağaza UI |
+| `/app/frontend/src/store/vipStore.ts` | VIP abonelik state ve IAP mantığı |
+| `/app/frontend/src/utils/adManager.ts` | Reklam yönetimi ve VIP kontrolü |
+| `/app/frontend/src/components/ShopModal.tsx` | Mağaza UI (VIP sekmesi dahil) |
 | `/app/frontend/src/components/DailyRewardsModal.tsx` | Günlük ödül + 7. gün VIP deneme |
-| `/app/AAB_BUILD_REHBERI.md` | Build ve yayınlama rehberi |
+| `/app/frontend/app/game.tsx` | Oyun ekranı (oyun sonu reklam) |
+
+### IAP Ürün IDleri
+| ID | Tür | Fiyat |
+|----|-----|-------|
+| vip_monthly | Abonelik | ₺149.99/ay |
+| coins_500 | Tek seferlik | ₺19.99 |
+| coins_1200 | Tek seferlik | ₺39.99 |
+| coins_3000 | Tek seferlik | ₺79.99 |
+| coins_8000 | Tek seferlik | ₺149.99 |
 
 ---
 
 ## Bilinen Sınırlamalar
 
-- Web preview'da VIP ikonu (Ionicons "star") görünüyor; Android'de daha iyi ikonlar kullanılabilir
-- IAP sadece gerçek Android cihazda çalışır
-- Multiplayer gerçek cihaz testi yapılmalı
+1. **Web Preview:** Kral tacı emojisi ve bazı Ionicons web'de soru işareti olarak görünüyor. Android'de düzgün çalışır.
+2. **IAP Test:** Gerçek satın alma sadece Google Play'den yüklenmiş APK/AAB'de test edilebilir.
+3. **Multiplayer:** Gerçek cihazlarla test gerekiyor.
+
+---
+
+## Backlog
+
+| Öncelik | Özellik |
+|---------|---------|
+| P1 | Kaygan blok yerleştirme animasyonu |
+| P1 | Multiplayer gerçek cihaz testi |
+| P2 | Backend turnuva mantığı |
+| P3 | Push notifications |
+
+---
+
+## Yayınlama
+
+- **Version:** 1.3.0
+- **Version Code:** 5
+- **Package:** com.puzzlemaster.blastgame
+- **Rehber:** `/app/AAB_BUILD_REHBERI.md`

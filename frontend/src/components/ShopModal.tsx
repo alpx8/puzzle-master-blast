@@ -308,7 +308,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
       {/* VIP Banner */}
       <View style={styles.vipBanner}>
         <View style={styles.vipCrown}>
-          <Ionicons name="star" size={40} color="#FFD700" />
+          <Text style={styles.crownEmoji}>👑</Text>
         </View>
         <Text style={styles.vipTitle}>VIP Üyelik</Text>
         <Text style={styles.vipSubtitle}>Reklamsız oyun deneyimi!</Text>
@@ -318,7 +318,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
       {isVIP && (
         <View style={styles.vipActiveCard}>
           <View style={styles.vipActiveHeader}>
-            <Ionicons name="star" size={24} color="#FFD700" />
+            <Text style={styles.vipActiveEmoji}>👑</Text>
             <Text style={styles.vipActiveTitle}>VIP Üyesi</Text>
           </View>
           <Text style={styles.vipActiveDesc}>
@@ -361,7 +361,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
             
             <View style={styles.featureItem}>
               <View style={[styles.featureIcon, { backgroundColor: 'rgba(255, 215, 0, 0.2)' }]}>
-                <Ionicons name="star" size={24} color="#FFD700" />
+                <Text style={styles.featureEmoji}>👑</Text>
               </View>
               <View style={styles.featureInfo}>
                 <Text style={styles.featureName}>VIP Rozeti</Text>
@@ -383,7 +383,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
               </>
             ) : (
               <>
-                <Ionicons name="star" size={24} color="#1a1a2e" />
+                <Text style={styles.vipPurchaseEmoji}>👑</Text>
                 <View style={styles.vipPurchaseInfo}>
                   <Text style={styles.vipPurchaseText}>VIP Ol</Text>
                   <Text style={styles.vipPurchasePrice}>{vipPrice}</Text>
@@ -667,7 +667,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
             <Text style={styles.balanceLabel}>Coin</Text>
           {isVIP && (
               <View style={styles.vipBadge}>
-                <Ionicons name="star" size={12} color="#FFD700" />
+                <Text style={styles.vipBadgeEmoji}>👑</Text>
                 <Text style={styles.vipBadgeText}>VIP</Text>
               </View>
             )}
@@ -703,7 +703,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
               style={[styles.tab, activeTab === 'vip' && styles.activeTab, styles.vipTab]}
               onPress={() => setActiveTab('vip')}
             >
-              <Ionicons name="star" size={14} color={activeTab === 'vip' ? '#FFD700' : '#888'} />
+              <Text style={[styles.tabVipEmoji, activeTab === 'vip' && styles.tabVipEmojiActive]}>👑</Text>
               <Text style={[styles.tabText, activeTab === 'vip' && styles.activeTabText]}>VIP</Text>
             </TouchableOpacity>
           </View>
@@ -728,7 +728,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
           {showVIPSuccess && (
             <Animated.View style={[styles.vipSuccessOverlay, { transform: [{ scale: vipSuccessScale }] }]}>
               <View style={styles.vipSuccessBox}>
-                <Ionicons name="star" size={64} color="#FFD700" />
+                <Text style={styles.vipSuccessCrown}>👑</Text>
                 <Text style={styles.vipSuccessTitle}>Tebrikler!</Text>
                 <Text style={styles.vipSuccessSubtitle}>VIP Üye Oldunuz!</Text>
                 <Text style={styles.vipSuccessDesc}>Artık reklamsız oynayabilirsiniz!</Text>
@@ -846,6 +846,12 @@ const styles = StyleSheet.create({
   tabCrownEmoji: {
     fontSize: 14,
   },
+  tabVipEmoji: {
+    fontSize: 12,
+  },
+  tabVipEmojiActive: {
+    fontSize: 14,
+  },
   tabContent: {
     flex: 1,
     paddingHorizontal: 20,
@@ -902,6 +908,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     marginBottom: 8,
+  },
+  vipActiveEmoji: {
+    fontSize: 24,
   },
   vipActiveCrown: {
     fontSize: 24,
@@ -968,6 +977,9 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   vipPurchaseCrown: {
+    fontSize: 24,
+  },
+  vipPurchaseEmoji: {
     fontSize: 24,
   },
   vipPurchaseInfo: {

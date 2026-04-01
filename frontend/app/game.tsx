@@ -19,11 +19,13 @@ import { useGameStore, Block } from '@/src/store/gameStore';
 import { useQuestStore } from '@/src/store/questStore';
 import { usePowerUpsStore, PowerUpType } from '@/src/store/powerUpsStore';
 import { useDailyRewardsStore } from '@/src/store/dailyRewardsStore';
+import { useVIPStore } from '@/src/store/vipStore';
 import { GameBoard } from '@/src/components/GameBoard';
 import { BlockPiece } from '@/src/components/BlockPiece';
 import { ScoreDisplay } from '@/src/components/ScoreDisplay';
 import { StreakMilestone } from '@/src/components/StreakMilestone';
 import { ConfettiCelebration } from '@/src/components/ConfettiCelebration';
+import { shouldShowInterstitialAfterGame, incrementGameCount } from '@/src/utils/adManager';
 import {
   initSounds,
   playPlaceSound,
@@ -356,11 +358,21 @@ export default function GameScreen() {
     saveUserData();
     updateQuestProgress('score', score);
     
+    // Oyun sayacını artır
+    incrementGameCount();
+    
     // Reset milestones for new game
     reachedMilestones.current.clear();
     
-    // Interstitial ad göster - sadece native'de çalışır
-    // Production build'de aktif olacak
+    // VIP değilse her 3 oyunda bir interstitial reklam göster
+    const showAd = async () => {
+      const shouldShow = await shouldShowInterstitialAfterGame();
+      if (shouldShow && Platform.OS !== 'web') {
+        console.log('[Game] VIP değil - interstitial reklam gösterilecek');
+        // Native'de gerçek reklam gösterilecek
+      }
+    };
+    showAd();
   };
 
   const handleWatchAdToContinue = async () => {
